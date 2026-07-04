@@ -149,7 +149,7 @@ CREATE TABLE document_chunks (
   chapter_title VARCHAR(500),
   page_start INT,
   page_end INT,
-  embedding VECTOR(1024),   -- số chiều tuỳ model embedding đang dùng, xem mục 3.1
+  embedding VECTOR(1024),   -- BGE-M3 local, xem mục 3.1
   created_at TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX idx_chunks_document ON document_chunks(document_id);
@@ -222,6 +222,10 @@ CREATE TABLE exam_attempts (
 
 ### 3.1 Lưu ý về số chiều embedding
 Số chiều `VECTOR(n)` phụ thuộc model embedding đang dùng (ví dụ Voyage AI ~1024, OpenAI `text-embedding-3-small` = 1536, Titan Embeddings v2 trên Bedrock = 1024). **Chốt số chiều trước khi tạo migration đầu tiên** — đổi model embedding sau này đồng nghĩa phải re-embed toàn bộ dữ liệu cũ (viết migration script riêng, không thể chỉ đổi cột).
+
+Mặc định local cho Phase 1 là **BAAI/bge-m3**, dense embedding **1024 chiều**
+và hỗ trợ tài liệu đa ngôn ngữ. Vì vậy migration đầu tiên của
+`document_chunks.embedding` dùng `VECTOR(1024)`.
 
 ### 3.2 ORM
 Dùng **Prisma** (khuyến nghị) hoặc Drizzle ORM cho type-safety + migration tool có sẵn. Prisma hỗ trợ tốt cho Postgres; với cột `VECTOR` cần dùng raw SQL query (`$queryRaw`) cho phần similarity search vì Prisma chưa có type built-in cho pgvector.

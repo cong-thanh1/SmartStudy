@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id             String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  email          String         @unique @db.VarChar(255)
-  passwordHash   String         @map("password_hash") @db.VarChar(255)
-  fullName       String?        @map("full_name") @db.VarChar(255)
-  role           String         @default("student") @db.VarChar(20)
-  emailVerified  Boolean        @default(false) @map("email_verified")
-  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  refreshTokens  RefreshToken[]
+  id            String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email         String         @unique @db.VarChar(255)
+  passwordHash  String         @map("password_hash") @db.VarChar(255)
+  fullName      String?        @map("full_name") @db.VarChar(255)
+  role          String         @default("student") @db.VarChar(20)
+  emailVerified Boolean        @default(false) @map("email_verified")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  documents     Document[]
+  refreshTokens RefreshToken[]
 
   @@map("users")
 }
@@ -32,4 +33,38 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+model Document {
+  id        String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String          @map("user_id") @db.Uuid
+  title     String          @db.VarChar(500)
+  fileKey   String          @map("file_key") @db.VarChar(500)
+  status    String          @default("uploading") @db.VarChar(20)
+  pageCount Int?            @map("page_count")
+  sizeBytes BigInt?         @map("size_bytes")
+  chapters  Json            @default("[]") @db.JsonB
+  deleted   Boolean         @default(false)
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks    DocumentChunk[]
+
+  @@index([userId, createdAt(sort: Desc)], map: "idx_documents_user")
+  @@map("documents")
+}
+
+model DocumentChunk {
+  id           String                       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId   String                       @map("document_id") @db.Uuid
+  chunkText    String                       @map("chunk_text") @db.Text
+  chapterTitle String?                      @map("chapter_title") @db.VarChar(500)
+  pageStart    Int?                         @map("page_start")
+  pageEnd      Int?                         @map("page_end")
+  embedding    Unsupported("vector(1024)")?
+  createdAt    DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  document     Document                     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId], map: "idx_chunks_document")
+  @@map("document_chunks")
 }

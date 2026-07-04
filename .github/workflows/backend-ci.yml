@@ -18,6 +18,20 @@ jobs:
     name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: smartstudy
+          POSTGRES_PASSWORD: smartstudy
+          POSTGRES_USER: smartstudy
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U smartstudy -d smartstudy"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: postgresql://smartstudy:smartstudy@localhost:5432/smartstudy
     defaults:
@@ -36,6 +50,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Apply database migrations
+        run: npm run prisma:migrate:deploy
 
       - name: Lint
         run: npm run lint
