@@ -52,7 +52,7 @@ tạo branch → code + test → commit (Conventional Commits) → push
 ## 2. Trạng thái hiện tại
 
 **Phase đang làm:** `Phase 0 — Foundation (local)`
-**Task/branch đang mở (nếu có):** _(không có — chuẩn bị task kế tiếp)_
+**Task/branch đang mở (nếu có):** `feature/p0-prisma-users`
 **Cập nhật lần cuối:** `2026-07-04`
 
 ---

@@ -77,7 +77,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
       STORAGE_ENDPOINT: http://minio:9000
       STORAGE_BUCKET: ${MINIO_BUCKET}
@@ -113,7 +113,7 @@ services:
     command: ["node", "dist/worker.js"]
     environment:
       NODE_ENV: development
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
       STORAGE_ENDPOINT: http://minio:9000
       STORAGE_BUCKET: ${MINIO_BUCKET}

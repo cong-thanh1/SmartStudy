@@ -25,3 +25,4 @@ Thumbs.db
 # Prisma local databases
 *.db
 *.db-journal
+backend/src/generated/prisma/

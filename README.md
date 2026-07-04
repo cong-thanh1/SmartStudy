@@ -59,6 +59,17 @@ npm test
 npm run build
 ```
 
-Lệnh migration Prisma và seed sẽ được bổ sung trong task database Phase 0.
+Chạy migration và seed tài khoản mẫu:
+
+```bash
+cd backend
+npm run prisma:migrate:deploy
+npm run prisma:seed
+```
+
+Trước khi seed, đặt `SEED_USER_EMAIL`, `SEED_USER_PASSWORD` và
+`SEED_USER_FULL_NAME` trong `.env`. Seed từ chối chạy nếu password trống hoặc
+ngắn hơn 12 ký tự.
+
 API key Anthropic lấy từ Anthropic Console và đặt vào `ANTHROPIC_API_KEY` trong
 file `.env`; không commit file này.
