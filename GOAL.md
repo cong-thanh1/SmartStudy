@@ -51,7 +51,7 @@ tạo branch → code + test → commit (Conventional Commits) → push
 
 ## 2. Trạng thái hiện tại
 
-**Phase đang làm:** `Phase 0 — Foundation (local)`
+**Phase đang làm:** `Phase 1 — MVP lõi (RAG local)` — chờ trả lời câu hỏi mục 5 trước khi code
 **Task/branch đang mở (nếu có):** _(không có — chuẩn bị task kế tiếp)_
 **Cập nhật lần cuối:** `2026-07-04`
 
@@ -67,7 +67,7 @@ tạo branch → code + test → commit (Conventional Commits) → push
 - [x] `feat(db): prisma schema + migration đầu tiên` — bảng `users`, extension `vector`
 - [x] `feat(auth): JwtAuthProvider + endpoint register/login/refresh`
 - [x] `chore(ci): setup GitHub Actions lint + test`
-- [ ] **DoD Phase 0:** đăng ký/đăng nhập thật, JWT hợp lệ, chạy qua `docker compose up`, mỗi task trên đã có PR riêng đã merge vào `develop`, không có credential AWS trong repo
+- [x] **DoD Phase 0:** đăng ký/đăng nhập thật, JWT hợp lệ, chạy qua `docker compose up`, mỗi task trên đã có PR riêng đã merge vào `develop`, không có credential AWS trong repo
 
 ### Phase 1 — MVP lõi (RAG local)
 - [ ] `feat(storage): S3CompatibleStorageProvider (MinIO)` implement `IStorageProvider`
