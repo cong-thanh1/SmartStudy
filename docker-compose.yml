@@ -1,0 +1,4 @@
+name: smartstudy
+
+# Các service local được thêm trong task `chore(infra): setup docker compose`.
+services: {}
