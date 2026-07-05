@@ -100,3 +100,9 @@ ngắn hơn 12 ký tự.
 
 API key Anthropic lấy từ Anthropic Console và đặt vào `ANTHROPIC_API_KEY` trong
 file `.env`; không commit file này.
+
+LLM mặc định dùng Anthropic trực tiếp qua `LLM_PROVIDER=anthropic`. Embedding
+mặc định dùng BGE-M3 local qua `EMBEDDING_PROVIDER=local`, sinh vector 1024
+chiều bằng model ONNX q8. Lần chạy embedding đầu tiên tải khoảng 570 MB; Compose
+lưu cache model trong volume `embedding-model-cache` để các lần sau không phải
+tải lại.

@@ -3,6 +3,8 @@ import { ZodError } from "zod";
 
 import {
   createAuthProviderFromEnv,
+  createEmbeddingProviderFromEnv,
+  createLLMProviderFromEnv,
   createQueueProviderFromEnv,
   createStorageProviderFromEnv,
   ProviderFactory,
@@ -11,6 +13,8 @@ import {
   type Providers,
 } from "../src/provider-factory.js";
 import { JwtAuthProvider } from "../src/adapters/auth/jwt-auth-provider.js";
+import { LocalBgeM3Provider } from "../src/adapters/embedding/local-bge-m3-provider.js";
+import { AnthropicLLMProvider } from "../src/adapters/llm/anthropic-llm-provider.js";
 import { RedisQueueProvider } from "../src/adapters/queue/redis-queue-provider.js";
 import { S3CompatibleStorageProvider } from "../src/adapters/storage/s3-compatible-storage-provider.js";
 import type { IAuthRepository } from "../src/modules/auth/auth-repository.js";
@@ -153,6 +157,23 @@ describe("ProviderFactory", () => {
     ).toBeInstanceOf(RedisQueueProvider);
   });
 
+  it("composes the local BGE-M3 embedding adapter", () => {
+    expect(
+      createEmbeddingProviderFromEnv({
+        EMBEDDING_PROVIDER: "local",
+      }),
+    ).toBeInstanceOf(LocalBgeM3Provider);
+  });
+
+  it("composes the Anthropic LLM adapter", () => {
+    expect(
+      createLLMProviderFromEnv({
+        ANTHROPIC_API_KEY: "test-api-key",
+        LLM_PROVIDER: "anthropic",
+      }),
+    ).toBeInstanceOf(AnthropicLLMProvider);
+  });
+
   it("fails fast for an auth adapter that is not implemented yet", () => {
     const repository = Object.freeze({}) as IAuthRepository;
 
@@ -173,5 +194,20 @@ describe("ProviderFactory", () => {
     ).toThrow(
       new ProviderNotRegisteredError("queue", "sqs"),
     );
+  });
+
+  it("fails fast for AI adapters that are not implemented yet", () => {
+    expect(() =>
+      createEmbeddingProviderFromEnv({
+        EMBEDDING_PROVIDER: "bedrock",
+      }),
+    ).toThrow(
+      new ProviderNotRegisteredError("embedding", "bedrock"),
+    );
+    expect(() =>
+      createLLMProviderFromEnv({
+        LLM_PROVIDER: "bedrock",
+      }),
+    ).toThrow(new ProviderNotRegisteredError("llm", "bedrock"));
   });
 });

@@ -12,6 +12,10 @@ import {
 import { BcryptPasswordHasher } from "./adapters/auth/bcrypt-password-hasher.js";
 import { loadJwtAuthConfig } from "./adapters/auth/jwt-auth-config.js";
 import { JwtAuthProvider } from "./adapters/auth/jwt-auth-provider.js";
+import { loadLocalBgeM3Config } from "./adapters/embedding/local-bge-m3-config.js";
+import { LocalBgeM3Provider } from "./adapters/embedding/local-bge-m3-provider.js";
+import { loadAnthropicLLMConfig } from "./adapters/llm/anthropic-llm-config.js";
+import { AnthropicLLMProvider } from "./adapters/llm/anthropic-llm-provider.js";
 import { loadRedisQueueConfig } from "./adapters/queue/redis-queue-config.js";
 import { RedisQueueProvider } from "./adapters/queue/redis-queue-provider.js";
 import { loadS3CompatibleStorageConfig } from "./adapters/storage/s3-compatible-storage-config.js";
@@ -91,12 +95,8 @@ export class ProviderFactory {
         this.config.emailProvider,
         this.registry.email,
       ),
-      embedding: this.resolve(
-        "embedding",
-        this.config.embeddingProvider,
-        this.registry.embedding,
-      ),
-      llm: this.resolve("llm", this.config.llmProvider, this.registry.llm),
+      embedding: this.createEmbeddingProvider(),
+      llm: this.createLLMProvider(),
       queue: this.createQueueProvider(),
       storage: this.createStorageProvider(),
       vectorStore: this.resolve(
@@ -120,6 +120,22 @@ export class ProviderFactory {
       "storage",
       this.config.storageProvider,
       this.registry.storage,
+    );
+  }
+
+  createEmbeddingProvider(): IEmbeddingProvider {
+    return this.resolve(
+      "embedding",
+      this.config.embeddingProvider,
+      this.registry.embedding,
+    );
+  }
+
+  createLLMProvider(): ILLMProvider {
+    return this.resolve(
+      "llm",
+      this.config.llmProvider,
+      this.registry.llm,
     );
   }
 
@@ -222,4 +238,47 @@ export function createQueueProviderFromEnv(
   }
 
   return queueProvider;
+}
+
+export function createEmbeddingProviderFromEnv(
+  environment: NodeJS.ProcessEnv = process.env,
+): IEmbeddingProvider {
+  const config = loadProviderConfig(environment);
+  const registry: ProviderRegistry = {
+    auth: {},
+    email: {},
+    embedding: {
+      local: () =>
+        new LocalBgeM3Provider(loadLocalBgeM3Config(environment)),
+    },
+    llm: {},
+    queue: {},
+    storage: {},
+    vectorStore: {},
+  };
+
+  return new ProviderFactory(
+    config,
+    registry,
+  ).createEmbeddingProvider();
+}
+
+export function createLLMProviderFromEnv(
+  environment: NodeJS.ProcessEnv = process.env,
+): ILLMProvider {
+  const config = loadProviderConfig(environment);
+  const registry: ProviderRegistry = {
+    auth: {},
+    email: {},
+    embedding: {},
+    llm: {
+      anthropic: () =>
+        new AnthropicLLMProvider(loadAnthropicLLMConfig(environment)),
+    },
+    queue: {},
+    storage: {},
+    vectorStore: {},
+  };
+
+  return new ProviderFactory(config, registry).createLLMProvider();
 }
