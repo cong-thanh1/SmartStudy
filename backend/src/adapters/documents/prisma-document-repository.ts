@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from "../../generated/prisma/client.js";
+import { toPgVectorLiteral } from "../vector/pg-vector-utils.js";
 import type {
   CompleteDocumentProcessingInput,
   CreateUploadingDocumentInput,
@@ -7,8 +8,6 @@ import type {
   DocumentStatus,
   IDocumentRepository,
 } from "../../modules/documents/document-repository.js";
-
-const DOCUMENT_CHUNK_EMBEDDING_DIMENSIONS = 1024;
 
 const documentSelection = {
   chapters: true,
@@ -251,22 +250,4 @@ function toChapterJson(
     end_page: chapter.endPage,
     start_page: chapter.startPage,
   }));
-}
-
-function toPgVectorLiteral(embedding: readonly number[]): string {
-  if (embedding.length !== DOCUMENT_CHUNK_EMBEDDING_DIMENSIONS) {
-    throw new RangeError(
-      `Document chunk embedding must contain ${DOCUMENT_CHUNK_EMBEDDING_DIMENSIONS} dimensions`,
-    );
-  }
-
-  return `[${embedding.map(formatVectorValue).join(",")}]`;
-}
-
-function formatVectorValue(value: number): string {
-  if (!Number.isFinite(value)) {
-    throw new RangeError("Document chunk embedding contains a non-finite value");
-  }
-
-  return value.toString();
 }

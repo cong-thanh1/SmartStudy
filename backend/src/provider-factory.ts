@@ -20,6 +20,8 @@ import { loadRedisQueueConfig } from "./adapters/queue/redis-queue-config.js";
 import { RedisQueueProvider } from "./adapters/queue/redis-queue-provider.js";
 import { loadS3CompatibleStorageConfig } from "./adapters/storage/s3-compatible-storage-config.js";
 import { S3CompatibleStorageProvider } from "./adapters/storage/s3-compatible-storage-provider.js";
+import { PgVectorStore } from "./adapters/vector/pg-vector-store.js";
+import type { PrismaClient } from "./generated/prisma/client.js";
 import type { IAuthRepository } from "./modules/auth/auth-repository.js";
 import type {
   IAuthProvider,
@@ -99,11 +101,7 @@ export class ProviderFactory {
       llm: this.createLLMProvider(),
       queue: this.createQueueProvider(),
       storage: this.createStorageProvider(),
-      vectorStore: this.resolve(
-        "vectorStore",
-        this.config.vectorStore,
-        this.registry.vectorStore,
-      ),
+      vectorStore: this.createVectorStore(),
     };
   }
 
@@ -144,6 +142,14 @@ export class ProviderFactory {
       "queue",
       this.config.queueProvider,
       this.registry.queue,
+    );
+  }
+
+  createVectorStore(): IVectorStore {
+    return this.resolve(
+      "vectorStore",
+      this.config.vectorStore,
+      this.registry.vectorStore,
     );
   }
 
@@ -281,4 +287,24 @@ export function createLLMProviderFromEnv(
   };
 
   return new ProviderFactory(config, registry).createLLMProvider();
+}
+
+export function createVectorStoreFromEnv(
+  prisma: PrismaClient,
+  environment: NodeJS.ProcessEnv = process.env,
+): IVectorStore {
+  const config = loadProviderConfig(environment);
+  const registry: ProviderRegistry = {
+    auth: {},
+    email: {},
+    embedding: {},
+    llm: {},
+    queue: {},
+    storage: {},
+    vectorStore: {
+      pgvector: () => new PgVectorStore(prisma),
+    },
+  };
+
+  return new ProviderFactory(config, registry).createVectorStore();
 }

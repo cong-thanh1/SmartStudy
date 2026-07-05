@@ -7,6 +7,7 @@ import {
   createLLMProviderFromEnv,
   createQueueProviderFromEnv,
   createStorageProviderFromEnv,
+  createVectorStoreFromEnv,
   ProviderFactory,
   ProviderNotRegisteredError,
   type ProviderRegistry,
@@ -17,6 +18,8 @@ import { LocalBgeM3Provider } from "../src/adapters/embedding/local-bge-m3-provi
 import { AnthropicLLMProvider } from "../src/adapters/llm/anthropic-llm-provider.js";
 import { RedisQueueProvider } from "../src/adapters/queue/redis-queue-provider.js";
 import { S3CompatibleStorageProvider } from "../src/adapters/storage/s3-compatible-storage-provider.js";
+import { PgVectorStore } from "../src/adapters/vector/pg-vector-store.js";
+import type { PrismaClient } from "../src/generated/prisma/client.js";
 import type { IAuthRepository } from "../src/modules/auth/auth-repository.js";
 import { loadProviderConfig } from "../src/provider-config.js";
 import type {
@@ -174,6 +177,16 @@ describe("ProviderFactory", () => {
     ).toBeInstanceOf(AnthropicLLMProvider);
   });
 
+  it("composes the PgVector vector store adapter", () => {
+    const prisma = Object.freeze({}) as PrismaClient;
+
+    expect(
+      createVectorStoreFromEnv(prisma, {
+        VECTOR_STORE: "pgvector",
+      }),
+    ).toBeInstanceOf(PgVectorStore);
+  });
+
   it("fails fast for an auth adapter that is not implemented yet", () => {
     const repository = Object.freeze({}) as IAuthRepository;
 
@@ -209,5 +222,17 @@ describe("ProviderFactory", () => {
         LLM_PROVIDER: "bedrock",
       }),
     ).toThrow(new ProviderNotRegisteredError("llm", "bedrock"));
+  });
+
+  it("fails fast for a vector store adapter that is not implemented yet", () => {
+    const prisma = Object.freeze({}) as PrismaClient;
+
+    expect(() =>
+      createVectorStoreFromEnv(prisma, {
+        VECTOR_STORE: "bedrock-kb",
+      }),
+    ).toThrow(
+      new ProviderNotRegisteredError("vectorStore", "bedrock-kb"),
+    );
   });
 });
