@@ -17,6 +17,8 @@ import { loadLocalBgeM3Config } from "./adapters/embedding/local-bge-m3-config.j
 import { LocalBgeM3Provider } from "./adapters/embedding/local-bge-m3-provider.js";
 import { loadAnthropicLLMConfig } from "./adapters/llm/anthropic-llm-config.js";
 import { AnthropicLLMProvider } from "./adapters/llm/anthropic-llm-provider.js";
+import { loadGeminiLLMConfig } from "./adapters/llm/gemini-llm-config.js";
+import { GeminiLLMProvider } from "./adapters/llm/gemini-llm-provider.js";
 import { loadRedisQueueConfig } from "./adapters/queue/redis-queue-config.js";
 import { RedisQueueProvider } from "./adapters/queue/redis-queue-provider.js";
 import { loadS3CompatibleStorageConfig } from "./adapters/storage/s3-compatible-storage-config.js";
@@ -287,6 +289,7 @@ export function createLLMProviderFromEnv(
     llm: {
       anthropic: () =>
         new AnthropicLLMProvider(loadAnthropicLLMConfig(environment)),
+      gemini: () => new GeminiLLMProvider(loadGeminiLLMConfig(environment)),
     },
     queue: {},
     storage: {},
