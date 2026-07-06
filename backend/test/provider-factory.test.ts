@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import {
   createAuthProviderFromEnv,
   createEmbeddingProviderFromEnv,
+  createLazyLLMProviderFromEnv,
   createLLMProviderFromEnv,
   createQueueProviderFromEnv,
   createStorageProviderFromEnv,
@@ -22,6 +23,7 @@ import { PgVectorStore } from "../src/adapters/vector/pg-vector-store.js";
 import type { PrismaClient } from "../src/generated/prisma/client.js";
 import type { IAuthRepository } from "../src/modules/auth/auth-repository.js";
 import { loadProviderConfig } from "../src/provider-config.js";
+import { ProviderConfigurationError } from "../src/provider-errors.js";
 import type {
   IAuthProvider,
   IEmailProvider,
@@ -175,6 +177,17 @@ describe("ProviderFactory", () => {
         LLM_PROVIDER: "anthropic",
       }),
     ).toBeInstanceOf(AnthropicLLMProvider);
+  });
+  it("defers missing LLM configuration until the provider is used", async () => {
+    const provider = createLazyLLMProviderFromEnv({
+      LLM_PROVIDER: "anthropic",
+    });
+
+    await expect(
+      provider.generateText({
+        messages: [{ content: "Question", role: "user" }],
+      }),
+    ).rejects.toThrow(ProviderConfigurationError);
   });
 
   it("composes the PgVector vector store adapter", () => {

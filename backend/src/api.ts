@@ -1,15 +1,20 @@
 import "dotenv/config";
 
 import { PrismaAuthRepository } from "./adapters/auth/prisma-auth-repository.js";
+import { PrismaChatRepository } from "./adapters/chat/prisma-chat-repository.js";
 import { PrismaDocumentRepository } from "./adapters/documents/prisma-document-repository.js";
 import { createApp } from "./app.js";
 import { createPrismaClient } from "./database/prisma-client.js";
+import { ChatService } from "./modules/chat/chat-service.js";
 import { loadDocumentConfig } from "./modules/documents/document-config.js";
 import { DocumentService } from "./modules/documents/document-service.js";
 import {
   createAuthProviderFromEnv,
+  createEmbeddingProviderFromEnv,
+  createLazyLLMProviderFromEnv,
   createQueueProviderFromEnv,
   createStorageProviderFromEnv,
+  createVectorStoreFromEnv,
 } from "./provider-factory.js";
 
 const port = Number.parseInt(process.env.PORT ?? "3000", 10);
@@ -22,17 +27,29 @@ if (!databaseUrl) {
 const prisma = createPrismaClient(databaseUrl);
 const authRepository = new PrismaAuthRepository(prisma);
 const authProvider = createAuthProviderFromEnv(authRepository);
+const documentRepository = new PrismaDocumentRepository(prisma);
 const documentConfig = loadDocumentConfig();
 const queueProvider = createQueueProviderFromEnv();
 const storageProvider = createStorageProviderFromEnv();
+const embeddingProvider = createEmbeddingProviderFromEnv();
+const llmProvider = createLazyLLMProviderFromEnv();
+const vectorStore = createVectorStoreFromEnv(prisma);
 const documentService = new DocumentService(
-  new PrismaDocumentRepository(prisma),
+  documentRepository,
   storageProvider,
   queueProvider,
   documentConfig,
 );
+const chatService = new ChatService(
+  new PrismaChatRepository(prisma),
+  documentRepository,
+  embeddingProvider,
+  vectorStore,
+  llmProvider,
+);
 const app = createApp({
   authProvider,
+  chatService,
   documentConfig,
   documentService,
 });

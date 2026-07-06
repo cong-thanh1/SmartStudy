@@ -79,6 +79,16 @@ Quản lý tài liệu dùng Bearer access token:
 - `GET /api/v1/documents` hỗ trợ `search`, `status`, `page`, `limit`.
 - `GET /api/v1/documents/{documentId}` trả metadata, số trang và danh sách chương.
 - `DELETE /api/v1/documents/{documentId}` xóa object storage và soft-delete record.
+Chat RAG dùng Bearer access token:
+
+- `POST /api/v1/chat/conversations` với `documentId` của tài liệu đã `ready`.
+- `POST /api/v1/chat/conversations/{conversationId}/messages` với `content`.
+
+API embed câu hỏi, lấy tối đa 5 chunk bằng pgvector, yêu cầu LLM chỉ trả lời từ
+context và trả citations `{documentId, page, snippet}` được dựng trực tiếp từ
+các chunk truy xuất. Conversation và cặp user/assistant message được lưu trong
+Postgres. Cấu hình `ANTHROPIC_API_KEY` để sinh câu trả lời; nếu chưa cấu hình,
+API khác vẫn hoạt động và endpoint gửi message trả `503 PROVIDER_NOT_CONFIGURED`.
 
 Dừng service nhưng giữ dữ liệu:
 

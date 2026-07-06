@@ -7,6 +7,7 @@ import {
   DEFAULT_DOCUMENT_MAX_SIZE_BYTES,
   type DocumentConfig,
 } from "../src/modules/documents/document-config.js";
+import type { IChatService } from "../src/modules/chat/chat-service.js";
 import type { IDocumentService } from "../src/modules/documents/document-service.js";
 import type { IAuthProvider } from "../src/ports/index.js";
 
@@ -18,6 +19,13 @@ export const testDocumentConfig: DocumentConfig = {
   processingQueue: "document-processing",
   uploadUrlExpiresSeconds: 900,
 };
+
+export function createChatServiceStub(): IChatService {
+  return {
+    createConversation: vi.fn(),
+    sendMessage: vi.fn(),
+  };
+}
 
 export function createDocumentServiceStub(): IDocumentService {
   return {
@@ -32,9 +40,11 @@ export function createDocumentServiceStub(): IDocumentService {
 export function createTestApp(
   authProvider: IAuthProvider,
   documentService: IDocumentService = createDocumentServiceStub(),
+  chatService: IChatService = createChatServiceStub(),
 ) {
   return createApp({
     authProvider,
+    chatService,
     documentConfig: testDocumentConfig,
     documentService,
   });

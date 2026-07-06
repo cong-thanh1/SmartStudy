@@ -9,6 +9,7 @@ import {
   type StorageProviderName,
   type VectorStoreName,
 } from "./provider-config.js";
+import { ProviderConfigurationError } from "./provider-errors.js";
 import { BcryptPasswordHasher } from "./adapters/auth/bcrypt-password-hasher.js";
 import { loadJwtAuthConfig } from "./adapters/auth/jwt-auth-config.js";
 import { JwtAuthProvider } from "./adapters/auth/jwt-auth-provider.js";
@@ -269,6 +270,12 @@ export function createEmbeddingProviderFromEnv(
   ).createEmbeddingProvider();
 }
 
+export function createLazyLLMProviderFromEnv(
+  environment: NodeJS.ProcessEnv = process.env,
+): ILLMProvider {
+  return new LazyLLMProvider(() => createLLMProviderFromEnv(environment));
+}
+
 export function createLLMProviderFromEnv(
   environment: NodeJS.ProcessEnv = process.env,
 ): ILLMProvider {
@@ -307,4 +314,35 @@ export function createVectorStoreFromEnv(
   };
 
   return new ProviderFactory(config, registry).createVectorStore();
+}
+
+class LazyLLMProvider implements ILLMProvider {
+  private provider: ILLMProvider | undefined;
+
+  constructor(private readonly createProvider: () => ILLMProvider) {}
+
+  async generateStructuredJSON<T>(
+    input: Parameters<ILLMProvider["generateStructuredJSON"]>[0],
+  ): Promise<T> {
+    return this.resolve().generateStructuredJSON<T>(input);
+  }
+
+  async generateText(
+    input: Parameters<ILLMProvider["generateText"]>[0],
+  ): Promise<Awaited<ReturnType<ILLMProvider["generateText"]>>> {
+    return this.resolve().generateText(input);
+  }
+
+  private resolve(): ILLMProvider {
+    if (this.provider) {
+      return this.provider;
+    }
+
+    try {
+      this.provider = this.createProvider();
+      return this.provider;
+    } catch (error) {
+      throw new ProviderConfigurationError("llm", { cause: error });
+    }
+  }
 }
