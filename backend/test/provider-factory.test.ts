@@ -17,6 +17,7 @@ import {
 import { JwtAuthProvider } from "../src/adapters/auth/jwt-auth-provider.js";
 import { LocalBgeM3Provider } from "../src/adapters/embedding/local-bge-m3-provider.js";
 import { AnthropicLLMProvider } from "../src/adapters/llm/anthropic-llm-provider.js";
+import { GeminiLLMProvider } from "../src/adapters/llm/gemini-llm-provider.js";
 import { RedisQueueProvider } from "../src/adapters/queue/redis-queue-provider.js";
 import { S3CompatibleStorageProvider } from "../src/adapters/storage/s3-compatible-storage-provider.js";
 import { PgVectorStore } from "../src/adapters/vector/pg-vector-store.js";
@@ -177,6 +178,15 @@ describe("ProviderFactory", () => {
         LLM_PROVIDER: "anthropic",
       }),
     ).toBeInstanceOf(AnthropicLLMProvider);
+  });
+
+  it("composes the Gemini LLM adapter", () => {
+    expect(
+      createLLMProviderFromEnv({
+        GEMINI_API_KEY: "test-api-key",
+        LLM_PROVIDER: "gemini",
+      }),
+    ).toBeInstanceOf(GeminiLLMProvider);
   });
   it("defers missing LLM configuration until the provider is used", async () => {
     const provider = createLazyLLMProviderFromEnv({
