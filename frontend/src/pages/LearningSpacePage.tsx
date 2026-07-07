@@ -26,6 +26,7 @@ export const LearningSpacePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'rag' | 'summary' | 'tutor'>('rag');
 
   // RAG Chat State
+  const [activeConversationId, setActiveConversationId] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -48,10 +49,14 @@ export const LearningSpacePage: React.FC = () => {
 
   useEffect(() => {
     const init = async () => {
-      const docs = await documentService.listDocuments();
-      setDocuments(docs);
-      if (docs.length > 0 && !selectedDocId) {
-        setSelectedDocId(docs[0].id);
+      try {
+        const docs = await documentService.listDocuments();
+        setDocuments(docs);
+        if (docs.length > 0 && !selectedDocId) {
+          setSelectedDocId(docs[0].id);
+        }
+      } catch {
+        // Handle fetch error
       }
     };
     init();
@@ -60,16 +65,17 @@ export const LearningSpacePage: React.FC = () => {
   useEffect(() => {
     if (selectedDocId) {
       setSearchParams({ docId: selectedDocId });
-      // Load sample initial conversation
-      setMessages([
-        {
-          id: 'init-1',
-          conversationId: 'conv-1',
-          role: 'assistant',
-          content: `👋 Chào mừng bạn đến với **Không gian học tập AI** cho tài liệu này! Tôi đã hoàn tất lập chỉ mục HNSW pgvector cho các đoạn văn bản. Bạn cần giải thích khái niệm nào hoặc muốn tóm tắt chương sách ra sao?`,
-          createdAt: new Date().toISOString(),
-        },
-      ]);
+      setMessages([]);
+      chatService.listConversations(selectedDocId).then(async (convs) => {
+        if (convs.length > 0) {
+          setActiveConversationId(convs[0].id);
+        } else {
+          const newConv = await chatService.createConversation('Hội thoại RAG: ' + selectedDocId, selectedDocId);
+          setActiveConversationId(newConv.id);
+        }
+      }).catch(() => {
+        setActiveConversationId('');
+      });
     }
   }, [selectedDocId, setSearchParams]);
 
@@ -87,9 +93,16 @@ export const LearningSpacePage: React.FC = () => {
     e.preventDefault();
     if (!inputMessage.trim() || isSending) return;
 
+    let convId = activeConversationId;
+    if (!convId) {
+      const newConv = await chatService.createConversation('Hội thoại mới', selectedDocId);
+      convId = newConv.id;
+      setActiveConversationId(convId);
+    }
+
     const userMsg: Message = {
       id: 'usr-' + Date.now(),
-      conversationId: 'conv-1',
+      conversationId: convId,
       role: 'user',
       content: inputMessage,
       createdAt: new Date().toISOString(),
@@ -101,7 +114,7 @@ export const LearningSpacePage: React.FC = () => {
     setIsSending(true);
 
     try {
-      const aiReply = await chatService.sendMessage('conv-1', prompt);
+      const aiReply = await chatService.sendMessage(convId, prompt);
       setMessages((prev) => [...prev, aiReply]);
     } finally {
       setIsSending(false);

@@ -17,70 +17,8 @@ export const ResultsPage: React.FC = () => {
         setResult(parsed.result);
         setQuestions(parsed.questions || []);
       } catch {
-        // Ignore fallback
+        // Ignore JSON parse errors for corrupted storage
       }
-    }
-
-    // If no stored result, load demo sample result
-    if (!stored) {
-      const demoQuestions: ExamQuestion[] = [
-        {
-          id: 'eq-1',
-          questionText: 'Trong kiến trúc Hexagonal của SmartStudy AI, tại sao business logic không được import trực tiếp từ SDK cloud?',
-          options: [
-            'Vì SDK cloud tốn quá nhiều bộ nhớ RAM',
-            'Để cách ly nghiệp vụ, dễ kiểm thử unit test với mock adapter và chuyển đổi hạ tầng cloud không gãy vỡ',
-            'Vì Node.js không hỗ trợ import SDK cloud trong controller',
-            'Để giảm thời gian compile TypeScript',
-          ],
-          points: 10,
-        },
-        {
-          id: 'eq-2',
-          questionText: 'Extension pgvector trên PostgreSQL sử dụng thuật toán lập chỉ mục nào để truy vấn RAG đạt tốc độ x10?',
-          options: ['B-Tree standard', 'HNSW (Hierarchical Navigable Small World)', 'GIN index', 'Hash Index'],
-          points: 10,
-        },
-        {
-          id: 'eq-3',
-          questionText: 'Trong luồng xử lý PDF bất đồng bộ, công cụ nào quản lý hàng đợi tác vụ worker?',
-          options: ['Redis + BullMQ', 'Apache ActiveMQ', 'Amazon SQS trực tiếp', 'SQLite Queue'],
-          points: 10,
-        },
-      ];
-
-      const demoResult: GradingResult = {
-        attemptId: 'demo-res-1',
-        score: 20,
-        totalPoints: 30,
-        details: [
-          {
-            questionId: 'eq-1',
-            userOption: 1,
-            correctOption: 1,
-            isCorrect: true,
-          },
-          {
-            questionId: 'eq-2',
-            userOption: 0,
-            correctOption: 1,
-            isCorrect: false,
-            explanationForWrong:
-              'Bạn đã chọn B-Tree. Tuy nhiên, B-Tree chỉ hỗ trợ tra cứu vô hướng (scalar). Đối với vector embeddings số chiều lớn (768/1536 dims), hệ thống sử dụng HNSW để tìm kiếm k-NN siêu tốc độ.',
-          },
-          {
-            questionId: 'eq-3',
-            userOption: 0,
-            correctOption: 0,
-            isCorrect: true,
-          },
-        ],
-        aiFeedback:
-          '💡 **Nhận xét từ AI:** Bạn đã nắm vững lý thuyết kiến trúc Ports & Adapters và luồng BullMQ. Hãy lưu ý thêm về chỉ mục vector HNSW của pgvector ở Chương 1 nhé!',
-      };
-
-      setResult(demoResult);
-      setQuestions(demoQuestions);
     }
   }, []);
 
