@@ -52,4 +52,28 @@ describe("Prisma migrations", () => {
     expect(migrationSql).toContain("NULLS NOT DISTINCT");
     expect(migrationSql).toContain("ON DELETE CASCADE");
   });
+
+  it("adds quizzes table with JSON question validation", () => {
+    const migrationSql = readFileSync(
+      new URL(
+        "../prisma/migrations/20260706130000_add_quizzes_table/migration.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+
+    expect(migrationSql).toContain('CREATE TABLE "quizzes"');
+    expect(migrationSql).toContain('"document_id" UUID NOT NULL');
+    expect(migrationSql).toContain('"user_id" UUID NOT NULL');
+    expect(migrationSql).toContain('"questions" JSONB NOT NULL');
+    expect(migrationSql).toContain("quizzes_difficulty_check");
+    expect(migrationSql).toContain("'easy', 'medium', 'hard'");
+    expect(migrationSql).toContain("quizzes_questions_check");
+    expect(migrationSql).toContain("jsonb_typeof(\"questions\") = 'array'");
+    expect(migrationSql).toContain('CREATE INDEX "idx_quizzes_document"');
+    expect(migrationSql).toContain('CREATE INDEX "idx_quizzes_user"');
+    expect(migrationSql).toContain("REFERENCES \"documents\"(\"id\")");
+    expect(migrationSql).toContain("REFERENCES \"users\"(\"id\")");
+    expect(migrationSql).toContain("ON DELETE CASCADE");
+  });
 });

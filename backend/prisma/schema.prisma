@@ -18,6 +18,7 @@ model User {
   updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   conversations Conversation[]
   documents     Document[]
+  quizzes       Quiz[]
   refreshTokens RefreshToken[]
 
   @@map("users")
@@ -50,6 +51,7 @@ model Document {
   updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   conversations Conversation[]
   summaries     Summary[]
+  quizzes       Quiz[]
   user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   chunks        DocumentChunk[]
 
@@ -114,4 +116,19 @@ model Summary {
   @@unique([documentId, scope, chapterRef], map: "summaries_document_id_scope_chapter_ref_key")
   @@index([documentId], map: "idx_summaries_document")
   @@map("summaries")
+}
+
+model Quiz {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId String   @map("document_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  difficulty String?  @db.VarChar(20)
+  questions  Json     @db.JsonB
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([documentId], map: "idx_quizzes_document")
+  @@index([userId, createdAt(sort: Desc)], map: "idx_quizzes_user")
+  @@map("quizzes")
 }
