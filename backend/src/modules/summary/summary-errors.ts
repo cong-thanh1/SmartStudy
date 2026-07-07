@@ -1,4 +1,5 @@
 export type SummaryErrorCode =
+  | "SUMMARY_CHAPTER_NOT_FOUND"
   | "SUMMARY_DOCUMENT_NOT_FOUND"
   | "SUMMARY_DOCUMENT_NOT_READY"
   | "SUMMARY_GENERATION_FAILED"
@@ -13,6 +14,13 @@ export class SummaryError extends Error {
   ) {
     super(message);
     this.name = "SummaryError";
+  }
+}
+
+export class SummaryChapterNotFoundError extends SummaryError {
+  constructor() {
+    super("SUMMARY_CHAPTER_NOT_FOUND", 404, "Chapter was not found");
+    this.name = "SummaryChapterNotFoundError";
   }
 }
 

@@ -4,8 +4,8 @@ import { getAuthClaims, requireAuth } from "../../middleware/require-auth.js";
 import type { IAuthProvider } from "../../ports/index.js";
 import { SummaryNotFoundError } from "./summary-errors.js";
 import {
-  getFullDocumentSummaryQuerySchema,
-  summarizeFullDocumentSchema,
+  getSummaryQuerySchema,
+  summarizeRequestSchema,
   summaryDocumentIdParamsSchema,
 } from "./summary-schemas.js";
 import type { ISummaryService } from "./summary-service.js";
@@ -21,15 +21,22 @@ export function createSummaryRouter(
   router.get(
     "/:documentId/summary",
     handle(async (request, response) => {
-      getFullDocumentSummaryQuerySchema.parse(request.query);
+      const query = getSummaryQuerySchema.parse(request.query);
       const { documentId } = summaryDocumentIdParamsSchema.parse(
         request.params,
       );
       const claims = getAuthClaims(response);
-      const summary = await summaryService.getFullDocumentSummary({
-        documentId,
-        userId: claims.sub,
-      });
+      const summary =
+        query.scope === "chapter"
+          ? await summaryService.getChapterSummary({
+              chapterRef: requireChapterRef(query.chapterRef),
+              documentId,
+              userId: claims.sub,
+            })
+          : await summaryService.getFullDocumentSummary({
+              documentId,
+              userId: claims.sub,
+            });
 
       if (!summary) {
         throw new SummaryNotFoundError();
@@ -47,15 +54,25 @@ export function createSummaryRouter(
       const { documentId } = summaryDocumentIdParamsSchema.parse(
         request.params,
       );
-      const body = summarizeFullDocumentSchema.parse(request.body ?? {});
+      const body = summarizeRequestSchema.parse(request.body ?? {});
       const claims = getAuthClaims(response);
-      const summary = await summaryService.summarizeFullDocument({
-        documentId,
-        userId: claims.sub,
-        ...(body.forceRefresh === undefined
-          ? {}
-          : { forceRefresh: body.forceRefresh }),
-      });
+      const summary =
+        body.scope === "chapter"
+          ? await summaryService.summarizeChapter({
+              chapterRef: body.chapterRef,
+              documentId,
+              userId: claims.sub,
+              ...(body.forceRefresh === undefined
+                ? {}
+                : { forceRefresh: body.forceRefresh }),
+            })
+          : await summaryService.summarizeFullDocument({
+              documentId,
+              userId: claims.sub,
+              ...(body.forceRefresh === undefined
+                ? {}
+                : { forceRefresh: body.forceRefresh }),
+            });
 
       response.status(200).json({
         summary,
@@ -64,6 +81,14 @@ export function createSummaryRouter(
   );
 
   return router;
+}
+
+function requireChapterRef(chapterRef: string | undefined): string {
+  if (chapterRef === undefined) {
+    throw new Error("chapterRef is required for chapter summaries");
+  }
+
+  return chapterRef;
 }
 
 type AsyncRouteHandler = (

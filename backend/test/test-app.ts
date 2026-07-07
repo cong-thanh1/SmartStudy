@@ -40,7 +40,9 @@ export function createDocumentServiceStub(): IDocumentService {
 
 export function createSummaryServiceStub(): ISummaryService {
   return {
+    getChapterSummary: vi.fn(),
     getFullDocumentSummary: vi.fn(),
+    summarizeChapter: vi.fn(),
     summarizeFullDocument: vi.fn(),
   };
 }

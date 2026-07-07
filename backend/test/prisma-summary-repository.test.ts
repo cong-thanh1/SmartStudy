@@ -6,6 +6,7 @@ import type { PrismaClient } from "../src/generated/prisma/client.js";
 const createdAt = new Date("2026-07-07T01:00:00.000Z");
 const documentId = "11111111-1111-4111-8111-111111111111";
 const summaryId = "55555555-5555-4555-8555-555555555555";
+const chapterRef = "Chapter 1";
 
 interface DatabaseSummaryStub {
   readonly chapterRef: string | null;
@@ -62,6 +63,38 @@ describe("PrismaSummaryRepository", () => {
     });
   });
 
+  it("finds a chapter cached summary", async () => {
+    const prisma = createPrismaStub();
+    prisma.summary.findFirst.mockResolvedValueOnce({
+      ...databaseSummary,
+      chapterRef,
+      scope: "chapter",
+      summaryText: "Chapter summary.",
+    });
+    const repository = new PrismaSummaryRepository(
+      prisma as unknown as PrismaClient,
+    );
+
+    await expect(
+      repository.findChapterSummary({
+        chapterRef,
+        documentId,
+      }),
+    ).resolves.toMatchObject({
+      chapterRef,
+      scope: "chapter",
+      summaryText: "Chapter summary.",
+    });
+    expect(prisma.summary.findFirst).toHaveBeenCalledWith({
+      select: expect.any(Object),
+      where: {
+        chapterRef,
+        documentId,
+        scope: "chapter",
+      },
+    });
+  });
+
   it("returns null when no cached summary exists", async () => {
     const prisma = createPrismaStub();
     prisma.summary.findFirst.mockResolvedValueOnce(null);
@@ -95,6 +128,43 @@ describe("PrismaSummaryRepository", () => {
         keyPoints: ["Key 1", "Key 2"],
         scope: "full",
         summaryText: "This is a full document summary.",
+      },
+      select: expect.any(Object),
+    });
+  });
+
+  it("creates a new chapter summary when no cache row exists", async () => {
+    const prisma = createPrismaStub();
+    prisma.summary.findFirst.mockResolvedValueOnce(null);
+    prisma.summary.create.mockResolvedValueOnce({
+      ...databaseSummary,
+      chapterRef,
+      scope: "chapter",
+      summaryText: "Chapter summary.",
+    });
+    const repository = new PrismaSummaryRepository(
+      prisma as unknown as PrismaClient,
+    );
+
+    await expect(
+      repository.saveChapterSummary({
+        chapterRef,
+        documentId,
+        keyPoints: ["Chapter Key"],
+        summaryText: "Chapter summary.",
+      }),
+    ).resolves.toMatchObject({
+      chapterRef,
+      scope: "chapter",
+      summaryText: "Chapter summary.",
+    });
+    expect(prisma.summary.create).toHaveBeenCalledWith({
+      data: {
+        chapterRef,
+        documentId,
+        keyPoints: ["Chapter Key"],
+        scope: "chapter",
+        summaryText: "Chapter summary.",
       },
       select: expect.any(Object),
     });
@@ -140,7 +210,19 @@ describe("PrismaSummaryRepository", () => {
     });
     await expect(
       repository.findFullDocumentSummary(documentId),
-    ).rejects.toThrow("not a full-document summary");
+    ).resolves.toMatchObject({
+      chapterRef: "Chapter 1",
+      scope: "chapter",
+    });
+
+    prisma.summary.findFirst.mockResolvedValueOnce({
+      ...databaseSummary,
+      chapterRef: null,
+      scope: "chapter",
+    });
+    await expect(
+      repository.findFullDocumentSummary(documentId),
+    ).rejects.toThrow("Chapter summary cache row must have chapterRef");
 
     prisma.summary.findFirst.mockResolvedValueOnce({
       ...databaseSummary,

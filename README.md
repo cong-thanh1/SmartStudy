@@ -83,11 +83,14 @@ Quản lý tài liệu dùng Bearer access token:
 Summary full-document dùng Bearer access token:
 
 - `POST /api/v1/documents/{documentId}/summary` sinh summary cho tài liệu đã
-  `ready`; body hỗ trợ `forceRefresh` và optional `scope: "full"`.
-- `GET /api/v1/documents/{documentId}/summary` đọc full summary đã cache.
-- Kết quả được cache trong bảng `summaries` với `scope="full"` và
-  `chapterRef=null`; request không `forceRefresh` sẽ tái dùng cache sau khi
-  kiểm tra ownership tài liệu.
+  `ready`; body hỗ trợ `forceRefresh` và `scope`.
+- `GET /api/v1/documents/{documentId}/summary` đọc summary đã cache.
+- Full-document summary dùng `scope: "full"` (hoặc bỏ trống scope) với
+  `chapterRef=null`.
+- Chapter summary dùng `scope: "chapter"` và `chapterRef` trùng tên chương
+  trong metadata document.
+- Kết quả được cache trong bảng `summaries`; request không `forceRefresh` sẽ tái
+  dùng cache sau khi kiểm tra ownership tài liệu.
 
 Chat RAG dùng Bearer access token:
 

@@ -1,10 +1,12 @@
 import type { Prisma, PrismaClient } from "../../generated/prisma/client.js";
 import type {
   ISummaryRepository,
-  SaveFullDocumentSummaryInput,
+  SaveSummaryInput,
   SummaryRecord,
+  SummaryScope,
 } from "../../modules/summary/summary-repository.js";
 
+const CHAPTER_SUMMARY_SCOPE = "chapter";
 const FULL_SUMMARY_SCOPE = "full";
 
 const summarySelection = {
@@ -20,32 +22,83 @@ const summarySelection = {
 export class PrismaSummaryRepository implements ISummaryRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
+  async findChapterSummary(input: {
+    readonly chapterRef: string;
+    readonly documentId: string;
+  }): Promise<SummaryRecord | null> {
+    return this.findCached({
+      chapterRef: input.chapterRef,
+      documentId: input.documentId,
+      scope: CHAPTER_SUMMARY_SCOPE,
+    });
+  }
+
   async findFullDocumentSummary(
     documentId: string,
   ): Promise<SummaryRecord | null> {
+    return this.findCached({
+      chapterRef: null,
+      documentId,
+      scope: FULL_SUMMARY_SCOPE,
+    });
+  }
+
+  async saveChapterSummary(input: {
+    readonly chapterRef: string;
+    readonly documentId: string;
+    readonly keyPoints: readonly string[];
+    readonly summaryText: string;
+  }): Promise<SummaryRecord> {
+    return this.saveSummary({
+      chapterRef: input.chapterRef,
+      documentId: input.documentId,
+      keyPoints: input.keyPoints,
+      scope: CHAPTER_SUMMARY_SCOPE,
+      summaryText: input.summaryText,
+    });
+  }
+
+  async saveFullDocumentSummary(input: {
+    readonly documentId: string;
+    readonly keyPoints: readonly string[];
+    readonly summaryText: string;
+  }): Promise<SummaryRecord> {
+    return this.saveSummary({
+      chapterRef: null,
+      documentId: input.documentId,
+      keyPoints: input.keyPoints,
+      scope: FULL_SUMMARY_SCOPE,
+      summaryText: input.summaryText,
+    });
+  }
+
+  private async findCached(input: {
+    readonly chapterRef: string | null;
+    readonly documentId: string;
+    readonly scope: SummaryScope;
+  }): Promise<SummaryRecord | null> {
     const summary = await this.prisma.summary.findFirst({
       select: summarySelection,
       where: {
-        chapterRef: null,
-        documentId,
-        scope: FULL_SUMMARY_SCOPE,
+        chapterRef: input.chapterRef,
+        documentId: input.documentId,
+        scope: input.scope,
       },
     });
 
     return summary ? mapSummary(summary) : null;
   }
 
-  async saveFullDocumentSummary(
-    input: SaveFullDocumentSummaryInput,
-  ): Promise<SummaryRecord> {
+  private async saveSummary(input: SaveSummaryInput): Promise<SummaryRecord> {
+    const chapterRef = input.chapterRef ?? null;
     const existing = await this.prisma.summary.findFirst({
       select: {
         id: true,
       },
       where: {
-        chapterRef: null,
+        chapterRef,
         documentId: input.documentId,
-        scope: FULL_SUMMARY_SCOPE,
+        scope: input.scope,
       },
     });
 
@@ -66,10 +119,10 @@ export class PrismaSummaryRepository implements ISummaryRepository {
 
     const created = await this.prisma.summary.create({
       data: {
-        chapterRef: null,
+        chapterRef,
         documentId: input.documentId,
         keyPoints: toKeyPointsJson(input.keyPoints),
-        scope: FULL_SUMMARY_SCOPE,
+        scope: input.scope,
         summaryText: input.summaryText,
       },
       select: summarySelection,
@@ -88,19 +141,31 @@ function mapSummary(record: {
   readonly scope: string;
   readonly summaryText: string;
 }): SummaryRecord {
-  if (record.scope !== FULL_SUMMARY_SCOPE || record.chapterRef !== null) {
-    throw new Error("Database summary record was not a full-document summary");
+  if (!isSummaryScope(record.scope)) {
+    throw new Error("Unsupported summary scope stored in database");
+  }
+
+  if (record.scope === FULL_SUMMARY_SCOPE && record.chapterRef !== null) {
+    throw new Error("Full-document summary cache row must not have chapterRef");
+  }
+
+  if (record.scope === CHAPTER_SUMMARY_SCOPE && record.chapterRef === null) {
+    throw new Error("Chapter summary cache row must have chapterRef");
   }
 
   return {
-    chapterRef: null,
+    chapterRef: record.chapterRef,
     createdAt: record.createdAt,
     documentId: record.documentId,
     id: record.id,
     keyPoints: parseKeyPoints(record.keyPoints),
-    scope: "full",
+    scope: record.scope,
     summaryText: record.summaryText,
   };
+}
+
+function isSummaryScope(scope: string): scope is SummaryScope {
+  return scope === CHAPTER_SUMMARY_SCOPE || scope === FULL_SUMMARY_SCOPE;
 }
 
 function parseKeyPoints(value: unknown): readonly string[] {

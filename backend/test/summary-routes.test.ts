@@ -2,6 +2,7 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  SummaryChapterNotFoundError,
   SummaryDocumentNotFoundError,
   SummaryDocumentNotReadyError,
   SummaryGenerationFailedError,
@@ -22,6 +23,7 @@ const userId = "22222222-2222-4222-8222-222222222222";
 const documentId = "11111111-1111-4111-8111-111111111111";
 const summaryId = "55555555-5555-4555-8555-555555555555";
 const createdAt = new Date("2026-07-07T01:00:00.000Z");
+const chapterRef = "Chapter 1";
 
 function createAuthProvider(): IAuthProvider {
   return {
@@ -37,21 +39,34 @@ function createAuthProvider(): IAuthProvider {
   };
 }
 
-function createSummary(documentIdValue = documentId): SummaryRecord {
+function createSummary(
+  documentIdValue = documentId,
+  scope: SummaryRecord["scope"] = "full",
+  chapterRefValue: string | null = null,
+): SummaryRecord {
   return {
-    chapterRef: null,
+    chapterRef: chapterRefValue,
     createdAt,
     documentId: documentIdValue,
     id: summaryId,
     keyPoints: ["Key 1", "Key 2"],
-    scope: "full",
-    summaryText: "Full document summary.",
+    scope,
+    summaryText:
+      scope === "chapter"
+        ? `Summary for ${chapterRefValue}.`
+        : "Full document summary.",
   };
 }
 
 function createSummaryService(): ISummaryService {
   return {
+    getChapterSummary: vi.fn(async (input) =>
+      createSummary(input.documentId, "chapter", input.chapterRef),
+    ),
     getFullDocumentSummary: vi.fn(async () => createSummary()),
+    summarizeChapter: vi.fn(async (input) =>
+      createSummary(input.documentId, "chapter", input.chapterRef),
+    ),
     summarizeFullDocument: vi.fn(async (input) =>
       createSummary(input.documentId),
     ),
@@ -118,6 +133,48 @@ describe("summary HTTP routes", () => {
     });
   });
 
+  it("returns a cached chapter summary", async () => {
+    const response = await request(app())
+      .get(`/api/v1/documents/${documentId}/summary`)
+      .query({ chapterRef, scope: "chapter" })
+      .set("Authorization", "Bearer access-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body.summary).toMatchObject({
+      chapterRef,
+      scope: "chapter",
+      summaryText: `Summary for ${chapterRef}.`,
+    });
+    expect(summaryService.getChapterSummary).toHaveBeenCalledWith({
+      chapterRef,
+      documentId,
+      userId,
+    });
+  });
+
+  it("summarizes a chapter with optional force refresh", async () => {
+    const response = await request(app())
+      .post(`/api/v1/documents/${documentId}/summary`)
+      .set("Authorization", "Bearer access-token")
+      .send({
+        chapterRef: ` ${chapterRef} `,
+        forceRefresh: true,
+        scope: "chapter",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.summary).toMatchObject({
+      chapterRef,
+      scope: "chapter",
+    });
+    expect(summaryService.summarizeChapter).toHaveBeenCalledWith({
+      chapterRef,
+      documentId,
+      forceRefresh: true,
+      userId,
+    });
+  });
+
   it("omits forceRefresh when the client does not send it", async () => {
     const response = await request(app())
       .post(`/api/v1/documents/${documentId}/summary`)
@@ -163,6 +220,25 @@ describe("summary HTTP routes", () => {
     expect(response.status).toBe(400);
     expect(response.body.error.code).toBe("VALIDATION_ERROR");
     expect(summaryService.summarizeFullDocument).not.toHaveBeenCalled();
+    expect(summaryService.summarizeChapter).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid chapter summary query input", async () => {
+    for (const query of [
+      { scope: "chapter" },
+      { chapterRef, scope: "full" },
+    ]) {
+      const response = await request(app())
+        .get(`/api/v1/documents/${documentId}/summary`)
+        .query(query)
+        .set("Authorization", "Bearer access-token");
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.code).toBe("VALIDATION_ERROR");
+    }
+
+    expect(summaryService.getChapterSummary).not.toHaveBeenCalled();
+    expect(summaryService.getFullDocumentSummary).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -175,6 +251,11 @@ describe("summary HTTP routes", () => {
       error: new SummaryDocumentNotReadyError(),
       expectedCode: "SUMMARY_DOCUMENT_NOT_READY",
       expectedStatus: 409,
+    },
+    {
+      error: new SummaryChapterNotFoundError(),
+      expectedCode: "SUMMARY_CHAPTER_NOT_FOUND",
+      expectedStatus: 404,
     },
     {
       error: new SummarySourceNotFoundError(),
