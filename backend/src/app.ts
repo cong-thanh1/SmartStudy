@@ -7,6 +7,8 @@ import type { IChatService } from "./modules/chat/chat-service.js";
 import type { DocumentConfig } from "./modules/documents/document-config.js";
 import { createDocumentRouter } from "./modules/documents/document-routes.js";
 import type { IDocumentService } from "./modules/documents/document-service.js";
+import { createSummaryRouter } from "./modules/summary/summary-routes.js";
+import type { ISummaryService } from "./modules/summary/summary-service.js";
 import type { IAuthProvider } from "./ports/index.js";
 
 export interface AppDependencies {
@@ -14,6 +16,7 @@ export interface AppDependencies {
   readonly chatService: IChatService;
   readonly documentConfig: DocumentConfig;
   readonly documentService: IDocumentService;
+  readonly summaryService: ISummaryService;
 }
 
 export function createApp(dependencies: AppDependencies): Express {
@@ -40,6 +43,13 @@ export function createApp(dependencies: AppDependencies): Express {
       dependencies.authProvider,
       dependencies.documentService,
       dependencies.documentConfig,
+    ),
+  );
+  app.use(
+    "/api/v1/documents",
+    createSummaryRouter(
+      dependencies.authProvider,
+      dependencies.summaryService,
     ),
   );
   app.use(errorHandler);

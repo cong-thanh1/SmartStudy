@@ -208,6 +208,7 @@ function createDocumentRepository(): IDocumentRepository {
     findOwnedById: vi.fn(async (documentId, userId) =>
       documents.get(documentKey(documentId, userId)) ?? null,
     ),
+    listChunks: vi.fn(async () => []),
     listOwned: vi.fn(),
     markFailed: vi.fn(),
     markProcessing: vi.fn(),

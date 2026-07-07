@@ -69,6 +69,7 @@ function createRepository(): IDocumentRepository {
       status: "uploading",
     })),
     findOwnedById: vi.fn(async () => createDocument()),
+    listChunks: vi.fn(async () => []),
     listOwned: vi.fn(async () => ({
       documents: [createDocument()],
       total: 1,

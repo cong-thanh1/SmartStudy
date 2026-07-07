@@ -9,6 +9,7 @@ import {
 } from "../src/modules/documents/document-config.js";
 import type { IChatService } from "../src/modules/chat/chat-service.js";
 import type { IDocumentService } from "../src/modules/documents/document-service.js";
+import type { ISummaryService } from "../src/modules/summary/summary-service.js";
 import type { IAuthProvider } from "../src/ports/index.js";
 
 export const testDocumentConfig: DocumentConfig = {
@@ -37,15 +38,24 @@ export function createDocumentServiceStub(): IDocumentService {
   };
 }
 
+export function createSummaryServiceStub(): ISummaryService {
+  return {
+    getFullDocumentSummary: vi.fn(),
+    summarizeFullDocument: vi.fn(),
+  };
+}
+
 export function createTestApp(
   authProvider: IAuthProvider,
   documentService: IDocumentService = createDocumentServiceStub(),
   chatService: IChatService = createChatServiceStub(),
+  summaryService: ISummaryService = createSummaryServiceStub(),
 ) {
   return createApp({
     authProvider,
     chatService,
     documentConfig: testDocumentConfig,
     documentService,
+    summaryService,
   });
 }

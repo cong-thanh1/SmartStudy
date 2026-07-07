@@ -3,11 +3,13 @@ import "dotenv/config";
 import { PrismaAuthRepository } from "./adapters/auth/prisma-auth-repository.js";
 import { PrismaChatRepository } from "./adapters/chat/prisma-chat-repository.js";
 import { PrismaDocumentRepository } from "./adapters/documents/prisma-document-repository.js";
+import { PrismaSummaryRepository } from "./adapters/summary/prisma-summary-repository.js";
 import { createApp } from "./app.js";
 import { createPrismaClient } from "./database/prisma-client.js";
 import { ChatService } from "./modules/chat/chat-service.js";
 import { loadDocumentConfig } from "./modules/documents/document-config.js";
 import { DocumentService } from "./modules/documents/document-service.js";
+import { SummaryService } from "./modules/summary/summary-service.js";
 import {
   createAuthProviderFromEnv,
   createEmbeddingProviderFromEnv,
@@ -47,11 +49,17 @@ const chatService = new ChatService(
   vectorStore,
   llmProvider,
 );
+const summaryService = new SummaryService(
+  new PrismaSummaryRepository(prisma),
+  documentRepository,
+  llmProvider,
+);
 const app = createApp({
   authProvider,
   chatService,
   documentConfig,
   documentService,
+  summaryService,
 });
 
 const server = app.listen(port, "0.0.0.0", () => {

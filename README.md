@@ -79,6 +79,16 @@ Quản lý tài liệu dùng Bearer access token:
 - `GET /api/v1/documents` hỗ trợ `search`, `status`, `page`, `limit`.
 - `GET /api/v1/documents/{documentId}` trả metadata, số trang và danh sách chương.
 - `DELETE /api/v1/documents/{documentId}` xóa object storage và soft-delete record.
+
+Summary full-document dùng Bearer access token:
+
+- `POST /api/v1/documents/{documentId}/summary` sinh summary cho tài liệu đã
+  `ready`; body hỗ trợ `forceRefresh` và optional `scope: "full"`.
+- `GET /api/v1/documents/{documentId}/summary` đọc full summary đã cache.
+- Kết quả được cache trong bảng `summaries` với `scope="full"` và
+  `chapterRef=null`; request không `forceRefresh` sẽ tái dùng cache sau khi
+  kiểm tra ownership tài liệu.
+
 Chat RAG dùng Bearer access token:
 
 - `POST /api/v1/chat/conversations` với `documentId` của tài liệu đã `ready`.

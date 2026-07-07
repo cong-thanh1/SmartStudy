@@ -28,6 +28,14 @@ const databaseDocument: DatabaseStubDocument = {
   userId: "user-1",
 };
 
+const databaseChunk = {
+  chapterTitle: "Chapter 1",
+  chunkText: "first chunk",
+  id: "chunk-1",
+  pageEnd: 2,
+  pageStart: 1,
+};
+
 function createPrismaStub() {
   const transaction = {
     $executeRaw: vi.fn(async () => 1),
@@ -54,6 +62,9 @@ function createPrismaStub() {
         async (): Promise<DatabaseStubDocument | null> => databaseDocument,
       ),
       updateMany: vi.fn(async () => ({ count: 1 })),
+    },
+    documentChunk: {
+      findMany: vi.fn(async () => [databaseChunk]),
     },
   };
 }
@@ -116,6 +127,91 @@ describe("PrismaDocumentRepository", () => {
     await expect(
       repository.findOwnedById("missing", "user-1"),
     ).resolves.toBeNull();
+  });
+
+  it("lists chunks only after verifying document ownership", async () => {
+    const prisma = createPrismaStub();
+    const repository = new PrismaDocumentRepository(
+      prisma as unknown as PrismaClient,
+    );
+
+    await expect(
+      repository.listChunks({
+        documentId: "document-1",
+        userId: "user-1",
+      }),
+    ).resolves.toEqual([databaseChunk]);
+    expect(prisma.document.findFirst).toHaveBeenCalledWith({
+      select: {
+        id: true,
+      },
+      where: {
+        deleted: false,
+        id: "document-1",
+        userId: "user-1",
+      },
+    });
+    expect(prisma.documentChunk.findMany).toHaveBeenCalledWith({
+      orderBy: [
+        {
+          pageStart: "asc",
+        },
+        {
+          pageEnd: "asc",
+        },
+        {
+          id: "asc",
+        },
+      ],
+      select: {
+        chapterTitle: true,
+        chunkText: true,
+        id: true,
+        pageEnd: true,
+        pageStart: true,
+      },
+      where: {
+        documentId: "document-1",
+      },
+    });
+  });
+
+  it("does not query chunks for another user's document", async () => {
+    const prisma = createPrismaStub();
+    prisma.document.findFirst.mockResolvedValueOnce(null);
+    const repository = new PrismaDocumentRepository(
+      prisma as unknown as PrismaClient,
+    );
+
+    await expect(
+      repository.listChunks({
+        documentId: "document-1",
+        userId: "other-user",
+      }),
+    ).resolves.toEqual([]);
+    expect(prisma.documentChunk.findMany).not.toHaveBeenCalled();
+  });
+
+  it("can filter chunks by chapter title for later chapter summaries", async () => {
+    const prisma = createPrismaStub();
+    const repository = new PrismaDocumentRepository(
+      prisma as unknown as PrismaClient,
+    );
+
+    await repository.listChunks({
+      chapterTitle: "Chapter 1",
+      documentId: "document-1",
+      userId: "user-1",
+    });
+
+    expect(prisma.documentChunk.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          chapterTitle: "Chapter 1",
+          documentId: "document-1",
+        },
+      }),
+    );
   });
 
   it("lists only owned active documents with case-insensitive search", async () => {

@@ -4,9 +4,11 @@ import type {
   CompleteDocumentProcessingInput,
   CreateUploadingDocumentInput,
   DocumentChapter,
+  DocumentChunkRecord,
   DocumentRecord,
   DocumentStatus,
   IDocumentRepository,
+  ListDocumentChunksInput,
   ListOwnedDocumentsInput,
   ListOwnedDocumentsResult,
 } from "../../modules/documents/document-repository.js";
@@ -58,6 +60,60 @@ export class PrismaDocumentRepository implements IDocumentRepository {
     });
 
     return document ? mapDocument(document) : null;
+  }
+
+  async listChunks(
+    input: ListDocumentChunksInput,
+  ): Promise<readonly DocumentChunkRecord[]> {
+    const owner = await this.prisma.document.findFirst({
+      select: {
+        id: true,
+      },
+      where: {
+        deleted: false,
+        id: input.documentId,
+        userId: input.userId,
+      },
+    });
+
+    if (!owner) {
+      return [];
+    }
+
+    const chunks = await this.prisma.documentChunk.findMany({
+      orderBy: [
+        {
+          pageStart: "asc",
+        },
+        {
+          pageEnd: "asc",
+        },
+        {
+          id: "asc",
+        },
+      ],
+      select: {
+        chapterTitle: true,
+        chunkText: true,
+        id: true,
+        pageEnd: true,
+        pageStart: true,
+      },
+      where: {
+        documentId: input.documentId,
+        ...(input.chapterTitle === undefined
+          ? {}
+          : { chapterTitle: input.chapterTitle }),
+      },
+    });
+
+    return chunks.map((chunk) => ({
+      chapterTitle: chunk.chapterTitle,
+      chunkText: chunk.chunkText,
+      id: chunk.id,
+      pageEnd: chunk.pageEnd,
+      pageStart: chunk.pageStart,
+    }));
   }
 
   async listOwned(

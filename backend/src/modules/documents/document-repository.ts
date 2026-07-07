@@ -18,6 +18,14 @@ export interface DocumentChunkInput {
   readonly pageStart: number;
 }
 
+export interface DocumentChunkRecord {
+  readonly chapterTitle: string | null;
+  readonly chunkText: string;
+  readonly id: string;
+  readonly pageEnd: number | null;
+  readonly pageStart: number | null;
+}
+
 export interface DocumentRecord {
   readonly chapters: readonly DocumentChapter[];
   readonly createdAt: Date;
@@ -59,6 +67,12 @@ export interface ListOwnedDocumentsResult {
   readonly total: number;
 }
 
+export interface ListDocumentChunksInput {
+  readonly chapterTitle?: string;
+  readonly documentId: string;
+  readonly userId: string;
+}
+
 export interface IDocumentRepository {
   createUploading(
     input: CreateUploadingDocumentInput,
@@ -67,6 +81,9 @@ export interface IDocumentRepository {
     documentId: string,
     userId: string,
   ): Promise<DocumentRecord | null>;
+  listChunks(
+    input: ListDocumentChunksInput,
+  ): Promise<readonly DocumentChunkRecord[]>;
   listOwned(
     input: ListOwnedDocumentsInput,
   ): Promise<ListOwnedDocumentsResult>;

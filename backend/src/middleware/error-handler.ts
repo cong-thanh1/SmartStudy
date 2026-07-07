@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import { AuthError } from "../modules/auth/auth-errors.js";
 import { ChatError } from "../modules/chat/chat-errors.js";
 import { DocumentError } from "../modules/documents/document-errors.js";
+import { SummaryError } from "../modules/summary/summary-errors.js";
 import { ProviderConfigurationError } from "../provider-errors.js";
 
 export const errorHandler: ErrorRequestHandler = (
@@ -49,6 +50,16 @@ export const errorHandler: ErrorRequestHandler = (
   }
 
   if (error instanceof ChatError) {
+    response.status(error.statusCode).json({
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+    });
+    return;
+  }
+
+  if (error instanceof SummaryError) {
     response.status(error.statusCode).json({
       error: {
         code: error.code,
