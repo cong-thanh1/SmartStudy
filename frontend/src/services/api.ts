@@ -38,6 +38,45 @@ export const clearAuth = () => {
   localStorage.removeItem(USER_KEY);
 };
 
+interface TokenRefreshResponse {
+  readonly tokens: {
+    readonly accessToken: string;
+    readonly refreshToken: string;
+  };
+}
+
+let tokenRefreshPromise: Promise<TokenRefreshResponse['tokens']> | null = null;
+
+const refreshAuthTokens = async (): Promise<TokenRefreshResponse['tokens']> => {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    throw new Error('Missing refresh token');
+  }
+
+  tokenRefreshPromise ??= axios
+    .post<TokenRefreshResponse>(
+      `${BASE_URL}/auth/refresh`,
+      { refreshToken },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+    .then((response) => response.data.tokens)
+    .finally(() => {
+      tokenRefreshPromise = null;
+    });
+
+  return tokenRefreshPromise;
+};
+
+const redirectToWelcome = () => {
+  if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/welcome')) {
+    window.location.href = '/welcome';
+  }
+};
+
 // Request interceptor to attach JWT token
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -54,44 +93,36 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as
+      | (InternalAxiosRequestConfig & { _retry?: boolean })
+      | undefined;
+
     // If 401 and not already retrying and not on the refresh endpoint itself
     if (
+      originalRequest &&
       error.response?.status === 401 &&
-      !originalRequest?._retry &&
-      !originalRequest?.url?.includes('/auth/refresh') &&
-      !originalRequest?.url?.includes('/auth/login')
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/auth/refresh') &&
+      !originalRequest.url?.includes('/auth/login')
     ) {
       originalRequest._retry = true;
-      const refreshToken = getRefreshToken();
-      if (refreshToken) {
-        try {
-          const refreshResp = await api.post<{ tokens: { accessToken: string; refreshToken: string } }>(
-            '/auth/refresh',
-            { refreshToken }
-          );
-          const { accessToken, refreshToken: newRefreshToken } = refreshResp.data.tokens;
-          setTokens(accessToken, newRefreshToken);
-          // Retry original request with new token
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          }
-          return api(originalRequest);
-        } catch {
-          // Refresh failed — clear auth and redirect
-          clearAuth();
-          if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/welcome')) {
-            window.location.href = '/welcome';
-          }
+
+      try {
+        const { accessToken, refreshToken: newRefreshToken } =
+          await refreshAuthTokens();
+        setTokens(accessToken, newRefreshToken);
+        // Retry original request with new token
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         }
-      } else {
-        // No refresh token — clear auth and redirect
+        return api(originalRequest);
+      } catch (refreshError) {
         clearAuth();
-        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/welcome')) {
-          window.location.href = '/welcome';
-        }
+        redirectToWelcome();
+        return Promise.reject(refreshError);
       }
     }
+
     return Promise.reject(error);
   }
 );

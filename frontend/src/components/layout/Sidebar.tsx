@@ -19,9 +19,12 @@ export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const user = getStoredUser() || { name: 'Giảng viên AI', email: 'teacher@smartstudy.ai' };
 
-  const handleLogout = () => {
-    authService.logout();
-    navigate('/welcome');
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      navigate('/welcome');
+    }
   };
 
   const navItems = [

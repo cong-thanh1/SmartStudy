@@ -1,4 +1,4 @@
-import { api, setTokens, setStoredUser, clearAuth } from './api';
+import { api, setTokens, setStoredUser, clearAuth, getRefreshToken } from './api';
 export * from './api';
 import {
   AuthResponse,
@@ -33,8 +33,16 @@ export const authService = {
     return response.data;
   },
 
-  logout() {
-    clearAuth();
+  async logout() {
+    const refreshToken = getRefreshToken();
+
+    try {
+      if (refreshToken) {
+        await api.post('/auth/logout', { refreshToken });
+      }
+    } finally {
+      clearAuth();
+    }
   },
 };
 
