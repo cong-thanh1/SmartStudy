@@ -26,6 +26,9 @@ const userOneDocumentId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const userTwoDocumentId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const userOneConversationId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const userTwoConversationId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+const userThreeId = "33333333-3333-4333-8333-333333333333";
+const userThreeDocumentId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+const userThreeConversationId = "ffffffff-ffff-4fff-8fff-ffffffffffff";
 
 interface OwnedSource extends VectorSearchResult {
   readonly ownerUserId: string;
@@ -46,6 +49,14 @@ const documents = new Map<string, DocumentRecord>([
       id: userTwoDocumentId,
       title: "User two private notes",
       userId: userTwoId,
+    }),
+  ],
+  [
+    documentKey(userThreeDocumentId, userThreeId),
+    createDocument({
+      id: userThreeDocumentId,
+      title: "User three confidential notes",
+      userId: userThreeId,
     }),
   ],
 ]);
@@ -69,6 +80,15 @@ const conversations = new Map<string, ConversationRecord>([
       userId: userTwoId,
     }),
   ],
+  [
+    conversationKey(userThreeConversationId, userThreeId),
+    createConversation({
+      documentId: userThreeDocumentId,
+      id: userThreeConversationId,
+      title: "User three confidential notes",
+      userId: userThreeId,
+    }),
+  ],
 ]);
 
 const sourceFixture: readonly OwnedSource[] = [
@@ -87,6 +107,14 @@ const sourceFixture: readonly OwnedSource[] = [
     pageStart: 7,
     similarity: 0.99,
     text: "Other user's private context: the exam password is swordfish.",
+  },
+  {
+    documentId: userThreeDocumentId,
+    id: "user-three-confidential-chunk",
+    ownerUserId: userThreeId,
+    pageStart: 2,
+    similarity: 0.95,
+    text: "User three context: secret financial data.",
   },
 ];
 
@@ -141,6 +169,27 @@ describe("RAG user isolation", () => {
     expect(chatRepository.findOwnedConversation).toHaveBeenCalledWith(
       userOneConversationId,
       userTwoId,
+    );
+    expect(embeddingProvider.embed).not.toHaveBeenCalled();
+    expect(vectorStore.similaritySearch).not.toHaveBeenCalled();
+    expect(llmProvider.generateText).not.toHaveBeenCalled();
+  });
+
+  it("isolates across >=3 concurrent users and blocks direct API query using another user's documentId", async () => {
+    const { documentRepository, embeddingProvider, llmProvider, service, vectorStore } =
+      createIsolationService();
+
+    await expect(
+      service.createConversation({
+        documentId: userOneDocumentId,
+        title: "Unauthorized query attempt",
+        userId: userThreeId,
+      }),
+    ).rejects.toThrow();
+
+    expect(documentRepository.findOwnedById).toHaveBeenCalledWith(
+      userOneDocumentId,
+      userThreeId,
     );
     expect(embeddingProvider.embed).not.toHaveBeenCalled();
     expect(vectorStore.similaritySearch).not.toHaveBeenCalled();

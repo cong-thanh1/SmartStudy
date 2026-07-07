@@ -23,7 +23,7 @@ Commit dùng định dạng:
 `exam`, `grading`, `tutor`, `core`, `db`, `ci`, `observability`, `infra`.
 Subject dùng câu mệnh lệnh, ngắn gọn, không kết thúc bằng dấu chấm.
 
-### 1.3 Pull request
+### 1.3 Pull request@
 
 PR phải dùng template của repository và có:
 

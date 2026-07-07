@@ -11,6 +11,7 @@
     "dev:api": "tsx watch src/api.ts",
     "dev:worker": "tsx watch src/worker.ts",
     "lint": "eslint . --max-warnings 0",
+    "logs:query": "tsx scripts/query-logs.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
