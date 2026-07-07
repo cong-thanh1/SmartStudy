@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-headline-lg: 'Inter', system-ui, sans-serif;
+  --font-headline-md: 'Inter', system-ui, sans-serif;
+  --font-title-lg: 'Inter', system-ui, sans-serif;
+  --font-body-lg: 'Inter', system-ui, sans-serif;
+  --font-body-md: 'Inter', system-ui, sans-serif;
+  --font-label-md: 'Inter', system-ui, sans-serif;
+  --font-label-sm: 'Inter', system-ui, sans-serif;
+
+  --color-primary: #0073bb;
+  --color-primary-container: #0073bb;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #edf4ff;
+  --color-primary-fixed: #d0e4ff;
+  --color-primary-fixed-dim: #9ccaff;
+  
+  --color-secondary: #8a2be2;
+  --color-secondary-container: #9c42f4;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #fffbff;
+  --color-secondary-fixed: #efdbff;
+  
+  --color-tertiary: #4c5868;
+  --color-tertiary-container: #647081;
+  --color-on-tertiary: #ffffff;
+  
+  --color-navy: #232f3e;
+  
+  --color-background: #f4f7f9;
+  --color-on-background: #181c1e;
+  
+  --color-surface: #ffffff;
+  --color-on-surface: #181c1e;
+  --color-surface-variant: #e0e3e5;
+  --color-on-surface-variant: #404751;
+  --color-surface-tint: #0062a0;
+  
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f1f4f6;
+  --color-surface-container: #ebeef0;
+  --color-surface-container-high: #e5e9eb;
+  --color-surface-container-highest: #e0e3e5;
+  
+  --color-outline: #707882;
+  --color-outline-variant: #c0c7d2;
+  
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-on-background);
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    background-color: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+  
+  .glass-panel-dark {
+    background-color: rgba(35, 47, 62, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .ai-glow {
+    box-shadow: 0 0 24px rgba(138, 43, 226, 0.22);
+  }
+
+  .ai-gradient {
+    background: linear-gradient(135deg, #0073bb 0%, #8a2be2 100%);
+  }
+
+  .ai-gradient-text {
+    background: linear-gradient(135deg, #0073bb 0%, #8a2be2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
