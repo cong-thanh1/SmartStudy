@@ -33,4 +33,23 @@ describe("Prisma migrations", () => {
     expect(migrationSql).toContain('CREATE INDEX "idx_messages_conversation"');
     expect(migrationSql).toContain("ON DELETE CASCADE");
   });
+
+  it("adds summaries table with a unique cache constraint", () => {
+    const migrationSql = readFileSync(
+      new URL(
+        "../prisma/migrations/20260706120000_add_summaries_table/migration.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+
+    expect(migrationSql).toContain('CREATE TABLE "summaries"');
+    expect(migrationSql).toContain("summaries_scope_check");
+    expect(migrationSql).toContain("summaries_key_points_check");
+    expect(migrationSql).toContain(
+      'CREATE UNIQUE INDEX "summaries_document_id_scope_chapter_ref_key"',
+    );
+    expect(migrationSql).toContain("NULLS NOT DISTINCT");
+    expect(migrationSql).toContain("ON DELETE CASCADE");
+  });
 });

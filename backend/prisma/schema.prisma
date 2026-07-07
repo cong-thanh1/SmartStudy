@@ -49,8 +49,9 @@ model Document {
   createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   conversations Conversation[]
-  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chunks    DocumentChunk[]
+  summaries     Summary[]
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks        DocumentChunk[]
 
   @@index([userId, createdAt(sort: Desc)], map: "idx_documents_user")
   @@map("documents")
@@ -98,4 +99,19 @@ model Message {
 
   @@index([conversationId, createdAt], map: "idx_messages_conversation")
   @@map("messages")
+}
+
+model Summary {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId  String   @map("document_id") @db.Uuid
+  scope       String   @db.VarChar(20)
+  chapterRef  String?  @map("chapter_ref") @db.VarChar(500)
+  summaryText String   @map("summary_text") @db.Text
+  keyPoints   Json     @default("[]") @map("key_points") @db.JsonB
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, scope, chapterRef], map: "summaries_document_id_scope_chapter_ref_key")
+  @@index([documentId], map: "idx_summaries_document")
+  @@map("summaries")
 }
