@@ -28,11 +28,17 @@ export function createExamRouter(
       const claims = getAuthClaims(response);
 
       const exam = await examService.generateExam({
-        difficultyDistribution: body.difficultyDistribution,
         documentId,
-        numQuestions: body.numQuestions,
-        timeLimitMinutes: body.timeLimitMinutes,
         userId: claims.sub,
+        ...(body.difficultyDistribution === undefined
+          ? {}
+          : { difficultyDistribution: body.difficultyDistribution }),
+        ...(body.numQuestions === undefined
+          ? {}
+          : { numQuestions: body.numQuestions }),
+        ...(body.timeLimitMinutes === undefined
+          ? {}
+          : { timeLimitMinutes: body.timeLimitMinutes }),
       });
 
       response.status(201).json({ exam });
@@ -58,11 +64,7 @@ export function createExamRouter(
     "/exams/:examId",
     handle(async (request, response) => {
       const { examId } = examIdParamsSchema.parse(request.params);
-      const mode = z
-        .enum(["take", "review", "grade"])
-        .optional()
-        .default("take")
-        .parse(request.query.mode);
+      const mode = parseExamMode(request.query.mode);
       const claims = getAuthClaims(response);
 
       const exam = await examService.getExam({
@@ -148,4 +150,11 @@ function handle(handler: AsyncRouteHandler) {
   return (request: Request, response: Response, next: NextFunction): void => {
     handler(request, response).catch(next);
   };
+}
+
+function parseExamMode(value: unknown): "grade" | "review" | "take" {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  const result = z.enum(["take", "review", "grade"]).safeParse(candidate);
+
+  return result.success ? result.data : "take";
 }

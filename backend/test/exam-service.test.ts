@@ -6,9 +6,7 @@ import type {
   IDocumentRepository,
 } from "../src/modules/documents/document-repository.js";
 import {
-  ExamDocumentNotFoundError,
   ExamDocumentNotReadyError,
-  ExamGenerationError,
   ExamNotFoundError,
 } from "../src/modules/exam/exam-errors.js";
 import type {
@@ -203,8 +201,7 @@ function createServiceStubs() {
     save: vi.fn(),
   };
 
-  const llmProvider: ILLMProvider = {
-    generateStructuredJSON: vi.fn(async () => ({
+  const generateStructuredJSON = vi.fn(async <T>(): Promise<T> => ({
       questions: [
         {
           correct_answer: "Option A",
@@ -215,7 +212,11 @@ function createServiceStubs() {
           question_text: "Question 1?",
         },
       ],
-    })),
+    }) as T);
+
+  const llmProvider: ILLMProvider = {
+    generateStructuredJSON:
+      generateStructuredJSON as unknown as ILLMProvider["generateStructuredJSON"],
     generateText: vi.fn(async () => ({
       model: "test-model",
       text: "Good effort! Review concept B.",

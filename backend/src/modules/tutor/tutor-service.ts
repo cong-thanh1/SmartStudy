@@ -40,10 +40,10 @@ export class TutorService implements ITutorService {
         throw new TutorDocumentNotFoundError(input.documentId);
       }
 
-      const chunks = await this.documentRepository.listChunks(
-        input.documentId,
-        input.userId,
-      );
+      const chunks = await this.documentRepository.listChunks({
+        documentId: input.documentId,
+        userId: input.userId,
+      });
       if (chunks.length > 0) {
         contextText = `\n\nDocument Reference Context:\n${chunks
           .slice(0, 10)
@@ -73,7 +73,7 @@ export class TutorService implements ITutorService {
 
       return {
         answer: result.text.trim(),
-        model: result.model,
+        model: "configured-llm",
       };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);

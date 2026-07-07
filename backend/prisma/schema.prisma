@@ -18,6 +18,9 @@ model User {
   updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   conversations Conversation[]
   documents     Document[]
+  examAttempts  ExamAttempt[]
+  exams         Exam[]
+  quizzes       Quiz[]
   refreshTokens RefreshToken[]
 
   @@map("users")
@@ -50,6 +53,8 @@ model Document {
   updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   conversations Conversation[]
   summaries     Summary[]
+  exams         Exam[]
+  quizzes       Quiz[]
   user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   chunks        DocumentChunk[]
 
@@ -114,4 +119,60 @@ model Summary {
   @@unique([documentId, scope, chapterRef], map: "summaries_document_id_scope_chapter_ref_key")
   @@index([documentId], map: "idx_summaries_document")
   @@map("summaries")
+}
+
+model Quiz {
+  id           String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId   String        @map("document_id") @db.Uuid
+  userId       String        @map("user_id") @db.Uuid
+  difficulty   String?       @db.VarChar(20)
+  questions    Json          @db.JsonB
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  document     Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  examAttempts ExamAttempt[]
+
+  @@index([documentId], map: "idx_quizzes_document")
+  @@index([userId, createdAt(sort: Desc)], map: "idx_quizzes_user")
+  @@map("quizzes")
+}
+
+model Exam {
+  id                     String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId             String        @map("document_id") @db.Uuid
+  userId                 String        @map("user_id") @db.Uuid
+  numQuestions           Int           @map("num_questions")
+  timeLimitMinutes       Int?          @map("time_limit_minutes")
+  difficultyDistribution Json?         @map("difficulty_distribution") @db.JsonB
+  questions              Json          @db.JsonB
+  answerKey              Json          @map("answer_key") @db.JsonB
+  createdAt              DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  document               Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user                   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts               ExamAttempt[]
+
+  @@index([documentId], map: "idx_exams_document")
+  @@index([userId, createdAt(sort: Desc)], map: "idx_exams_user")
+  @@map("exams")
+}
+
+model ExamAttempt {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  examId         String?  @map("exam_id") @db.Uuid
+  quizId         String?  @map("quiz_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  answers        Json     @db.JsonB
+  score          Decimal? @db.Decimal(10, 2)
+  maxScore       Decimal? @map("max_score") @db.Decimal(10, 2)
+  detailedResult Json?    @map("detailed_result") @db.JsonB
+  aiFeedback     String?  @map("ai_feedback") @db.Text
+  submittedAt    DateTime @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  exam           Exam?    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  quiz           Quiz?    @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([examId], map: "idx_exam_attempts_exam")
+  @@index([quizId], map: "idx_exam_attempts_quiz")
+  @@index([userId, submittedAt(sort: Desc)], map: "idx_exam_attempts_user")
+  @@map("exam_attempts")
 }

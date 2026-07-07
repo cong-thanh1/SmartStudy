@@ -25,11 +25,17 @@ export function createQuizRouter(
       const claims = getAuthClaims(response);
 
       const quiz = await quizService.generateQuiz({
-        chapterRef: body.chapterRef,
-        difficulty: body.difficulty,
         documentId,
-        numQuestions: body.numQuestions,
         userId: claims.sub,
+        ...(body.chapterRef === undefined
+          ? {}
+          : { chapterRef: body.chapterRef }),
+        ...(body.difficulty === undefined
+          ? {}
+          : { difficulty: body.difficulty }),
+        ...(body.numQuestions === undefined
+          ? {}
+          : { numQuestions: body.numQuestions }),
       });
 
       response.status(201).json({ quiz });

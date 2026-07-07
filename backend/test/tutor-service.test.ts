@@ -80,7 +80,7 @@ describe("TutorService", () => {
     });
 
     expect(result.answer).toBe("Socratic guidance response.");
-    expect(result.model).toBe("test-model");
+    expect(result.model).toBe("configured-llm");
     expect(llmProvider.generateText).toHaveBeenCalledWith(
       expect.objectContaining({
         systemPrompt: expect.stringContaining("Tutor reference text."),

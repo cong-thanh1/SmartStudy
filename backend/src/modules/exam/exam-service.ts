@@ -81,10 +81,10 @@ export class ExamService implements IExamService {
       throw new ExamDocumentNotReadyError(input.documentId, document.status);
     }
 
-    const chunks = await this.documentRepository.listChunks(
-      input.documentId,
-      input.userId,
-    );
+    const chunks = await this.documentRepository.listChunks({
+      documentId: input.documentId,
+      userId: input.userId,
+    });
     if (chunks.length === 0) {
       throw new ExamGenerationError(
         "No document content available to generate exam.",
@@ -161,10 +161,10 @@ export class ExamService implements IExamService {
     }
 
     if (input.mode === "take") {
-      return {
-        ...exam,
-        answerKey: undefined, // Prevent leaking answer key during test taking
-      };
+      const { answerKey: _answerKey, ...examWithoutAnswerKey } = exam;
+      void _answerKey;
+
+      return examWithoutAnswerKey;
     }
 
     return exam;
@@ -184,10 +184,12 @@ export class ExamService implements IExamService {
       input.userId,
     );
 
-    return exams.map((e) => ({
-      ...e,
-      answerKey: undefined,
-    }));
+    return exams.map((exam) => {
+      const { answerKey: _answerKey, ...examWithoutAnswerKey } = exam;
+      void _answerKey;
+
+      return examWithoutAnswerKey;
+    });
   }
 
   async submitAttempt(input: SubmitAttemptInput): Promise<ExamAttemptRecord> {
@@ -327,10 +329,10 @@ export class ExamService implements IExamService {
       }
 
       cleanQuestions.push({
-        difficulty: q.difficulty,
         options,
         question_id: questionId,
         question_text: q.question_text.trim(),
+        ...(q.difficulty === undefined ? {} : { difficulty: q.difficulty }),
       });
 
       answerKey.push({

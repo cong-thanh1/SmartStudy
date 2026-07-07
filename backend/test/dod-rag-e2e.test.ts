@@ -61,6 +61,7 @@ describe("DoD Phase 1: End-to-End RAG workflow", () => {
       createUploading: vi.fn(async (input) => {
         storedDocument = {
           ...storedDocument,
+          fileKey: input.fileKey,
           id: input.id,
           sizeBytes: input.sizeBytes,
           title: input.title,
@@ -84,9 +85,10 @@ describe("DoD Phase 1: End-to-End RAG workflow", () => {
         })),
       ),
       listOwned: vi.fn(async () => ({ documents: [storedDocument], total: 1 })),
-      markFailed: vi.fn(),
+      markFailed: vi.fn(async () => true),
       markProcessing: vi.fn(async () => {
         storedDocument = { ...storedDocument, status: "processing" };
+        return true;
       }),
       replaceChunksAndMarkReady: vi.fn(async (input) => {
         storedChunks.push(...input.chunks);
@@ -98,7 +100,7 @@ describe("DoD Phase 1: End-to-End RAG workflow", () => {
         };
         return true;
       }),
-      softDeleteOwned: vi.fn(),
+      softDeleteOwned: vi.fn(async () => true),
     };
 
     const storageProvider: IStorageProvider = {
@@ -108,13 +110,18 @@ describe("DoD Phase 1: End-to-End RAG workflow", () => {
       getUploadUrl: vi.fn(async () => ({
         expiresAt: new Date(Date.now() + 900_000),
         headers: { "content-type": "application/pdf" },
-        method: "PUT",
+        method: "PUT" as const,
         url: "https://storage.local.test/upload",
       })),
+      getMetadata: vi.fn(async () => ({
+        contentLength: 5000,
+        contentType: "application/pdf",
+      })),
+      upload: vi.fn(),
     };
 
     const queueProvider: IQueueProvider = {
-      close: vi.fn(),
+      consume: vi.fn(),
       enqueue: vi.fn(),
     };
 
@@ -123,9 +130,11 @@ describe("DoD Phase 1: End-to-End RAG workflow", () => {
       storageProvider,
       queueProvider,
       config,
+      { createId: () => documentId },
     );
 
     const uploadRequest = await documentService.requestUpload({
+      contentType: "application/pdf",
       sizeBytes: 5000,
       title: "Physics Textbook",
       userId,
@@ -133,14 +142,12 @@ describe("DoD Phase 1: End-to-End RAG workflow", () => {
     expect(uploadRequest.document.status).toBe("uploading");
     expect(uploadRequest.upload.url).toBeDefined();
 
-    const completedDoc = await documentService.completeUpload({
-      documentId,
-      userId,
-    });
+    const completedDoc = await documentService.completeUpload(documentId, userId);
     expect(completedDoc.status).toBe("processing");
     expect(queueProvider.enqueue).toHaveBeenCalledWith(
       "document-processing",
       expect.objectContaining({ documentId, userId }),
+      expect.objectContaining({ attempts: 3, jobId: documentId }),
     );
 
     const pdfExtractor: IPdfTextExtractor = {
@@ -175,8 +182,10 @@ describe("DoD Phase 1: End-to-End RAG workflow", () => {
     );
 
     await processingService.processJob({
+      attemptsMade: 0,
       data: { documentId, fileKey, userId },
       id: "job-1",
+      name: "document-processing",
     });
 
     expect(storedDocument.status).toBe("ready");

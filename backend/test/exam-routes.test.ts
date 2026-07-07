@@ -2,7 +2,6 @@ import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  ExamDocumentNotFoundError,
   ExamDocumentNotReadyError,
 } from "../src/modules/exam/exam-errors.js";
 import type { IExamService } from "../src/modules/exam/exam-service.js";
@@ -64,17 +63,8 @@ function createExamServiceStub(): IExamService {
       submittedAt: createdAt,
       userId,
     })),
-    getExam: vi.fn(async (input) => ({
-      answerKey:
-        input.mode === "take"
-          ? undefined
-          : [
-              {
-                correct_answer: "A",
-                explanation: "Expl",
-                question_id: "eq-1",
-              },
-            ],
+    getExam: vi.fn(async (input) => {
+      const exam = {
       createdAt,
       difficultyDistribution: { easy: 50, hard: 0, medium: 50 },
       documentId,
@@ -90,7 +80,23 @@ function createExamServiceStub(): IExamService {
       ],
       timeLimitMinutes: 30,
       userId,
-    })),
+      };
+
+      if (input.mode === "take") {
+        return exam;
+      }
+
+      return {
+        ...exam,
+        answerKey: [
+          {
+            correct_answer: "A",
+            explanation: "Expl",
+            question_id: "eq-1",
+          },
+        ],
+      };
+    }),
     listAttempts: vi.fn(async () => []),
     listExams: vi.fn(async () => []),
     submitAttempt: vi.fn(async () => ({

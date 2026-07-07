@@ -29,7 +29,7 @@ function createPrismaStub() {
   return {
     quiz: {
       create: vi.fn(async () => databaseQuiz),
-      findFirst: vi.fn(async () => databaseQuiz),
+      findFirst: vi.fn(async (): Promise<typeof databaseQuiz | null> => databaseQuiz),
       findMany: vi.fn(async () => [databaseQuiz]),
     },
   };

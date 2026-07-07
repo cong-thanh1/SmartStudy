@@ -99,8 +99,7 @@ function createServiceStubs() {
     softDeleteOwned: vi.fn(),
   };
 
-  const llmProvider: ILLMProvider = {
-    generateStructuredJSON: vi.fn(async () => ({
+  const generateStructuredJSON = vi.fn(async <T>(): Promise<T> => ({
       questions: [
         {
           correct_answer: "Option A",
@@ -110,7 +109,11 @@ function createServiceStubs() {
           question_text: "Sample Question?",
         },
       ],
-    })),
+    }) as T);
+
+  const llmProvider: ILLMProvider = {
+    generateStructuredJSON:
+      generateStructuredJSON as unknown as ILLMProvider["generateStructuredJSON"],
     generateText: vi.fn(),
   };
 
@@ -120,13 +123,20 @@ function createServiceStubs() {
     llmProvider,
   );
 
-  return { documentRepository, llmProvider, quizRepository, service };
+  return {
+    documentRepository,
+    generateStructuredJSON,
+    llmProvider,
+    quizRepository,
+    service,
+  };
 }
 
 describe("QuizService", () => {
   describe("generateQuiz", () => {
     it("generates and saves quiz on first attempt when LLM output is valid", async () => {
-      const { llmProvider, quizRepository, service } = createServiceStubs();
+      const { generateStructuredJSON, quizRepository, service } =
+        createServiceStubs();
 
       const result = await service.generateQuiz({
         difficulty: "medium",
@@ -136,7 +146,7 @@ describe("QuizService", () => {
       });
 
       expect(result.id).toBe(quizId);
-      expect(llmProvider.generateStructuredJSON).toHaveBeenCalledTimes(1);
+      expect(generateStructuredJSON).toHaveBeenCalledTimes(1);
       expect(quizRepository.save).toHaveBeenCalledWith({
         difficulty: "medium",
         documentId,
@@ -154,8 +164,9 @@ describe("QuizService", () => {
     });
 
     it("normalizes correct_answer when option letter A/B/C/D is returned", async () => {
-      const { llmProvider, quizRepository, service } = createServiceStubs();
-      vi.mocked(llmProvider.generateStructuredJSON).mockResolvedValueOnce({
+      const { generateStructuredJSON, quizRepository, service } =
+        createServiceStubs();
+      generateStructuredJSON.mockImplementationOnce(async <T>(): Promise<T> => ({
         questions: [
           {
             correct_answer: "B", // Option letter
@@ -165,7 +176,7 @@ describe("QuizService", () => {
             question_text: "Select second?",
           },
         ],
-      });
+      }) as T);
 
       await service.generateQuiz({ documentId, userId });
 
@@ -185,11 +196,15 @@ describe("QuizService", () => {
     });
 
     it("retries when Zod schema validation fails and succeeds on retry", async () => {
-      const { llmProvider, quizRepository, service } = createServiceStubs();
+      const { generateStructuredJSON, quizRepository, service } =
+        createServiceStubs();
       // First attempt returns invalid schema (missing options array)
-      vi.mocked(llmProvider.generateStructuredJSON)
-        .mockResolvedValueOnce({ questions: [{ question_text: "Bad" }] })
-        .mockResolvedValueOnce({
+      generateStructuredJSON
+        .mockImplementationOnce(
+          async <T>(): Promise<T> =>
+            ({ questions: [{ question_text: "Bad" }] }) as T,
+        )
+        .mockImplementationOnce(async <T>(): Promise<T> => ({
           questions: [
             {
               correct_answer: "Opt 1",
@@ -199,25 +214,25 @@ describe("QuizService", () => {
               question_text: "Good question?",
             },
           ],
-        });
+        }) as T);
 
       const result = await service.generateQuiz({ documentId, userId });
 
-      expect(llmProvider.generateStructuredJSON).toHaveBeenCalledTimes(2);
+      expect(generateStructuredJSON).toHaveBeenCalledTimes(2);
       expect(result.id).toBe(quizId);
       expect(quizRepository.save).toHaveBeenCalledTimes(1);
     });
 
     it("throws QuizGenerationError after 3 failed retries", async () => {
-      const { llmProvider, service } = createServiceStubs();
-      vi.mocked(llmProvider.generateStructuredJSON).mockRejectedValue(
+      const { generateStructuredJSON, service } = createServiceStubs();
+      generateStructuredJSON.mockRejectedValue(
         new Error("LLM provider unavailable"),
       );
 
       await expect(service.generateQuiz({ documentId, userId })).rejects.toThrow(
         QuizGenerationError,
       );
-      expect(llmProvider.generateStructuredJSON).toHaveBeenCalledTimes(3);
+      expect(generateStructuredJSON).toHaveBeenCalledTimes(3);
     });
 
     it("throws QuizDocumentNotFoundError when document not owned", async () => {

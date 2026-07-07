@@ -217,10 +217,10 @@ function fromQuestionsJson(value: unknown): readonly ExamQuestion[] {
           : undefined;
 
       return {
-        difficulty,
         options,
         question_id: questionId,
         question_text: questionText,
+        ...(difficulty === undefined ? {} : { difficulty }),
       };
     });
 }
@@ -229,10 +229,10 @@ function toQuestionsJson(
   questions: readonly ExamQuestion[],
 ): Prisma.InputJsonValue {
   return questions.map((q) => ({
-    difficulty: q.difficulty,
     options: [...q.options],
     question_id: q.question_id,
     question_text: q.question_text,
+    ...(q.difficulty === undefined ? {} : { difficulty: q.difficulty }),
   }));
 }
 

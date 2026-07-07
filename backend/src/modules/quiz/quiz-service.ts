@@ -60,11 +60,13 @@ export class QuizService implements IQuizService {
       throw new QuizDocumentNotReadyError(input.documentId, document.status);
     }
 
-    const chunks = await this.documentRepository.listChunks(
-      input.documentId,
-      input.userId,
-      input.chapterRef,
-    );
+    const chunks = await this.documentRepository.listChunks({
+      documentId: input.documentId,
+      userId: input.userId,
+      ...(input.chapterRef === undefined
+        ? {}
+        : { chapterTitle: input.chapterRef }),
+    });
     if (chunks.length === 0) {
       throw new QuizGenerationError(
         "No document content available to generate quiz.",

@@ -20,11 +20,13 @@ export function createTutorRouter(
       const claims = getAuthClaims(response);
 
       const result = await tutorService.ask({
-        documentId: body.documentId,
-        history: body.history,
         question: body.question,
-        topic: body.topic,
         userId: claims.sub,
+        ...(body.documentId === undefined
+          ? {}
+          : { documentId: body.documentId }),
+        ...(body.history === undefined ? {} : { history: body.history }),
+        ...(body.topic === undefined ? {} : { topic: body.topic }),
       });
 
       response.status(200).json(result);

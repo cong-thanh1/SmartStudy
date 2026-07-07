@@ -4,7 +4,10 @@ import { ZodError } from "zod";
 import { AuthError } from "../modules/auth/auth-errors.js";
 import { ChatError } from "../modules/chat/chat-errors.js";
 import { DocumentError } from "../modules/documents/document-errors.js";
+import { ExamError } from "../modules/exam/exam-errors.js";
+import { QuizError } from "../modules/quiz/quiz-errors.js";
 import { SummaryError } from "../modules/summary/summary-errors.js";
+import { TutorError } from "../modules/tutor/tutor-errors.js";
 import { ProviderConfigurationError } from "../provider-errors.js";
 
 export const errorHandler: ErrorRequestHandler = (
@@ -60,6 +63,36 @@ export const errorHandler: ErrorRequestHandler = (
   }
 
   if (error instanceof SummaryError) {
+    response.status(error.statusCode).json({
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+    });
+    return;
+  }
+
+  if (error instanceof QuizError) {
+    response.status(error.statusCode).json({
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+    });
+    return;
+  }
+
+  if (error instanceof ExamError) {
+    response.status(error.statusCode).json({
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+    });
+    return;
+  }
+
+  if (error instanceof TutorError) {
     response.status(error.statusCode).json({
       error: {
         code: error.code,

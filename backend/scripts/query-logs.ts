@@ -15,15 +15,27 @@ function parseArgs(args: string[]): LogQueryOptions {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === "--file" && args[i + 1]) {
-      options.file = args[++i];
+      const value = args[++i];
+      if (value !== undefined) {
+        options.file = value;
+      }
     } else if (arg === "--level" && args[i + 1]) {
-      options.level = args[++i];
+      const value = args[++i];
+      if (value !== undefined) {
+        options.level = value;
+      }
     } else if (arg === "--userId" && args[i + 1]) {
-      options.userId = args[++i];
+      const value = args[++i];
+      if (value !== undefined) {
+        options.userId = value;
+      }
     } else if (arg === "--status" && args[i + 1]) {
       options.status = Number(args[++i]);
     } else if (arg === "--keyword" && args[i + 1]) {
-      options.keyword = args[++i]?.toLowerCase();
+      const value = args[++i];
+      if (value !== undefined) {
+        options.keyword = value.toLowerCase();
+      }
     } else if (arg === "--limit" && args[i + 1]) {
       options.limit = Number(args[++i]);
     }
