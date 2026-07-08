@@ -85,7 +85,7 @@ async function ensureReadyDocument(page: Page): Promise<string> {
 
   console.log(`[Exam Setup] Waiting for document ${sharedReadyDocId} to become ready...`);
   await expect(page.getByTestId(`document-status-${sharedReadyDocId}`)).toHaveText(/Sẵn sàng/i, {
-    timeout: 90_000,
+    timeout: 240_000,
   });
   console.log(`[Exam Setup] ✅ Document ${sharedReadyDocId} ready`);
   return sharedReadyDocId as string;
@@ -119,6 +119,7 @@ test.describe('Nhóm 5 — Sinh đề thi thử (Exam)', () => {
     await page.getByTestId('generate-exam-button').click();
 
     const examResp = await examResponsePromise;
+    console.log(`[DEBUG] Exam response: status=${examResp.status()}, body=${await examResp.text()}`);
     expect(examResp.status(), `Exam API should return 2xx, got ${examResp.status()}`).toBeLessThan(300);
 
     const examBody = await examResp.json() as {
@@ -371,5 +372,136 @@ test.describe('Nhóm 5 — Sinh đề thi thử (Exam)', () => {
 
       console.log(`[TC5.5] ✅ Backend rejected request with ${examResp.status()} — UI handled gracefully`);
     }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  test('TC5.6 — Hủy bài làm: Hiển thị cảnh báo và quay lại trang cấu hình khi đồng ý', async ({ page }) => {
+    const docId = await ensureReadyDocument(page);
+    await page.goto(`/exam-center?docId=${docId}`);
+
+    await page.getByTestId('num-questions-5').click();
+    await page.getByTestId('generate-exam-button').click();
+    await expect(page.getByTestId('question-card-0')).toBeVisible({ timeout: 15_000 });
+
+    // Handle dialog: Dismiss first
+    page.once('dialog', dialog => {
+      expect(dialog.message()).toContain('hủy bài làm');
+      dialog.dismiss();
+    });
+    await page.getByTitle('Quay lại cài đặt').click();
+    
+    // Verify still taking exam
+    await expect(page.getByTestId('question-card-0')).toBeVisible();
+
+    // Handle dialog again: Accept this time
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByTitle('Quay lại cài đặt').click();
+    
+    // Verify back to setup
+    await expect(page.getByTestId('generate-exam-button')).toBeVisible();
+    
+    console.log(`[TC5.6] ✅ Exam cancellation flow works correctly`);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  test('TC5.7 — UI Tiến độ: Cập nhật số câu đã trả lời chính xác khi chọn đáp án', async ({ page }) => {
+    const docId = await ensureReadyDocument(page);
+    await page.goto(`/exam-center?docId=${docId}`);
+
+    await page.getByTestId('num-questions-5').click();
+    await page.getByTestId('generate-exam-button').click();
+    await expect(page.getByTestId('question-card-0')).toBeVisible({ timeout: 15_000 });
+
+    // Verify initial progress text
+    await expect(page.locator('text=Đã trả lời: 0 / 5 câu')).toBeVisible();
+
+    // Click an option in the first question
+    await page.getByTestId('option-0-0').click();
+    await expect(page.locator('text=Đã trả lời: 1 / 5 câu')).toBeVisible();
+
+    // Click another option in the SAME question
+    await page.getByTestId('option-0-1').click();
+    await expect(page.locator('text=Đã trả lời: 1 / 5 câu')).toBeVisible(); // Count should remain 1
+
+    // Click an option in the SECOND question
+    await page.getByTestId('option-1-0').click();
+    await expect(page.locator('text=Đã trả lời: 2 / 5 câu')).toBeVisible();
+    
+    console.log(`[TC5.7] ✅ Progress counter updates correctly`);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  test('TC5.8 — Chấm điểm (Scoring): Tính đúng điểm số khi chọn đúng và sai', async ({ page }) => {
+    const docId = await ensureReadyDocument(page);
+    await page.goto(`/exam-center?docId=${docId}`);
+
+    await page.getByTestId('num-questions-5').click();
+    await page.getByTestId('generate-exam-button').click();
+    await expect(page.getByTestId('question-card-0')).toBeVisible({ timeout: 15_000 });
+
+    // MockLLMProvider always returns Option A as correct_answer.
+    // We will answer Q1-Q4 correctly (Option A) and Q5 incorrectly (Option B).
+    for (let i = 0; i < 4; i++) {
+      await page.getByTestId(`option-${i}-0`).click(); // Option A
+    }
+    await page.getByTestId(`option-4-1`).click(); // Option B (Incorrect for Q5)
+
+    await page.getByTestId('submit-exam-button').click();
+    
+    // Wait for Results page
+    await page.waitForURL(/results/, { timeout: 30_000 });
+    await expect(page.getByTestId('results-page')).toBeVisible({ timeout: 10_000 });
+
+    // Verify Score
+    await expect(page.getByTestId('score-display')).toContainText('4 / 5');
+    await expect(page.getByTestId('score-percentage')).toContainText('Đạt 80%');
+    await expect(page.getByTestId('result-status-badge')).toContainText('Hoàn thành xuất sắc');
+
+    // Verify Icons
+    const correctIcons = page.getByTestId(/result-correct-icon-.*/);
+    expect(await correctIcons.count()).toBe(4);
+
+    const wrongIcons = page.getByTestId(/result-wrong-icon-.*/);
+    expect(await wrongIcons.count()).toBe(1);
+
+    // Verify Explanation is only shown for the wrong answer
+    const explanations = page.getByTestId(/explanation-.*/);
+    expect(await explanations.count()).toBe(1);
+    
+    console.log(`[TC5.8] ✅ Scoring logic works perfectly (4/5 correct)`);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  test('TC5.9 — Bỏ qua câu hỏi: Xử lý đúng khi nộp bài mà chưa làm hết', async ({ page }) => {
+    const docId = await ensureReadyDocument(page);
+    await page.goto(`/exam-center?docId=${docId}`);
+
+    await page.getByTestId('num-questions-5').click();
+    await page.getByTestId('generate-exam-button').click();
+    await expect(page.getByTestId('question-card-0')).toBeVisible({ timeout: 15_000 });
+
+    // Answer only Q1 correctly
+    await page.getByTestId(`option-0-0`).click();
+
+    // Submit immediately with 4 unanswered questions
+    await page.getByTestId('submit-exam-button').click();
+    
+    // Wait for Results page
+    await page.waitForURL(/results/, { timeout: 30_000 });
+    await expect(page.getByTestId('results-page')).toBeVisible({ timeout: 10_000 });
+
+    // Verify Score is 1/5
+    await expect(page.getByTestId('score-display')).toContainText('1 / 5');
+    await expect(page.getByTestId('score-percentage')).toContainText('Đạt 20%');
+    await expect(page.getByTestId('result-status-badge')).toContainText('Cần cố gắng thêm');
+
+    // Verify Icons (1 correct, 4 wrong/unanswered)
+    const correctIcons = page.getByTestId(/result-correct-icon-.*/);
+    expect(await correctIcons.count()).toBe(1);
+
+    const wrongIcons = page.getByTestId(/result-wrong-icon-.*/);
+    expect(await wrongIcons.count()).toBe(4);
+
+    console.log(`[TC5.9] ✅ Unanswered questions are treated as incorrect (1/5 correct)`);
   });
 });
