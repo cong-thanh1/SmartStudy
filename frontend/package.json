@@ -7,7 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pw:setup": "node e2e/setup.mjs",
+    "pw:test": "playwright test --config=e2e/playwright.config.ts",
+    "pw:test:chromium": "playwright test --config=e2e/playwright.config.ts --project=chromium",
+    "pw:test:headed": "playwright test --config=e2e/playwright.config.ts --headed",
+    "pw:report": "playwright show-report playwright-report",
+    "pw:ui": "playwright test --config=e2e/playwright.config.ts --ui"
   },
   "dependencies": {
     "axios": "^1.18.1",
@@ -19,6 +25,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "@tailwindcss/vite": "^4.3.2",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",

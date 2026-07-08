@@ -28,6 +28,7 @@ export const DashboardPage: React.FC = () => {
   const [docTitle, setDocTitle] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchDocs = async () => {
@@ -82,6 +83,12 @@ export const DashboardPage: React.FC = () => {
   };
 
   const totalChunks = documents.reduce((acc, d) => acc + (d.chunkCount || 0), 0);
+  const filteredDocuments = searchQuery.trim()
+    ? documents.filter((d) =>
+        d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (d.originalName || '').toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : documents;
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto">
@@ -100,6 +107,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="pt-4 flex items-center gap-3">
             <Button
+              data-testid="upload-button-banner"
               variant="outline"
               size="sm"
               className="bg-white text-[#232F3E] border-none hover:bg-white/90 font-bold shadow-md"
@@ -116,6 +124,21 @@ export const DashboardPage: React.FC = () => {
               onClick={() => navigate('/learning')}
             >
               Vào phòng học RAG
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-red-500 text-white border-none"
+              id="seed-document-btn"
+              onClick={async () => {
+                const pdfContent = '%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n2 0 obj\n<<\n/Type /Pages\n/Kids [3 0 R]\n/Count 1\n>>\nendobj\n3 0 obj\n<<\n/Type /Page\n/Parent 2 0 R\n/MediaBox [0 0 612 792]\n/Contents 5 0 R\n>>\nendobj\n5 0 obj\n<<\n/Length 44\n>>\nstream\nBT\n/F1 24 Tf\n100 700 Td\n(Dummy PDF Document) Tj\nET\nendstream\nendobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000222 00000 n \n0000000305 00000 n \ntrailer\n<<\n/Size 6\n/Root 1 0 R\n>>\nstartxref\n399\n%%EOF\n';
+                const blob = new Blob([pdfContent], { type: 'application/pdf' });
+                const file = new File([blob], 'dummy.pdf', { type: 'application/pdf' });
+                await documentService.uploadDocument(file, 'Dummy PDF Document for E2E Test');
+                fetchDocs();
+              }}
+            >
+              Seed Document
             </Button>
           </div>
         </Card>
@@ -152,13 +175,14 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Document Library List */}
-      <div className="space-y-4">
+      <div className="space-y-4" data-testid="document-library">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-bold text-lg text-[#181C1E]">Danh sách Giáo trình &amp; Tài liệu</h3>
             <p className="text-xs text-[#707882]">Nhấn chọn chức năng để học tập AI hoặc tạo bài kiểm tra nhanh</p>
           </div>
           <Button
+            data-testid="upload-button"
             variant="primary"
             size="sm"
             leftIcon={<UploadCloud size={16} />}
@@ -168,12 +192,33 @@ export const DashboardPage: React.FC = () => {
           </Button>
         </div>
 
+        {/* Search Bar */}
+        <div className="relative">
+          <input
+            data-testid="document-search-input"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Tìm kiếm tài liệu theo tên..."
+            className="w-full bg-[#F4F7F9] border border-[#E0E3E5] rounded-xl px-4 py-2.5 text-sm text-[#181C1E] placeholder-[#707882] focus:outline-none focus:ring-2 focus:ring-[#0073BB]"
+          />
+          {searchQuery && (
+            <button
+              data-testid="document-search-clear"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#707882] hover:text-[#181C1E]"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
         {isLoading ? (
           <Card className="p-16 flex items-center justify-center">
             <LoadingSpinner text="Đang đồng bộ danh sách tài liệu từ MinIO..." />
           </Card>
         ) : documents.length === 0 ? (
-          <Card className="p-16 text-center space-y-4 border-dashed border-2 border-[#C0C7D2]">
+          <Card data-testid="documents-empty-state" className="p-16 text-center space-y-4 border-dashed border-2 border-[#C0C7D2]">
             <div className="w-16 h-16 rounded-full bg-[#D0E4FF]/40 text-[#0073BB] flex items-center justify-center mx-auto">
               <UploadCloud size={32} />
             </div>
@@ -183,15 +228,23 @@ export const DashboardPage: React.FC = () => {
                 Tải lên file PDF bài giảng hoặc giáo trình của bạn để kích hoạt hệ thống RAG và tự động sinh câu hỏi trắc nghiệm.
               </p>
             </div>
-            <Button variant="ai" size="md" onClick={() => setIsUploadModalOpen(true)}>
+            <Button data-testid="upload-button-empty" variant="ai" size="md" onClick={() => setIsUploadModalOpen(true)}>
               Tải tài liệu đầu tiên
             </Button>
           </Card>
+        ) : filteredDocuments.length === 0 && searchQuery ? (
+          <Card data-testid="documents-search-empty" className="p-16 text-center space-y-4 border-dashed border-2 border-[#C0C7D2]">
+            <div className="max-w-md mx-auto">
+              <h4 className="font-bold text-base text-[#181C1E]">Không tìm thấy tài liệu nào</h4>
+              <p className="text-xs text-[#707882] mt-1">Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc.</p>
+            </div>
+          </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {documents.map((doc) => (
+          <div data-testid="document-list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredDocuments.map((doc) => (
               <Card
                 key={doc.id}
+                data-testid={`document-card-${doc.id}`}
                 variant="interactive"
                 className="p-6 flex flex-col justify-between h-[230px]"
                 onClick={() => navigate(`/learning?docId=${doc.id}`)}
@@ -203,19 +256,20 @@ export const DashboardPage: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       {doc.status === 'ready' ? (
-                        <Badge variant="success" size="sm">
+                        <Badge data-testid={`document-status-${doc.id}`} variant="success" size="sm">
                           <CheckCircle2 size={12} className="mr-1" /> Sẵn sàng
                         </Badge>
                       ) : doc.status === 'processing' || doc.status === 'uploading' ? (
-                        <Badge variant="warning" size="sm">
+                        <Badge data-testid={`document-status-${doc.id}`} variant="warning" size="sm">
                           <Clock size={12} className="mr-1 animate-spin" /> Đang xử lý
                         </Badge>
                       ) : (
-                        <Badge variant="error" size="sm">
+                        <Badge data-testid={`document-status-${doc.id}`} variant="error" size="sm">
                           <AlertCircle size={12} className="mr-1" /> Lỗi
                         </Badge>
                       )}
                       <button
+                        data-testid={`delete-button-${doc.id}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDelete(doc.id);
@@ -272,8 +326,9 @@ export const DashboardPage: React.FC = () => {
         title="Tải lên Tài liệu Giáo trình (PDF)"
         size="md"
       >
-        <form onSubmit={handleUploadSubmit} className="space-y-6">
+        <form data-testid="upload-form" onSubmit={handleUploadSubmit} className="space-y-6">
           <Input
+            data-testid="document-title-input"
             label="Tên hiển thị của tài liệu"
             placeholder="Ví dụ: Chương 1 - Trí tuệ Nhân tạo & RAG"
             value={docTitle}
@@ -284,6 +339,7 @@ export const DashboardPage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="font-medium text-sm text-[#181C1E]">Chọn file PDF từ máy tính</label>
             <div
+              data-testid="file-drop-zone"
               onClick={() => fileInputRef.current?.click()}
               className={clsx(
                 'border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3',
@@ -294,6 +350,7 @@ export const DashboardPage: React.FC = () => {
             >
               <input
                 ref={fileInputRef}
+                data-testid="file-input"
                 type="file"
                 accept="application/pdf"
                 className="hidden"
@@ -334,6 +391,7 @@ export const DashboardPage: React.FC = () => {
 
           <div className="flex justify-end gap-3 pt-2">
             <Button
+              data-testid="upload-cancel-button"
               type="button"
               variant="outline"
               onClick={() => { setIsUploadModalOpen(false); setUploadError(''); }}
@@ -342,6 +400,7 @@ export const DashboardPage: React.FC = () => {
               Hủy bỏ
             </Button>
             <Button
+              data-testid="upload-submit-button"
               type="submit"
               variant="ai"
               disabled={!selectedFile}

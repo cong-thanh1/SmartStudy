@@ -188,6 +188,7 @@ export const ExamCenterPage: React.FC = () => {
                   <BookOpen size={16} className="text-[#0073BB]" /> Chọn tài liệu nguồn từ Thư viện
                 </label>
                 <select
+                  data-testid="document-selector"
                   value={selectedDocId}
                   onChange={(e) => setSelectedDocId(e.target.value)}
                   className="w-full bg-[#F4F7F9] border border-[#E0E3E5] rounded-xl px-4 py-3 text-sm font-medium text-[#181C1E] focus:outline-none focus:ring-2 focus:ring-[#0073BB]"
@@ -210,6 +211,7 @@ export const ExamCenterPage: React.FC = () => {
                     <button
                       key={num}
                       type="button"
+                      data-testid={`num-questions-${num}`}
                       onClick={() => setNumQuestions(num)}
                       className={clsx(
                         'py-2.5 rounded-xl font-bold text-xs border transition-all',
@@ -234,6 +236,7 @@ export const ExamCenterPage: React.FC = () => {
                     <button
                       key={mins}
                       type="button"
+                      data-testid={`duration-${mins}`}
                       onClick={() => setDurationMinutes(mins)}
                       className={clsx(
                         'py-2.5 rounded-xl font-bold text-xs border transition-all',
@@ -252,6 +255,7 @@ export const ExamCenterPage: React.FC = () => {
             {/* Action Buttons */}
             <div className="pt-6 border-t border-[#E0E3E5] grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Button
+                data-testid="generate-quiz-button"
                 variant="outline"
                 size="lg"
                 className="w-full justify-center border-2 border-[#0073BB] text-[#0073BB] hover:bg-[#D0E4FF]/20 font-bold"
@@ -262,6 +266,7 @@ export const ExamCenterPage: React.FC = () => {
               </Button>
 
               <Button
+                data-testid="generate-exam-button"
                 variant="ai"
                 size="lg"
                 className="w-full justify-center font-bold"
@@ -331,6 +336,7 @@ export const ExamCenterPage: React.FC = () => {
           </div>
 
           <Button
+            data-testid="submit-exam-button-header"
             variant="primary"
             size="md"
             onClick={handleSubmitExam}
@@ -349,12 +355,12 @@ export const ExamCenterPage: React.FC = () => {
           const qText = q.question_text || q.questionText || '';
           const selectedOpt = userAnswers[qId];
           return (
-            <Card key={qId} className="p-6 space-y-4">
+            <Card key={qId} data-testid={`question-card-${qIdx}`} className="p-6 space-y-4">
               <div className="flex items-start gap-3">
                 <span className="w-7 h-7 rounded-full bg-[#D0E4FF] text-[#00497A] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                   {qIdx + 1}
                 </span>
-                <h4 className="font-bold text-sm text-[#181C1E] leading-relaxed flex-1">
+                <h4 data-testid={`question-text-${qIdx}`} className="font-bold text-sm text-[#181C1E] leading-relaxed flex-1">
                   {qText}
                 </h4>
               </div>
@@ -367,6 +373,7 @@ export const ExamCenterPage: React.FC = () => {
                     <button
                       key={optIdx}
                       type="button"
+                      data-testid={`option-${qIdx}-${optIdx}`}
                       onClick={() => handleOptionSelect(qId, optionText)}
                       className={clsx(
                         'w-full text-left p-3.5 rounded-xl font-medium text-xs border transition-all flex items-center gap-3 cursor-pointer',
@@ -398,6 +405,7 @@ export const ExamCenterPage: React.FC = () => {
       {/* Bottom Floating Submit CTA */}
       <div className="flex justify-center pt-6">
         <Button
+          data-testid="submit-exam-button"
           variant="ai"
           size="lg"
           onClick={handleSubmitExam}
