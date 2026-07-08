@@ -7,7 +7,7 @@ const providerEnvironmentSchema = z.object({
     .enum(["local", "voyage", "openai", "bedrock"])
     .default("local"),
   LLM_PROVIDER: z
-    .enum(["anthropic", "gemini", "bedrock"])
+    .enum(["anthropic", "gemini", "bedrock", "mock"])
     .default("anthropic"),
   QUEUE_PROVIDER: z.enum(["redis", "sqs"]).default("redis"),
   STORAGE_PROVIDER: z.literal("s3-compatible").default("s3-compatible"),

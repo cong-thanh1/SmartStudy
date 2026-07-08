@@ -102,7 +102,7 @@ export class ExamService implements IExamService {
 
     const systemPrompt = `You are an expert academic examiner. Generate an examination with exactly ${numQuestions} multiple-choice questions based on the provided text. ${diffText} Each question MUST have exactly 4 options, 1 correct answer (matching one option exactly or A/B/C/D), an explanation, and an assigned difficulty (easy, medium, or hard). Return ONLY a JSON object matching the requested schema without markdown or extra text.`;
     const schemaDescription =
-      "An object with property 'questions' which is an array of objects containing question_id, question_text, options (4 strings), correct_answer, explanation, and difficulty.";
+      "An object with property 'questions' which is an array of objects containing question_id (string), question_text (string), options (4 strings), correct_answer (string), explanation (string), and difficulty (string).";
 
     const maxAttempts = 3;
     let lastError = "Unknown error during exam generation.";

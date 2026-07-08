@@ -19,6 +19,7 @@ import { loadAnthropicLLMConfig } from "./adapters/llm/anthropic-llm-config.js";
 import { AnthropicLLMProvider } from "./adapters/llm/anthropic-llm-provider.js";
 import { loadGeminiLLMConfig } from "./adapters/llm/gemini-llm-config.js";
 import { GeminiLLMProvider } from "./adapters/llm/gemini-llm-provider.js";
+import { MockLLMProvider } from "./adapters/llm/mock-llm-provider.js";
 import { loadRedisQueueConfig } from "./adapters/queue/redis-queue-config.js";
 import { RedisQueueProvider } from "./adapters/queue/redis-queue-provider.js";
 import { loadS3CompatibleStorageConfig } from "./adapters/storage/s3-compatible-storage-config.js";
@@ -290,6 +291,7 @@ export function createLLMProviderFromEnv(
       anthropic: () =>
         new AnthropicLLMProvider(loadAnthropicLLMConfig(environment)),
       gemini: () => new GeminiLLMProvider(loadGeminiLLMConfig(environment)),
+      mock: () => new MockLLMProvider(),
     },
     queue: {},
     storage: {},

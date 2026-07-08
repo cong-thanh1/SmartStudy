@@ -21,29 +21,29 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
   const isPassed = percentage >= 70;
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn" data-testid="results-page">
       {/* Overview Score Header Card */}
       <Card variant="ai-glow" className="p-8 bg-gradient-to-br from-white via-[#F4F7F9] to-[#EFDBFF]/30">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
-            <Badge variant={isPassed ? 'success' : 'warning'} size="md">
+            <Badge data-testid="result-status-badge" variant={isPassed ? 'success' : 'warning'} size="md">
               {isPassed ? '🌟 Hoàn thành xuất sắc' : '💪 Cần cố gắng thêm'}
             </Badge>
             <h2 className="text-2xl font-bold text-[#181C1E] flex items-center justify-center md:justify-start gap-2">
               <span>Kết quả Phân tích Năng lực AI</span>
               <Sparkles className="w-6 h-6 text-[#8A2BE2] animate-bounce" />
             </h2>
-            <p className="text-sm text-[#404751] max-w-xl">
+            <p data-testid="ai-feedback-text" className="text-sm text-[#404751] max-w-xl">
               {result.aiFeedback || 'Hệ thống đã tự động chấm điểm và tổng hợp lỗi sai để giúp bạn cải thiện kiến thức nhanh chóng.'}
             </p>
           </div>
 
           <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-white shadow-md border border-[#E0E3E5] min-w-[160px]">
             <span className="text-xs font-semibold text-[#707882] uppercase tracking-wider">Điểm số của bạn</span>
-            <span className={clsx('text-4xl font-extrabold my-1', isPassed ? 'text-emerald-600' : 'text-[#8A2BE2]')}>
+            <span data-testid="score-display" className={clsx('text-4xl font-extrabold my-1', isPassed ? 'text-emerald-600' : 'text-[#8A2BE2]')}>
               {result.score} <span className="text-lg font-normal text-[#707882]">/ {result.totalPoints}</span>
             </span>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#F4F7F9] text-[#181C1E]">
+            <span data-testid="score-percentage" className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#F4F7F9] text-[#181C1E]">
               Đạt {percentage}%
             </span>
           </div>
@@ -69,6 +69,7 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
             return (
               <Card
                 key={detail.questionId}
+                data-testid={`result-question-${idx}`}
                 className={clsx(
                   'p-6 transition-all border-l-4',
                   detail.isCorrect ? 'border-l-emerald-500 bg-white' : 'border-l-[#BA1A1A] bg-[#FFDAD6]/10'
@@ -91,7 +92,7 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
                           Lựa chọn của bạn: {question.options[detail.userOption] || `Đáp án ${detail.userOption + 1}`}
                         </span>
                         {!detail.isCorrect && (
-                          <span className="font-semibold text-emerald-700">
+                          <span data-testid={`correct-answer-${idx}`} className="font-semibold text-emerald-700">
                             Đáp án đúng: {question.options[detail.correctOption] || `Đáp án ${detail.correctOption + 1}`}
                           </span>
                         )}
@@ -101,16 +102,16 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
 
                   <div className="shrink-0">
                     {detail.isCorrect ? (
-                      <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                      <CheckCircle2 data-testid={`result-correct-icon-${idx}`} className="w-6 h-6 text-emerald-500" />
                     ) : (
-                      <XCircle className="w-6 h-6 text-[#BA1A1A]" />
+                      <XCircle data-testid={`result-wrong-icon-${idx}`} className="w-6 h-6 text-[#BA1A1A]" />
                     )}
                   </div>
                 </div>
 
                 {/* AI Explanation for Wrong Answer */}
                 {!detail.isCorrect && detail.explanationForWrong && (
-                  <div className="mt-4 ml-10 p-4 rounded-xl bg-white border border-[#8A2BE2]/30 shadow-sm flex items-start gap-3">
+                  <div data-testid={`explanation-${idx}`} className="mt-4 ml-10 p-4 rounded-xl bg-white border border-[#8A2BE2]/30 shadow-sm flex items-start gap-3">
                     <Lightbulb className="w-5 h-5 text-[#8A2BE2] shrink-0 mt-0.5 animate-pulse" />
                     <div className="flex-1 text-xs space-y-1">
                       <p className="font-bold text-[#8A2BE2] uppercase tracking-wider text-[11px]">Phân tích lỗi sai từ AI:</p>
