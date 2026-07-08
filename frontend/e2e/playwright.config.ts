@@ -26,7 +26,6 @@ export default defineConfig({
     trace: 'on-first-retry',
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    storageState: path.join(__dirname, 'fixtures/storageState.json'),
     // Slow down interactions for observability in headed mode
     actionTimeout: 30_000,
     navigationTimeout: 30_000,
@@ -36,18 +35,23 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
-      use: { storageState: undefined }, // Don't load state for the login step
     },
     // Chromium tests — depend on auth setup
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        storageState: path.join(__dirname, 'fixtures/storageState.json') 
+      },
       dependencies: ['setup'],
     },
     // Firefox tests — depend on auth setup
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: { 
+        ...devices['Desktop Firefox'],
+        storageState: path.join(__dirname, 'fixtures/storageState.json')
+      },
       dependencies: ['setup'],
     },
   ],
