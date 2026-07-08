@@ -1,5 +1,9 @@
 import { test, expect, Page } from '@playwright/test';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import * as fs from 'fs';
 import { uniqueTitle, createMinimalPdfBuffer } from '../utils/test-data';
 
