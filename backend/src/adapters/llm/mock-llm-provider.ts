@@ -16,7 +16,6 @@ export class MockLLMProvider implements ILLMProvider {
 
     const questions = Array.from({ length: numQuestions }).map((_, i) => ({
       correct_answer: "Option A",
-      difficulty: "medium", // Used by exam, ignored by quiz
       explanation: "This is a mock explanation for the correct answer.",
       options: ["Option A", "Option B", "Option C", "Option D"],
       question_id: `q${i + 1}`,

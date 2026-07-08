@@ -25,6 +25,7 @@ dist-ssr
 
 # Playwright E2E test artifacts
 e2e/fixtures/storageState.json
+e2e/fixtures/*.pdf
 test-results/
 playwright-report/
 /playwright/.cache/
