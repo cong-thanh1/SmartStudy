@@ -24,7 +24,15 @@ export const generatedQuizQuestionSchema = z
   .object({
     correct_answer: z.string().trim().min(1),
     explanation: z.string().trim().min(1),
-    options: z.array(z.string().trim().min(1)).length(4),
+    options: z
+      .array(z.string().trim().min(1))
+      .length(4)
+      .refine(
+        (options) =>
+          new Set(options.map((option) => option.toLocaleLowerCase())).size ===
+          4,
+        "options must be distinct",
+      ),
     question_id: z.string().trim().min(1),
     question_text: z.string().trim().min(1),
   })
