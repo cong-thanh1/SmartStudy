@@ -205,7 +205,10 @@ export class QuizService implements IQuizService {
           maxTokens: 320,
           schemaDescription: JSON.stringify(questionSetJsonSchema(1, false)),
           systemPrompt,
-          temperature: 0.2,
+          // A retry must not repeat the same deterministic low-temperature
+          // decoding path; otherwise a malformed local-model answer is
+          // reproduced three times and generation always fails.
+          temperature: 0.2 + attempt * 0.15,
         });
         const parsed = generatedQuizSchema.safeParse(rawResult);
         const question = parsed.success ? parsed.data.questions[0] : undefined;
