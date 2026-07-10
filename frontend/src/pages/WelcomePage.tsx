@@ -69,6 +69,7 @@ export const WelcomePage: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <button
+            data-testid="auth-login-open"
             onClick={() => {
               setAuthMode('login');
               setIsAuthModalOpen(true);
@@ -78,6 +79,7 @@ export const WelcomePage: React.FC = () => {
             Đăng nhập
           </button>
           <Button
+            data-testid="auth-register-open"
             variant="ai"
             size="md"
             onClick={() => {
@@ -251,6 +253,7 @@ export const WelcomePage: React.FC = () => {
         <form onSubmit={handleAuthSubmit} className="space-y-4">
           {authMode === 'register' && (
             <Input
+              data-testid="auth-full-name-input"
               label="Họ và tên"
               placeholder="Nhập tên của bạn"
               value={name}
@@ -259,6 +262,7 @@ export const WelcomePage: React.FC = () => {
             />
           )}
           <Input
+            data-testid="auth-email-input"
             label="Địa chỉ Email"
             type="email"
             placeholder="student@smartstudy.ai"
@@ -268,6 +272,7 @@ export const WelcomePage: React.FC = () => {
             required
           />
           <Input
+            data-testid="auth-password-input"
             label={authMode === 'register' ? 'Mật khẩu (tối thiểu 12 ký tự)' : 'Mật khẩu'}
             type="password"
             placeholder={authMode === 'register' ? 'Nhập mật khẩu (≥ 12 ký tự)' : '••••••••'}
@@ -278,15 +283,16 @@ export const WelcomePage: React.FC = () => {
             minLength={authMode === 'register' ? 12 : 1}
           />
 
-          {error && <div className="p-3 rounded-lg bg-[#FFDAD6] text-[#93000A] text-xs font-medium">{error}</div>}
+          {error && <div data-testid="auth-error" className="p-3 rounded-lg bg-[#FFDAD6] text-[#93000A] text-xs font-medium">{error}</div>}
 
-          <Button type="submit" variant="ai" size="lg" className="w-full mt-2" isLoading={isLoading}>
+          <Button data-testid="auth-submit" type="submit" variant="ai" size="lg" className="w-full mt-2" isLoading={isLoading}>
             {authMode === 'login' ? 'Đăng nhập ngay' : 'Hoàn tất Đăng ký'}
           </Button>
 
           <div className="text-center pt-2 text-xs text-[#707882]">
             {authMode === 'login' ? 'Chưa có tài khoản? ' : 'Đã có tài khoản? '}
             <button
+              data-testid="auth-mode-switch"
               type="button"
               onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
               className="text-[#0073BB] font-bold hover:underline"
