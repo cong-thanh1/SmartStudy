@@ -11,7 +11,7 @@
  *   node e2e/setup.mjs
  *
  * Environment variables:
- *   BASE_URL       — Frontend URL (default: http://localhost:3000)
+ *   BASE_URL       — Frontend URL (default: http://localhost:5173)
  *   QA_EMAIL       — QA user email (default: qa_user_a@test.com)
  *   QA_PASSWORD    — QA user password (default: QaTestPassword123!)
  *   API_BASE_URL   — Backend API URL (default: http://localhost:3000/api/v1)
@@ -24,7 +24,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:8080';
 const API_BASE = process.env.API_BASE_URL || 'http://localhost:3000/api/v1';
 const QA_EMAIL = process.env.QA_EMAIL || 'qa_user_a@test.com';
 const QA_PASSWORD = process.env.QA_PASSWORD || 'QaTestPassword123!';
@@ -106,7 +106,7 @@ try {
     }
   );
   console.log('[Step 4] ✅ Auth setup complete — storageState.json created');
-} catch (err) {
+} catch {
   console.error('[Step 4] ❌ Auth setup failed. Check the error above.');
   console.error('   Make sure the frontend is running at:', BASE_URL);
   process.exit(1);

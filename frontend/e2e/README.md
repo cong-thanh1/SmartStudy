@@ -2,7 +2,7 @@
 
 ## Overview
 
-Playwright end-to-end test suite covering 6 features of SmartStudyAI across 5 test groups.
+Playwright end-to-end test suite that exercises the Docker application and its real local LLM.
 
 | Group | Feature | Branch | Spec File |
 |-------|---------|--------|-----------|
@@ -11,12 +11,22 @@ Playwright end-to-end test suite covering 6 features of SmartStudyAI across 5 te
 | 3 | Delete Document | `test/pw-documents-delete` | `tests/documents-delete.spec.ts` |
 | 4 | Quiz Generation | `test/pw-quiz-generation` | `tests/quiz-generation.spec.ts` |
 | 5 | Exam Generation | `test/pw-exam-generation` | `tests/exam-generation.spec.ts` |
+| 6 | Local AI Chat RAG & Tutor | `test/local-ai-e2e` | `tests/local-ai-chat-tutor.spec.ts` |
+| 7 | Local AI Summary | `test/local-ai-e2e` | `tests/summary-generation.spec.ts` |
 
 ## Prerequisites
 
-- Frontend running at `http://localhost:3000` (or set `BASE_URL`)
-- Backend running at `http://localhost:3000/api/v1` (or set `API_BASE_URL`)
-- Docker Compose services up: postgres, redis, minio, worker
+- Docker Compose services up, including `llama-cpp`, `api`, `worker`, and `frontend`.
+- The first start downloads the Qwen2.5 0.5B Q4 GGUF model once (~379 MB).
+- Tests use `http://localhost:8080` by default so the browser reaches the Docker nginx proxy and the real API container.
+
+```bash
+# From the repository root. The local LLM is CPU-only and configured for low-spec PCs.
+docker compose up -d --build
+docker compose ps
+```
+
+Do not run the suite against a separately started backend using `LLM_PROVIDER=mock`.
 
 ## Setup (One-time)
 
@@ -67,10 +77,10 @@ npm run pw:report
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `BASE_URL` | `http://localhost:3000` | Frontend URL |
+| `BASE_URL` | `http://localhost:8080` | Docker frontend URL |
 | `API_BASE_URL` | `http://localhost:3000/api/v1` | Backend API URL |
-| `QA_EMAIL` | `qa_user_a@test.com` | Test account email |
-| `QA_PASSWORD` | `QaTestPassword123!` | Test account password |
+| `QA_EMAIL` | Automatically generated | Existing test account email (optional) |
+| `QA_PASSWORD` | `QaTestPassword123!` | Password for `QA_EMAIL` (optional) |
 
 ## Key Design Decisions
 
@@ -92,7 +102,8 @@ The following `data-testid` attributes were added to the frontend as part of thi
 
 **ExamCenterPage:**
 - `document-selector`
-- `num-questions-{5|10|15|20}`, `duration-{10|15|30}`
+- `num-questions-{3|5|10|15|20}`, `duration-{10|15|30}`
+- `difficulty-{balanced|easy|medium|hard}`
 - `generate-quiz-button`, `generate-exam-button`
 - `submit-exam-button`, `submit-exam-button-header`
 - `question-card-{idx}`, `question-text-{idx}`, `option-{qIdx}-{optIdx}`
@@ -101,6 +112,11 @@ The following `data-testid` attributes were added to the frontend as part of thi
 - `results-page`, `result-status-badge`, `score-display`, `score-percentage`
 - `ai-feedback-text`
 - `result-question-{idx}`, `correct-answer-{idx}`
+
+**LearningSpacePage:**
+- `chat-tab`, `chat-input`, `chat-send-button`, `chat-assistant-message`, `chat-citation`
+- `summary-tab`, `summary-full-btn`, `summary-chapter-btn`, `summary-chapter-select`
+- `tutor-tab`, `tutor-input`, `tutor-ask-button`, `tutor-use-document-context`, `tutor-answer`
 - `result-correct-icon-{idx}`, `result-wrong-icon-{idx}`, `explanation-{idx}`
 
 ### Native dialog handling

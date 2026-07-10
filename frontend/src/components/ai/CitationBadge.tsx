@@ -18,6 +18,7 @@ export const CitationBadge: React.FC<CitationBadgeProps> = ({
   return (
     <div className="inline-block relative">
       <button
+        data-testid="chat-citation"
         onClick={() => onSelect?.(citation)}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}

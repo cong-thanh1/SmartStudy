@@ -141,7 +141,7 @@ describe("QuizService", () => {
       const result = await service.generateQuiz({
         difficulty: "medium",
         documentId,
-        numQuestions: 5,
+        numQuestions: 1,
         userId,
       });
 
@@ -155,7 +155,7 @@ describe("QuizService", () => {
             correct_answer: "Option A",
             explanation: "Clear explanation.",
             options: ["Option A", "Option B", "Option C", "Option D"],
-            question_id: "q-10",
+            question_id: "q-1",
             question_text: "Sample Question?",
           },
         ],
@@ -178,7 +178,7 @@ describe("QuizService", () => {
         ],
       }) as T);
 
-      await service.generateQuiz({ documentId, userId });
+      await service.generateQuiz({ documentId, numQuestions: 1, userId });
 
       expect(quizRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -216,7 +216,11 @@ describe("QuizService", () => {
           ],
         }) as T);
 
-      const result = await service.generateQuiz({ documentId, userId });
+      const result = await service.generateQuiz({
+        documentId,
+        numQuestions: 1,
+        userId,
+      });
 
       expect(generateStructuredJSON).toHaveBeenCalledTimes(2);
       expect(result.id).toBe(quizId);

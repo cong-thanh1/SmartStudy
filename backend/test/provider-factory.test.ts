@@ -18,6 +18,7 @@ import { JwtAuthProvider } from "../src/adapters/auth/jwt-auth-provider.js";
 import { LocalBgeM3Provider } from "../src/adapters/embedding/local-bge-m3-provider.js";
 import { AnthropicLLMProvider } from "../src/adapters/llm/anthropic-llm-provider.js";
 import { GeminiLLMProvider } from "../src/adapters/llm/gemini-llm-provider.js";
+import { LlamaCppLLMProvider } from "../src/adapters/llm/llama-cpp-llm-provider.js";
 import { RedisQueueProvider } from "../src/adapters/queue/redis-queue-provider.js";
 import { S3CompatibleStorageProvider } from "../src/adapters/storage/s3-compatible-storage-provider.js";
 import { PgVectorStore } from "../src/adapters/vector/pg-vector-store.js";
@@ -52,7 +53,7 @@ function createLocalRegistry(providers: Providers): ProviderRegistry {
     auth: { jwt: vi.fn(() => providers.auth) },
     email: { smtp: vi.fn(() => providers.email) },
     embedding: { local: vi.fn(() => providers.embedding) },
-    llm: { anthropic: vi.fn(() => providers.llm) },
+    llm: { "llama-cpp": vi.fn(() => providers.llm) },
     queue: { redis: vi.fn(() => providers.queue) },
     storage: { "s3-compatible": vi.fn(() => providers.storage) },
     vectorStore: { pgvector: vi.fn(() => providers.vectorStore) },
@@ -65,7 +66,7 @@ describe("provider config", () => {
       authProvider: "jwt",
       emailProvider: "smtp",
       embeddingProvider: "local",
-      llmProvider: "anthropic",
+      llmProvider: "llama-cpp",
       queueProvider: "redis",
       storageProvider: "s3-compatible",
       vectorStore: "pgvector",
@@ -111,7 +112,7 @@ describe("ProviderFactory", () => {
     expect(resolved).toEqual(providers);
     expect(registry.storage["s3-compatible"]).toHaveBeenCalledOnce();
     expect(registry.vectorStore.pgvector).toHaveBeenCalledOnce();
-    expect(registry.llm.anthropic).toHaveBeenCalledOnce();
+    expect(registry.llm["llama-cpp"]).toHaveBeenCalledOnce();
     expect(registry.embedding.local).toHaveBeenCalledOnce();
     expect(registry.auth.jwt).toHaveBeenCalledOnce();
     expect(registry.queue.redis).toHaveBeenCalledOnce();
@@ -187,6 +188,15 @@ describe("ProviderFactory", () => {
         LLM_PROVIDER: "gemini",
       }),
     ).toBeInstanceOf(GeminiLLMProvider);
+  });
+
+  it("composes the llama.cpp LLM adapter", () => {
+    expect(
+      createLLMProviderFromEnv({
+        LLAMA_CPP_BASE_URL: "http://localhost:8080",
+        LLM_PROVIDER: "llama-cpp",
+      }),
+    ).toBeInstanceOf(LlamaCppLLMProvider);
   });
   it("defers missing LLM configuration until the provider is used", async () => {
     const provider = createLazyLLMProviderFromEnv({

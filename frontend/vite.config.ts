@@ -12,7 +12,9 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    // Port 3000 is used by the local API. Keeping Vite on its conventional
+    // development port lets the proxy below forward API calls correctly.
+    port: 5173,
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:3000',

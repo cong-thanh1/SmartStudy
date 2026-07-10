@@ -29,7 +29,7 @@ function getAuthHeaders(token: string): Record<string, string> {
  * Get access token from Playwright storageState.
  * The token is saved in localStorage from the auth setup step.
  */
-export async function getTokenFromStorage(request: APIRequestContext): Promise<string> {
+export async function getTokenFromStorage(_request: APIRequestContext): Promise<string> {
   // We call /auth/refresh with the stored refresh token,
   // but since request context already has cookies/localStorage from storageState,
   // we can retrieve the token by checking the API behavior.
@@ -86,7 +86,7 @@ export async function uploadDocumentViaApi(
   token: string,
   title: string,
   pdfBuffer: Buffer,
-  baseUrl = 'http://localhost:3000'
+  _baseUrl = 'http://localhost:3000'
 ): Promise<string | null> {
   // Step 1: Get presigned URL
   const presignResp = await request.post(`${API_BASE}/documents/upload-url`, {
