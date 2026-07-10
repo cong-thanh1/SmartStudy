@@ -8,10 +8,21 @@ import { createMinimalPdfBuffer, uniqueTitle } from '../utils/test-data';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const FIXTURE_PATH = path.join(__dirname, '../fixtures/local_ai_learning.pdf');
+const EVIDENCE_DIR = path.resolve(__dirname, '../../../docs/test-evidence/chat');
 
 let documentId: string | undefined;
 
 test.describe.configure({ mode: 'serial' });
+
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status !== 'passed') return;
+  const caseId = testInfo.title.match(/TC\d+\.\d+/)?.[0] ?? 'chat';
+  fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
+  await page.screenshot({
+    fullPage: true,
+    path: path.join(EVIDENCE_DIR, `${caseId}-${testInfo.project.name}.png`),
+  });
+});
 
 test.beforeAll(() => {
   fs.writeFileSync(
@@ -80,6 +91,56 @@ test.describe('AI local — Chat RAG và Tutor', () => {
 
     await expect(page.getByTestId('chat-assistant-message')).toBeVisible();
     await expect(page.getByTestId('chat-citation').first()).toBeVisible();
+  });
+
+  test('TC3.2 — câu hỏi ngoài tài liệu vẫn được trả lời theo ngữ cảnh tài liệu, có citation hợp lệ', async ({ page }) => {
+    const docId = await ensureReadyDocument(page);
+    await page.goto(`/learning-space?docId=${docId}`);
+    const responsePromise = page.waitForResponse(
+      (response) => response.url().includes('/messages') && response.request().method() === 'POST',
+      { timeout: 90_000 },
+    );
+    await page.getByTestId('chat-input').fill('What is the weather forecast in Hanoi tomorrow?');
+    await page.getByTestId('chat-send-button').click();
+
+    const body = await (await responsePromise).json() as {
+      assistantMessage: { citations: Array<{ documentId: string; snippet: string }>; content: string };
+    };
+    expect(body.assistantMessage.content.trim()).not.toBe('');
+    expect(body.assistantMessage.citations.length).toBeGreaterThan(0);
+    expect(body.assistantMessage.citations.every((citation) => citation.documentId === docId)).toBe(true);
+    await expect(page.getByTestId('chat-assistant-message')).toBeVisible();
+  });
+
+  test('TC3.3 — không gửi API khi câu hỏi rỗng hoặc chỉ có khoảng trắng', async ({ page }) => {
+    const docId = await ensureReadyDocument(page);
+    await page.goto(`/learning-space?docId=${docId}`);
+    let messageRequests = 0;
+    page.on('request', (request) => {
+      if (request.url().includes('/messages') && request.method() === 'POST') messageRequests += 1;
+    });
+    await page.getByTestId('chat-input').fill('   ');
+    await expect(page.getByTestId('chat-send-button')).toBeDisabled();
+    expect(messageRequests).toBe(0);
+  });
+
+  test('TC3.4 — giữ được hội thoại nhiều lượt trong cùng conversation', async ({ page }) => {
+    const docId = await ensureReadyDocument(page);
+    await page.goto(`/learning-space?docId=${docId}`);
+    for (const question of [
+      'What does RAG retrieve before generating an answer?',
+      'Why are citations useful for that process?',
+    ]) {
+      const response = page.waitForResponse(
+        (candidate) => candidate.url().includes('/messages') && candidate.request().method() === 'POST',
+        { timeout: 90_000 },
+      );
+      await page.getByTestId('chat-input').fill(question);
+      await page.getByTestId('chat-send-button').click();
+      expect((await response).status()).toBe(201);
+    }
+    await expect(page.getByTestId('chat-user-message')).toHaveCount(2);
+    await expect(page.getByTestId('chat-assistant-message')).toHaveCount(2);
   });
 
   test('TC8.1 — Tutor giải thích khái niệm trong tài liệu đã chọn', async ({ page }) => {
