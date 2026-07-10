@@ -389,7 +389,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {uploadError && (
-            <div className="p-3 rounded-lg bg-[#FFDAD6] text-[#93000A] text-xs font-medium">
+            <div data-testid="upload-error" className="p-3 rounded-lg bg-[#FFDAD6] text-[#93000A] text-xs font-medium">
               {uploadError}
             </div>
           )}
