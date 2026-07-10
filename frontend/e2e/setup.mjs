@@ -106,7 +106,7 @@ try {
     }
   );
   console.log('[Step 4] ✅ Auth setup complete — storageState.json created');
-} catch (err) {
+} catch {
   console.error('[Step 4] ❌ Auth setup failed. Check the error above.');
   console.error('   Make sure the frontend is running at:', BASE_URL);
   process.exit(1);

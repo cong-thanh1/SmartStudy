@@ -380,17 +380,21 @@ describe("SummaryService", () => {
 
   it("throws when the LLM returns invalid summary JSON", async () => {
     const { llmProvider, service, summaryRepository } = createService();
-    vi.mocked(llmProvider.generateStructuredJSON).mockImplementationOnce(
+    vi.mocked(llmProvider.generateStructuredJSON).mockImplementation(
       async <T>(): Promise<T> =>
         ({
           keyPoints: [],
           summaryText: "",
         }) as T,
     );
+    vi.mocked(llmProvider.generateText).mockRejectedValue(
+      new Error("LLM fallback unavailable"),
+    );
 
     await expect(
       service.summarizeFullDocument({ documentId, userId }),
     ).rejects.toThrow(SummaryGenerationFailedError);
+    expect(llmProvider.generateStructuredJSON).toHaveBeenCalledTimes(3);
     expect(summaryRepository.saveFullDocumentSummary).not.toHaveBeenCalled();
   });
 
