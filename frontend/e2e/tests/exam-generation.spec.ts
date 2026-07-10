@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const EVIDENCE_DIR = path.resolve(__dirname, '../../../docs/test-evidence/exam');
 import * as fs from 'fs';
 import { uniqueTitle, createMinimalPdfBuffer } from '../utils/test-data';
 
@@ -47,6 +48,15 @@ test.beforeAll(async () => {
 // ─── Shared state ────────────────────────────────────────────────────────────
 
 let sharedReadyDocId: string | null = null;
+
+test.describe.configure({ mode: 'serial' });
+
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status !== 'passed') return;
+  const caseId = testInfo.title.match(/TC\d+\.\d+/)?.[0] ?? 'exam';
+  fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
+  await page.screenshot({ fullPage: true, path: path.join(EVIDENCE_DIR, `${caseId}-${testInfo.project.name}.png`) });
+});
 
 async function ensureReadyDocument(page: Page): Promise<string> {
   if (sharedReadyDocId) return sharedReadyDocId;
