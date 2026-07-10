@@ -24,6 +24,12 @@ export interface AuthResponse {
 // Document Management Types
 export type DocumentStatus = 'processing' | 'ready' | 'failed' | 'uploading';
 
+export interface DocumentChapter {
+  chapterTitle: string;
+  startPage: number;
+  endPage: number;
+}
+
 export interface Document {
   id: string;
   userId: string;
@@ -36,6 +42,7 @@ export interface Document {
   originalName?: string;
   mimeType?: string;
   sizeBytes?: number;
+  chapters?: readonly DocumentChapter[];
 }
 
 export interface PresignedUploadResponse {

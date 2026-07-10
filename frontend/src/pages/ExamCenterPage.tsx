@@ -22,8 +22,9 @@ export const ExamCenterPage: React.FC = () => {
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDocId, setSelectedDocId] = useState<string>(docIdParam || '');
-  const [numQuestions, setNumQuestions] = useState(5);
+  const [numQuestions, setNumQuestions] = useState(3);
   const [durationMinutes, setDurationMinutes] = useState(15);
+  const [difficulty, setDifficulty] = useState<'balanced' | 'easy' | 'medium' | 'hard'>('balanced');
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Active Exam / Quiz State
@@ -86,7 +87,19 @@ export const ExamCenterPage: React.FC = () => {
     if (!selectedDocId) return;
     setIsGenerating(true);
     try {
-      const exam = await examService.generateExam(selectedDocId, numQuestions, durationMinutes);
+      const difficultyDistribution = difficulty === 'balanced'
+        ? undefined
+        : difficulty === 'easy'
+          ? { easy: 100, medium: 0, hard: 0 }
+          : difficulty === 'medium'
+            ? { easy: 0, medium: 100, hard: 0 }
+            : { easy: 0, medium: 0, hard: 100 };
+      const exam = await examService.generateExam(
+        selectedDocId,
+        numQuestions,
+        durationMinutes,
+        difficultyDistribution,
+      );
       setActiveExam(exam);
       setActiveQuiz(null);
       setUserAnswers({});
@@ -206,8 +219,8 @@ export const ExamCenterPage: React.FC = () => {
                 <label className="font-semibold text-sm text-[#181C1E] flex items-center gap-2">
                   <FileQuestion size={16} className="text-[#8A2BE2]" /> Số lượng câu hỏi trắc nghiệm
                 </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {[5, 10, 15, 20].map((num) => (
+                <div className="grid grid-cols-5 gap-2">
+                  {[3, 5, 10, 15, 20].map((num) => (
                     <button
                       key={num}
                       type="button"
@@ -246,6 +259,35 @@ export const ExamCenterPage: React.FC = () => {
                       )}
                     >
                       {mins} phút
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <label className="font-semibold text-sm text-[#181C1E] flex items-center gap-2">
+                  <Sparkles size={16} className="text-[#8A2BE2]" /> Mức độ khó của đề thi
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {([
+                    ['balanced', 'Cân bằng'],
+                    ['easy', 'Dễ'],
+                    ['medium', 'Trung bình'],
+                    ['hard', 'Khó'],
+                  ] as const).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      data-testid={`difficulty-${value}`}
+                      onClick={() => setDifficulty(value)}
+                      className={clsx(
+                        'py-2.5 rounded-xl font-bold text-xs border transition-all',
+                        difficulty === value
+                          ? 'bg-[#8A2BE2] text-white border-[#8A2BE2] shadow-sm'
+                          : 'bg-[#F4F7F9] text-[#404751] border-[#E0E3E5] hover:border-[#8A2BE2]'
+                      )}
+                    >
+                      {label}
                     </button>
                   ))}
                 </div>

@@ -28,7 +28,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSelectCitatio
   };
 
   return (
-    <div className={clsx('flex gap-3.5 max-w-[85%] animate-fadeIn', isAi ? 'self-start' : 'self-end flex-row-reverse')}>
+    <div
+      data-testid={isAi ? 'chat-assistant-message' : 'chat-user-message'}
+      className={clsx('flex gap-3.5 max-w-[85%] animate-fadeIn', isAi ? 'self-start' : 'self-end flex-row-reverse')}
+    >
       {/* Avatar */}
       <div
         className={clsx(

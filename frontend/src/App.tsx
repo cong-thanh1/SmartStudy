@@ -19,9 +19,10 @@ export const App: React.FC = () => {
 
         {/* Main Application Layout with Sidebar & Navbar */}
         <Route element={<AppLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/learning" element={<LearningSpacePage />} />
-          <Route path="/exam-center" element={<ExamCenterPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/learning" element={<LearningSpacePage />} />
+        <Route path="/learning-space" element={<LearningSpacePage />} />
+        <Route path="/exam-center" element={<ExamCenterPage />} />
           <Route path="/results" element={<ResultsPage />} />
         </Route>
 

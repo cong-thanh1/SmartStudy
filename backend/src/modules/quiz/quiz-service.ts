@@ -85,52 +85,34 @@ export class QuizService implements IQuizService {
       ? `Focus specifically on chapter "${input.chapterRef}".`
       : "Cover the key concepts of the document.";
 
-    const systemPrompt = `You are an expert educational assessment creator. Generate exactly ${numQuestions} multiple-choice questions based on the provided study material. ${difficultyText} ${chapterText} Each question MUST have exactly 4 options, 1 correct answer (must exactly match one of the 4 options or be option letter A, B, C, or D), and a clear pedagogical explanation. Return ONLY a JSON object matching the requested schema without markdown formatting or commentary.`;
-    const schemaDescription =
-      "An object with property 'questions' which is an array of objects containing question_id (string), question_text (string), options (array of 4 strings), correct_answer (string matching one of options or A/B/C/D), and explanation (string).";
+    const systemPrompt = `You are an expert educational assessment creator. Generate one multiple-choice question based on the provided study material. ${difficultyText} ${chapterText} The question MUST have exactly 4 distinct options, 1 correct answer matching one option exactly, and a concise explanation. Return ONLY a JSON object matching the requested schema without markdown formatting or commentary.`;
+    const generatedQuestions: GeneratedQuizQuestion[] = [];
 
-    const maxAttempts = 3;
-    let lastError = "Unknown error during quiz generation.";
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const rawResult = await this.llmProvider.generateStructuredJSON<unknown>(
-          {
-            messages: [{ content: sourceText, role: "user" }],
-            schemaDescription,
-            systemPrompt,
-            temperature: 0.4,
-          },
-        );
-
-        const parsed = generatedQuizSchema.safeParse(rawResult);
-        if (!parsed.success) {
-          lastError = `Zod schema validation failed: ${parsed.error.message}`;
-          continue;
-        }
-
-        const validQuestions = this.normalizeAndValidateQuestions(
-          parsed.data.questions,
-        );
-        if (validQuestions.length === 0) {
-          lastError = "No valid questions after answer normalization.";
-          continue;
-        }
-
-        return await this.quizRepository.save({
-          difficulty: input.difficulty ?? null,
-          documentId: input.documentId,
-          questions: validQuestions,
-          userId: input.userId,
-        });
-      } catch (error) {
-        lastError = error instanceof Error ? error.message : String(error);
-      }
+    // Small CPU-only models are much more reliable when grammar-constrained
+    // output contains one question, rather than a long array that can exhaust
+    // the context window halfway through JSON generation.
+    for (let index = 0; index < numQuestions; index++) {
+      const generated = await this.generateOneQuestion(
+        sourceText,
+        `${systemPrompt}\nThis is question ${index + 1} of ${numQuestions}.`,
+      );
+      generatedQuestions.push({
+        ...generated,
+        question_id: `q-${index + 1}`,
+      });
     }
 
-    throw new QuizGenerationError(
-      `Failed to generate valid quiz after ${maxAttempts} attempts. Last error: ${lastError}`,
-    );
+    const validQuestions = this.normalizeAndValidateQuestions(generatedQuestions);
+    if (validQuestions.length !== numQuestions) {
+      throw new QuizGenerationError("A generated quiz contained an invalid question.");
+    }
+
+    return this.quizRepository.save({
+      difficulty: input.difficulty ?? null,
+      documentId: input.documentId,
+      questions: validQuestions,
+      userId: input.userId,
+    });
   }
 
   async getQuiz(input: GetQuizInput): Promise<QuizRecord> {
@@ -209,4 +191,77 @@ export class QuizService implements IQuizService {
 
     return valid;
   }
+
+  private async generateOneQuestion(
+    sourceText: string,
+    systemPrompt: string,
+  ): Promise<GeneratedQuizQuestion> {
+    let lastError = "Unknown error during question generation.";
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const rawResult = await this.llmProvider.generateStructuredJSON<unknown>({
+          messages: [{ content: sourceText, role: "user" }],
+          maxTokens: 320,
+          schemaDescription: JSON.stringify(questionSetJsonSchema(1, false)),
+          systemPrompt,
+          temperature: 0.2,
+        });
+        const parsed = generatedQuizSchema.safeParse(rawResult);
+        const question = parsed.success ? parsed.data.questions[0] : undefined;
+        if (question) return question;
+        lastError = parsed.success ? "LLM returned no question." : parsed.error.message;
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
+      }
+    }
+
+    throw new QuizGenerationError(
+      `Failed to generate a valid quiz question. Last error: ${lastError}`,
+    );
+  }
+}
+
+function questionSetJsonSchema(
+  numQuestions: number,
+  includeDifficulty: boolean,
+): Record<string, unknown> {
+  const questionProperties: Record<string, unknown> = {
+    correct_answer: { type: "string" },
+    explanation: { type: "string" },
+    options: {
+      items: { type: "string" },
+      maxItems: 4,
+      minItems: 4,
+      type: "array",
+    },
+    question_id: { type: "string" },
+    question_text: { type: "string" },
+  };
+
+  if (includeDifficulty) {
+    questionProperties.difficulty = {
+      enum: ["easy", "medium", "hard"],
+      type: "string",
+    };
+  }
+
+  return {
+    additionalProperties: false,
+    properties: {
+      questions: {
+        items: {
+          additionalProperties: false,
+          properties: questionProperties,
+          required: Object.keys(questionProperties),
+          type: "object",
+        },
+        maxItems: numQuestions,
+        minItems: numQuestions,
+        type: "array",
+      },
+    },
+    required: ["questions"],
+    type: "object",
+  };
 }

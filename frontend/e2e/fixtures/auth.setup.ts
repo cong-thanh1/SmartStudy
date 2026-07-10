@@ -18,12 +18,14 @@ import * as fs from 'fs';
 
 const STATE_FILE = path.join(__dirname, 'storageState.json');
 
-const QA_EMAIL = process.env.QA_EMAIL || 'qa_user_a@test.com';
+const hasConfiguredCredentials = Boolean(process.env.QA_EMAIL && process.env.QA_PASSWORD);
+const QA_EMAIL = process.env.QA_EMAIL || `playwright-${Date.now()}@test.invalid`;
 const QA_PASSWORD = process.env.QA_PASSWORD || 'QaTestPassword123!';
 
 setup('authenticate — login once and save session', async ({ page }) => {
   // Navigate to landing page
   await page.goto('/welcome');
+  console.log(`   E2E base URL: ${new URL(page.url()).origin}`);
   await expect(page).toHaveTitle(/SmartStudy/i, { timeout: 15_000 });
 
   // Open login modal — click "Đăng nhập" in the header
@@ -32,12 +34,24 @@ setup('authenticate — login once and save session', async ({ page }) => {
   // Wait for modal to appear
   await expect(page.getByRole('heading', { name: /đăng nhập/i })).toBeVisible();
 
+  // The default account is isolated per run, so an old account with a changed
+  // password cannot make the whole E2E suite fail before it starts. Explicit
+  // QA_EMAIL/QA_PASSWORD values keep the normal login path.
+  if (!hasConfiguredCredentials) {
+    await page.getByRole('button', { name: /đăng ký ngay/i }).click();
+    await page.locator('input').first().fill('Playwright E2E');
+  }
+
   // Fill credentials
   await page.getByLabel(/địa chỉ email/i).fill(QA_EMAIL);
   await page.getByLabel(/mật khẩu/i).fill(QA_PASSWORD);
 
   // Submit
-  await page.getByRole('button', { name: /đăng nhập ngay/i }).click();
+  await page
+    .getByRole('button', {
+      name: hasConfiguredCredentials ? /đăng nhập ngay/i : /hoàn tất đăng ký/i,
+    })
+    .click();
 
   // Wait for redirect to dashboard
   await page.waitForURL(/dashboard/, { timeout: 20_000 });

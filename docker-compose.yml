@@ -68,6 +68,48 @@ services:
         mc mb --ignore-existing "local/$${MINIO_BUCKET}";
         mc anonymous set none "local/$${MINIO_BUCKET}";
 
+  # A real local LLM, configured for low-spec PCs: Qwen 0.5B in Q4 format.
+  # The model is downloaded once into the named volume by llama-cpp-init.
+  llama-cpp:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    restart: unless-stopped
+    depends_on:
+      llama-cpp-init:
+        condition: service_completed_successfully
+    command:
+      - -m
+      - /models/qwen2.5-0.5b-instruct-q4_k_m.gguf
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --ctx-size
+      - "2048"
+      - --threads
+      - "2"
+      - --parallel
+      - "1"
+    ports:
+      - "${LLAMA_CPP_PORT:-127.0.0.1:8081}:8080"
+    volumes:
+      - llama-cpp-models:/models
+    healthcheck:
+      test: ["CMD", "/app/llama-server", "--help"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  llama-cpp-init:
+    image: curlimages/curl:8.16.0
+    restart: "no"
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - if [ ! -f /models/qwen2.5-0.5b-instruct-q4_k_m.gguf ]; then curl --fail --location --retry 3 --output /models/qwen2.5-0.5b-instruct-q4_k_m.gguf https://huggingface.co/bartowski/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf; fi
+    volumes:
+      - llama-cpp-models:/models
+
   migrate:
     build:
       context: ./backend
@@ -118,7 +160,9 @@ services:
       JWT_ISSUER: ${JWT_ISSUER:-smartstudy-api}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-smartstudy-web}
       BCRYPT_COST: ${BCRYPT_COST:-12}
-      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
+      # Compose is the local runtime and must never silently inherit a host
+      # test setting such as LLM_PROVIDER=mock.
+      LLM_PROVIDER: llama-cpp
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-6}
       ANTHROPIC_MAX_TOKENS: ${ANTHROPIC_MAX_TOKENS:-4096}
@@ -128,6 +172,9 @@ services:
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
       GEMINI_MAX_TOKENS: ${GEMINI_MAX_TOKENS:-4096}
       GEMINI_TIMEOUT_MILLISECONDS: ${GEMINI_TIMEOUT_MILLISECONDS:-120000}
+      LLAMA_CPP_BASE_URL: http://llama-cpp:8080
+      LLAMA_CPP_MAX_TOKENS: ${LLAMA_CPP_MAX_TOKENS:-1024}
+      LLAMA_CPP_TIMEOUT_MILLISECONDS: ${LLAMA_CPP_TIMEOUT_MILLISECONDS:-120000}
       EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-local}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-onnx-community/bge-m3-ONNX}
       EMBEDDING_DTYPE: ${EMBEDDING_DTYPE:-q8}
@@ -143,6 +190,8 @@ services:
       redis:
         condition: service_healthy
       minio-init:
+        condition: service_completed_successfully
+      llama-cpp-init:
         condition: service_completed_successfully
       migrate:
         condition: service_completed_successfully
@@ -188,7 +237,8 @@ services:
       AUTH_PROVIDER: ${AUTH_PROVIDER:-jwt}
       QUEUE_PROVIDER: ${QUEUE_PROVIDER:-redis}
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
-      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
+      # Keep the document worker on the same real local model as the API.
+      LLM_PROVIDER: llama-cpp
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-6}
       ANTHROPIC_MAX_TOKENS: ${ANTHROPIC_MAX_TOKENS:-4096}
@@ -198,6 +248,9 @@ services:
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
       GEMINI_MAX_TOKENS: ${GEMINI_MAX_TOKENS:-4096}
       GEMINI_TIMEOUT_MILLISECONDS: ${GEMINI_TIMEOUT_MILLISECONDS:-120000}
+      LLAMA_CPP_BASE_URL: http://llama-cpp:8080
+      LLAMA_CPP_MAX_TOKENS: ${LLAMA_CPP_MAX_TOKENS:-1024}
+      LLAMA_CPP_TIMEOUT_MILLISECONDS: ${LLAMA_CPP_TIMEOUT_MILLISECONDS:-120000}
       EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-local}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-onnx-community/bge-m3-ONNX}
       EMBEDDING_DTYPE: ${EMBEDDING_DTYPE:-q8}
@@ -211,6 +264,8 @@ services:
       redis:
         condition: service_healthy
       minio-init:
+        condition: service_completed_successfully
+      llama-cpp-init:
         condition: service_completed_successfully
       migrate:
         condition: service_completed_successfully
@@ -245,3 +300,4 @@ volumes:
   redis-data:
   minio-data:
   embedding-model-cache:
+  llama-cpp-models:

@@ -41,7 +41,11 @@ export function createExamRouter(
           : { timeLimitMinutes: body.timeLimitMinutes }),
       });
 
-      response.status(201).json({ exam });
+      // An active exam must never disclose its answer key. The key is only
+      // exposed through the graded attempt returned after submission.
+      const { answerKey: _answerKey, ...examForTaking } = exam;
+      void _answerKey;
+      response.status(201).json({ exam: examForTaking });
     }),
   );
 

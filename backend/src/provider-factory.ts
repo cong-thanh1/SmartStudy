@@ -20,6 +20,8 @@ import { AnthropicLLMProvider } from "./adapters/llm/anthropic-llm-provider.js";
 import { loadGeminiLLMConfig } from "./adapters/llm/gemini-llm-config.js";
 import { GeminiLLMProvider } from "./adapters/llm/gemini-llm-provider.js";
 import { MockLLMProvider } from "./adapters/llm/mock-llm-provider.js";
+import { loadLlamaCppLLMConfig } from "./adapters/llm/llama-cpp-llm-config.js";
+import { LlamaCppLLMProvider } from "./adapters/llm/llama-cpp-llm-provider.js";
 import { loadRedisQueueConfig } from "./adapters/queue/redis-queue-config.js";
 import { RedisQueueProvider } from "./adapters/queue/redis-queue-provider.js";
 import { loadS3CompatibleStorageConfig } from "./adapters/storage/s3-compatible-storage-config.js";
@@ -292,6 +294,7 @@ export function createLLMProviderFromEnv(
         new AnthropicLLMProvider(loadAnthropicLLMConfig(environment)),
       gemini: () => new GeminiLLMProvider(loadGeminiLLMConfig(environment)),
       mock: () => new MockLLMProvider(),
+      "llama-cpp": () => new LlamaCppLLMProvider(loadLlamaCppLLMConfig(environment)),
     },
     queue: {},
     storage: {},
@@ -345,6 +348,12 @@ class LazyLLMProvider implements ILLMProvider {
 
     try {
       this.provider = this.createProvider();
+      console.info(
+        JSON.stringify({
+          event: "llm_provider_initialized",
+          provider: this.provider.constructor.name,
+        }),
+      );
       return this.provider;
     } catch (error) {
       throw new ProviderConfigurationError("llm", { cause: error });
