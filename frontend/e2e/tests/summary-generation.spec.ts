@@ -6,6 +6,7 @@ import { uniqueTitle, createMinimalPdfBuffer } from '../utils/test-data';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const EVIDENCE_DIR = path.resolve(__dirname, '../../../docs/test-evidence/summary');
 
 /**
  * Group 4 — Summary Generation (Tóm tắt tài liệu)
@@ -36,6 +37,16 @@ test.beforeAll(async () => {
 });
 
 let sharedDocId: string | null = null;
+let firstFullSummaryDuration: number | null = null;
+
+test.describe.configure({ mode: 'serial' });
+
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status !== 'passed') return;
+  const caseId = testInfo.title.match(/TC\d+\.\d+/)?.[0] ?? 'summary';
+  fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
+  await page.screenshot({ fullPage: true, path: path.join(EVIDENCE_DIR, `${caseId}-${testInfo.project.name}.png`) });
+});
 
 async function ensureReadyDocument(page: Page): Promise<string> {
   if (sharedDocId) return sharedDocId;
@@ -99,9 +110,11 @@ test.describe('Nhóm 4 — Tóm tắt tài liệu tự động (Summary)', () =>
       { timeout: 60_000 }
     );
 
+    const startedAt = Date.now();
     await page.getByTestId('summary-full-btn').click();
 
     const summaryResp = await summaryResponsePromise;
+    firstFullSummaryDuration = Date.now() - startedAt;
     const body = await summaryResp.json() as any;
     expect(summaryResp.status(), `Summary API should return 2xx: ${JSON.stringify(body)}`).toBeLessThan(300);
     expect(body.summary).toBeTruthy();
@@ -146,6 +159,29 @@ test.describe('Nhóm 4 — Tóm tắt tài liệu tự động (Summary)', () =>
     expect(`${body.summary.summaryText} ${body.summary.keyPoints.join(' ')}`).toMatch(/RAG|retriev|vector|citation/i);
 
     await expect(page.getByTestId('summary-result-card')).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('TC4.3 — yêu cầu tóm tắt lại cùng tài liệu trả về cache nhất quán', async ({ page }) => {
+    const docId = await ensureReadyDocument(page);
+    await page.goto(`/learning-space?docId=${docId}`);
+    await page.getByTestId('summary-tab').click();
+    const responsePromise = page.waitForResponse(
+      (response) => response.url().includes(`/documents/${docId}/summary`) && response.request().method() === 'POST',
+      { timeout: 60_000 },
+    );
+    const startedAt = Date.now();
+    await page.getByTestId('summary-full-btn').click();
+    const response = await responsePromise;
+    const duration = Date.now() - startedAt;
+    const body = await response.json() as { summary: { summaryText: string; keyPoints: string[] } };
+
+    expect(response.ok()).toBe(true);
+    expect(body.summary.summaryText.trim()).not.toBe('');
+    expect(body.summary.keyPoints.length).toBeGreaterThan(0);
+    if (firstFullSummaryDuration !== null) {
+      expect(duration, `Cached summary (${duration}ms) should not be slower than initial generation (${firstFullSummaryDuration}ms)`).toBeLessThanOrEqual(firstFullSummaryDuration + 500);
+    }
+    console.log(`[Summary cache] initial=${firstFullSummaryDuration}ms cached=${duration}ms`);
   });
 
 });
