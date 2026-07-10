@@ -114,6 +114,7 @@ export const Sidebar: React.FC = () => {
             </div>
           )}
           <button
+            data-testid="logout-button"
             onClick={handleLogout}
             className="p-2 rounded-lg text-[#FFDAD6] hover:bg-[#BA1A1A]/20 transition-colors shrink-0"
             title="Đăng xuất"
