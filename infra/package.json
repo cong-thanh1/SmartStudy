@@ -9,6 +9,7 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "aws-cdk": "^2.1130.0",
+    "esbuild": "^0.28.1",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
     "vitest": "^3.0.0"

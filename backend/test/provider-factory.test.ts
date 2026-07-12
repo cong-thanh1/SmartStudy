@@ -263,15 +263,14 @@ describe("ProviderFactory", () => {
     ).toBeInstanceOf(PgVectorStore);
   });
 
-  it("fails fast for a vector store adapter that is not implemented yet", () => {
+  it("constructs a Bedrock Knowledge Base vector store", () => {
     const prisma = Object.freeze({}) as PrismaClient;
 
     expect(() =>
       createVectorStoreFromEnv(prisma, {
+        BEDROCK_KNOWLEDGE_BASE_ID: "KB123",
         VECTOR_STORE: "bedrock-kb",
       }),
-    ).toThrow(
-      new ProviderNotRegisteredError("vectorStore", "bedrock-kb"),
-    );
+    ).not.toThrow();
   });
 });

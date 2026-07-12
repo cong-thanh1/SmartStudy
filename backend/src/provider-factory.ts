@@ -35,6 +35,8 @@ import { SqsQueueProvider } from "./adapters/queue/sqs-queue-provider.js";
 import { loadS3CompatibleStorageConfig } from "./adapters/storage/s3-compatible-storage-config.js";
 import { S3CompatibleStorageProvider } from "./adapters/storage/s3-compatible-storage-provider.js";
 import { PgVectorStore } from "./adapters/vector/pg-vector-store.js";
+import { loadBedrockKnowledgeBaseConfig } from "./adapters/vector/bedrock-knowledge-base-config.js";
+import { BedrockKnowledgeBaseStore } from "./adapters/vector/bedrock-knowledge-base-store.js";
 import type { PrismaClient } from "./generated/prisma/client.js";
 import type { IAuthRepository } from "./modules/auth/auth-repository.js";
 import type {
@@ -183,7 +185,7 @@ export class ProviderFactory {
 }
 
 export function createAuthProviderFromEnv(
-  repository: IAuthRepository,
+  repository: IAuthRepository | undefined,
   environment: NodeJS.ProcessEnv = process.env,
 ): IAuthProvider {
   const config = loadProviderConfig(environment);
@@ -191,6 +193,12 @@ export function createAuthProviderFromEnv(
     auth: {
       cognito: () => new CognitoAuthProvider(loadCognitoAuthConfig(environment)),
       jwt: () => {
+        if (!repository) {
+          throw new ProviderConfigurationError(
+            "auth",
+            { cause: new Error("An auth repository is required for AUTH_PROVIDER=jwt") },
+          );
+        }
         const jwtConfig = loadJwtAuthConfig(environment);
         return new JwtAuthProvider(
           repository,
@@ -294,6 +302,7 @@ export function createEmbeddingProviderFromEnv(
   ).createEmbeddingProvider();
 }
 
+
 export function createLazyLLMProviderFromEnv(
   environment: NodeJS.ProcessEnv = process.env,
 ): ILLMProvider {
@@ -325,7 +334,7 @@ export function createLLMProviderFromEnv(
 }
 
 export function createVectorStoreFromEnv(
-  prisma: PrismaClient,
+  prisma: PrismaClient | undefined,
   environment: NodeJS.ProcessEnv = process.env,
 ): IVectorStore {
   const config = loadProviderConfig(environment);
@@ -337,7 +346,17 @@ export function createVectorStoreFromEnv(
     queue: {},
     storage: {},
     vectorStore: {
-      pgvector: () => new PgVectorStore(prisma),
+      pgvector: () => {
+        if (!prisma) {
+          throw new ProviderConfigurationError(
+            "vectorStore",
+            { cause: new Error("A Prisma client is required for VECTOR_STORE=pgvector") },
+          );
+        }
+        return new PgVectorStore(prisma);
+      },
+      "bedrock-kb": () =>
+        new BedrockKnowledgeBaseStore(loadBedrockKnowledgeBaseConfig(environment)),
     },
   };
 
