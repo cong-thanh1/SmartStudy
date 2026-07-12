@@ -1,4 +1,5 @@
 export type AuthErrorCode =
+  | "EMAIL_CONFIRMATION_REQUIRED"
   | "EMAIL_ALREADY_REGISTERED"
   | "INVALID_CREDENTIALS"
   | "INVALID_TOKEN"
@@ -23,6 +24,17 @@ export class EmailAlreadyRegisteredError extends AuthError {
       "An account with this email already exists",
     );
     this.name = "EmailAlreadyRegisteredError";
+  }
+}
+
+export class EmailConfirmationRequiredError extends AuthError {
+  constructor() {
+    super(
+      "EMAIL_CONFIRMATION_REQUIRED",
+      409,
+      "Email confirmation is required before signing in",
+    );
+    this.name = "EmailConfirmationRequiredError";
   }
 }
 
