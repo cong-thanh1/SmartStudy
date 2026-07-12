@@ -9,7 +9,6 @@ import {
   type StorageProviderName,
   type VectorStoreName,
 } from "./provider-config.js";
-import { createRequire } from "node:module";
 import { ProviderConfigurationError } from "./provider-errors.js";
 import { BcryptPasswordHasher } from "./adapters/auth/bcrypt-password-hasher.js";
 import { loadCognitoAuthConfig } from "./adapters/auth/cognito-auth-config.js";
@@ -18,6 +17,8 @@ import { loadJwtAuthConfig } from "./adapters/auth/jwt-auth-config.js";
 import { JwtAuthProvider } from "./adapters/auth/jwt-auth-provider.js";
 import { loadBedrockEmbeddingConfig } from "./adapters/embedding/bedrock-embedding-config.js";
 import { BedrockEmbeddingProvider } from "./adapters/embedding/bedrock-embedding-provider.js";
+import { loadLocalBgeM3Config } from "./adapters/embedding/local-bge-m3-config.js";
+import { LocalBgeM3Provider } from "./adapters/embedding/local-bge-m3-provider.js";
 import { loadAnthropicLLMConfig } from "./adapters/llm/anthropic-llm-config.js";
 import { AnthropicLLMProvider } from "./adapters/llm/anthropic-llm-provider.js";
 import { loadBedrockLLMConfig } from "./adapters/llm/bedrock-llm-config.js";
@@ -37,9 +38,6 @@ import { PgVectorStore } from "./adapters/vector/pg-vector-store.js";
 import { loadBedrockKnowledgeBaseConfig } from "./adapters/vector/bedrock-knowledge-base-config.js";
 import { BedrockKnowledgeBaseStore } from "./adapters/vector/bedrock-knowledge-base-store.js";
 import type { PrismaClient } from "./generated/prisma/client.js";
-import type { LocalBgeM3Provider } from "./adapters/embedding/local-bge-m3-provider.js";
-import type * as LocalBgeM3ConfigModule from "./adapters/embedding/local-bge-m3-config.js";
-import type * as LocalBgeM3ProviderModule from "./adapters/embedding/local-bge-m3-provider.js";
 import type { IAuthRepository } from "./modules/auth/auth-repository.js";
 import type {
   IAuthProvider,
@@ -289,9 +287,8 @@ export function createEmbeddingProviderFromEnv(
     embedding: {
       bedrock: () =>
         new BedrockEmbeddingProvider(loadBedrockEmbeddingConfig(environment)),
-      // The local ONNX dependency is intentionally resolved only when selected.
-      // This keeps the production Bedrock Lambda free of native ONNX binaries.
-      local: () => createLocalEmbeddingProvider(environment),
+      local: () =>
+        new LocalBgeM3Provider(loadLocalBgeM3Config(environment)),
     },
     llm: {},
     queue: {},
@@ -305,14 +302,6 @@ export function createEmbeddingProviderFromEnv(
   ).createEmbeddingProvider();
 }
 
-function createLocalEmbeddingProvider(
-  environment: NodeJS.ProcessEnv,
-): LocalBgeM3Provider {
-  const require = createRequire(`${process.cwd()}/provider-factory-runtime.cjs`);
-  const { loadLocalBgeM3Config } = require("./adapters/embedding/local-bge-m3-config.js") as typeof LocalBgeM3ConfigModule;
-  const { LocalBgeM3Provider } = require("./adapters/embedding/local-bge-m3-provider.js") as typeof LocalBgeM3ProviderModule;
-  return new LocalBgeM3Provider(loadLocalBgeM3Config(environment));
-}
 
 export function createLazyLLMProviderFromEnv(
   environment: NodeJS.ProcessEnv = process.env,

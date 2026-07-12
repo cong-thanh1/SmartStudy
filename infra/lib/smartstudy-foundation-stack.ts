@@ -242,6 +242,14 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       VECTOR_STORE: "bedrock-kb",
     };
     const apiFunction = new lambdaNodejs.NodejsFunction(this, "ApiFunction", {
+      bundling: {
+        esbuildArgs: {
+          "--alias:@huggingface/transformers": path.join(
+            __dirname,
+            "../../backend/src/adapters/embedding/lambda-transformers-stub.ts",
+          ),
+        },
+      },
       depsLockFilePath: path.join(__dirname, "../../backend/package-lock.json"),
       entry: path.join(__dirname, "../../backend/src/lambda.ts"),
       environment: sharedEnvironment,
@@ -251,6 +259,14 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(29),
     });
     const ingestionFunction = new lambdaNodejs.NodejsFunction(this, "DocumentIngestionFunction", {
+      bundling: {
+        esbuildArgs: {
+          "--alias:@huggingface/transformers": path.join(
+            __dirname,
+            "../../backend/src/adapters/embedding/lambda-transformers-stub.ts",
+          ),
+        },
+      },
       depsLockFilePath: path.join(__dirname, "../../backend/package-lock.json"),
       entry: path.join(__dirname, "../../backend/src/document-ingestion-lambda.ts"),
       environment: {
