@@ -13,10 +13,14 @@ import { ProviderConfigurationError } from "./provider-errors.js";
 import { BcryptPasswordHasher } from "./adapters/auth/bcrypt-password-hasher.js";
 import { loadJwtAuthConfig } from "./adapters/auth/jwt-auth-config.js";
 import { JwtAuthProvider } from "./adapters/auth/jwt-auth-provider.js";
+import { loadBedrockEmbeddingConfig } from "./adapters/embedding/bedrock-embedding-config.js";
+import { BedrockEmbeddingProvider } from "./adapters/embedding/bedrock-embedding-provider.js";
 import { loadLocalBgeM3Config } from "./adapters/embedding/local-bge-m3-config.js";
 import { LocalBgeM3Provider } from "./adapters/embedding/local-bge-m3-provider.js";
 import { loadAnthropicLLMConfig } from "./adapters/llm/anthropic-llm-config.js";
 import { AnthropicLLMProvider } from "./adapters/llm/anthropic-llm-provider.js";
+import { loadBedrockLLMConfig } from "./adapters/llm/bedrock-llm-config.js";
+import { BedrockLLMProvider } from "./adapters/llm/bedrock-llm-provider.js";
 import { loadGeminiLLMConfig } from "./adapters/llm/gemini-llm-config.js";
 import { GeminiLLMProvider } from "./adapters/llm/gemini-llm-provider.js";
 import { MockLLMProvider } from "./adapters/llm/mock-llm-provider.js";
@@ -260,6 +264,8 @@ export function createEmbeddingProviderFromEnv(
     auth: {},
     email: {},
     embedding: {
+      bedrock: () =>
+        new BedrockEmbeddingProvider(loadBedrockEmbeddingConfig(environment)),
       local: () =>
         new LocalBgeM3Provider(loadLocalBgeM3Config(environment)),
     },
@@ -292,6 +298,7 @@ export function createLLMProviderFromEnv(
     llm: {
       anthropic: () =>
         new AnthropicLLMProvider(loadAnthropicLLMConfig(environment)),
+      bedrock: () => new BedrockLLMProvider(loadBedrockLLMConfig(environment)),
       gemini: () => new GeminiLLMProvider(loadGeminiLLMConfig(environment)),
       mock: () => new MockLLMProvider(),
       "llama-cpp": () => new LlamaCppLLMProvider(loadLlamaCppLLMConfig(environment)),
