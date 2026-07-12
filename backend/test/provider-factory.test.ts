@@ -15,8 +15,10 @@ import {
   type Providers,
 } from "../src/provider-factory.js";
 import { JwtAuthProvider } from "../src/adapters/auth/jwt-auth-provider.js";
+import { BedrockEmbeddingProvider } from "../src/adapters/embedding/bedrock-embedding-provider.js";
 import { LocalBgeM3Provider } from "../src/adapters/embedding/local-bge-m3-provider.js";
 import { AnthropicLLMProvider } from "../src/adapters/llm/anthropic-llm-provider.js";
+import { BedrockLLMProvider } from "../src/adapters/llm/bedrock-llm-provider.js";
 import { GeminiLLMProvider } from "../src/adapters/llm/gemini-llm-provider.js";
 import { LlamaCppLLMProvider } from "../src/adapters/llm/llama-cpp-llm-provider.js";
 import { RedisQueueProvider } from "../src/adapters/queue/redis-queue-provider.js";
@@ -172,6 +174,15 @@ describe("ProviderFactory", () => {
     ).toBeInstanceOf(LocalBgeM3Provider);
   });
 
+  it("composes the Bedrock embedding adapter without static credentials", () => {
+    expect(
+      createEmbeddingProviderFromEnv({
+        BEDROCK_REGION: "us-east-1",
+        EMBEDDING_PROVIDER: "bedrock",
+      }),
+    ).toBeInstanceOf(BedrockEmbeddingProvider);
+  });
+
   it("composes the Anthropic LLM adapter", () => {
     expect(
       createLLMProviderFromEnv({
@@ -188,6 +199,15 @@ describe("ProviderFactory", () => {
         LLM_PROVIDER: "gemini",
       }),
     ).toBeInstanceOf(GeminiLLMProvider);
+  });
+
+  it("composes the Bedrock LLM adapter without static credentials", () => {
+    expect(
+      createLLMProviderFromEnv({
+        BEDROCK_REGION: "us-east-1",
+        LLM_PROVIDER: "bedrock",
+      }),
+    ).toBeInstanceOf(BedrockLLMProvider);
   });
 
   it("composes the llama.cpp LLM adapter", () => {
@@ -240,21 +260,6 @@ describe("ProviderFactory", () => {
     ).toThrow(
       new ProviderNotRegisteredError("queue", "sqs"),
     );
-  });
-
-  it("fails fast for AI adapters that are not implemented yet", () => {
-    expect(() =>
-      createEmbeddingProviderFromEnv({
-        EMBEDDING_PROVIDER: "bedrock",
-      }),
-    ).toThrow(
-      new ProviderNotRegisteredError("embedding", "bedrock"),
-    );
-    expect(() =>
-      createLLMProviderFromEnv({
-        LLM_PROVIDER: "bedrock",
-      }),
-    ).toThrow(new ProviderNotRegisteredError("llm", "bedrock"));
   });
 
   it("fails fast for a vector store adapter that is not implemented yet", () => {
