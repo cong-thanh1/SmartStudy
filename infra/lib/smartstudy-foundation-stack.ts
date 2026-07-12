@@ -125,6 +125,17 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       partitionKey: { name: "ownerId", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "submittedAt", type: dynamodb.AttributeType.STRING },
     });
+    attemptsTable.addGlobalSecondaryIndex({
+      indexName: "ownerId-examSubmittedAt-index",
+      partitionKey: { name: "ownerId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "examSubmittedAt", type: dynamodb.AttributeType.STRING },
+    });
+    const examsTable = createTable(this, "ExamsTable", "examId");
+    examsTable.addGlobalSecondaryIndex({
+      indexName: "ownerId-documentCreatedAt-index",
+      partitionKey: { name: "ownerId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "documentCreatedAt", type: dynamodb.AttributeType.STRING },
+    });
     const quizzesTable = createTable(this, "QuizzesTable", "quizId");
     quizzesTable.addGlobalSecondaryIndex({
       indexName: "ownerId-documentCreatedAt-index",
@@ -145,6 +156,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     new cdk.CfnOutput(this, "DocumentQueueUrl", { value: documentQueue.queueUrl });
     new cdk.CfnOutput(this, "UsersTableName", { value: usersTable.tableName });
     new cdk.CfnOutput(this, "QuizzesTableName", { value: quizzesTable.tableName });
+    new cdk.CfnOutput(this, "ExamsTableName", { value: examsTable.tableName });
   }
 }
 
