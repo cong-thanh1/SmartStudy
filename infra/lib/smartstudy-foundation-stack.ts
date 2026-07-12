@@ -1,8 +1,11 @@
 import * as cdk from "aws-cdk-lib";
+import * as bedrock from "aws-cdk-lib/aws-bedrock";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as iam from "aws-cdk-lib/aws-iam";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import * as s3vectors from "aws-cdk-lib/aws-s3vectors";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import { Construct } from "constructs";
 
@@ -40,6 +43,40 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       lifecycleRules: [{ abortIncompleteMultipartUploadAfter: cdk.Duration.days(1) }],
       removalPolicy: cdk.RemovalPolicy.RETAIN,
       versioned: true,
+    });
+    const vectorBucket = new s3vectors.CfnVectorBucket(this, "VectorBucket", {
+      vectorBucketName: `smartstudy-${suffix}-vectors`,
+    });
+    const vectorIndex = new s3vectors.CfnIndex(this, "VectorIndex", {
+      dataType: "float32",
+      dimension: 1024,
+      distanceMetric: "cosine",
+      indexName: `smartstudy-${suffix}-knowledge`,
+      vectorBucketArn: vectorBucket.attrVectorBucketArn,
+    });
+    const knowledgeBaseRole = new iam.Role(this, "KnowledgeBaseRole", {
+      assumedBy: new iam.ServicePrincipal("bedrock.amazonaws.com"),
+    });
+    knowledgeBaseRole.addToPolicy(new iam.PolicyStatement({
+      actions: ["bedrock:InvokeModel", "s3:GetObject", "s3:ListBucket", "s3vectors:*"],
+      resources: ["*"],
+    }));
+    const knowledgeBase = new bedrock.CfnKnowledgeBase(this, "KnowledgeBase", {
+      knowledgeBaseConfiguration: {
+        type: "VECTOR",
+        vectorKnowledgeBaseConfiguration: {
+          embeddingModelArn: `arn:${cdk.Aws.PARTITION}:bedrock:${cdk.Aws.REGION}::foundation-model/amazon.titan-embed-text-v2:0`,
+        },
+      },
+      name: `smartstudy-${suffix}-knowledge`,
+      roleArn: knowledgeBaseRole.roleArn,
+      storageConfiguration: {
+        type: "S3_VECTORS",
+        s3VectorsConfiguration: {
+          indexArn: vectorIndex.attrIndexArn,
+          vectorBucketArn: vectorBucket.attrVectorBucketArn,
+        },
+      },
     });
 
     const documentDlq = new sqs.Queue(this, "DocumentProcessingDlq", {
@@ -157,6 +194,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     new cdk.CfnOutput(this, "DocumentQueueUrl", { value: documentQueue.queueUrl });
     new cdk.CfnOutput(this, "UsersTableName", { value: usersTable.tableName });
     new cdk.CfnOutput(this, "SummariesTableName", { value: summariesTable.tableName });
+    new cdk.CfnOutput(this, "KnowledgeBaseId", { value: knowledgeBase.attrKnowledgeBaseId });
     new cdk.CfnOutput(this, "QuizzesTableName", { value: quizzesTable.tableName });
     new cdk.CfnOutput(this, "ExamsTableName", { value: examsTable.tableName });
   }
