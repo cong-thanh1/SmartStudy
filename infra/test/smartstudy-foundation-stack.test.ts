@@ -16,7 +16,7 @@ describe("SmartStudyFoundationStack", () => {
     template.resourceCountIs("AWS::SQS::Queue", 2);
     template.resourceCountIs("AWS::Cognito::UserPool", 1);
     template.resourceCountIs("AWS::Lambda::Function", 1);
-    template.resourceCountIs("AWS::DynamoDB::Table", 7);
+    template.resourceCountIs("AWS::DynamoDB::Table", 8);
     template.hasResourceProperties("AWS::SQS::Queue", {
       ReceiveMessageWaitTimeSeconds: 20,
       VisibilityTimeout: 120,
