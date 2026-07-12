@@ -30,6 +30,8 @@ import { loadLlamaCppLLMConfig } from "./adapters/llm/llama-cpp-llm-config.js";
 import { LlamaCppLLMProvider } from "./adapters/llm/llama-cpp-llm-provider.js";
 import { loadRedisQueueConfig } from "./adapters/queue/redis-queue-config.js";
 import { RedisQueueProvider } from "./adapters/queue/redis-queue-provider.js";
+import { loadSqsQueueConfig } from "./adapters/queue/sqs-queue-config.js";
+import { SqsQueueProvider } from "./adapters/queue/sqs-queue-provider.js";
 import { loadS3CompatibleStorageConfig } from "./adapters/storage/s3-compatible-storage-config.js";
 import { S3CompatibleStorageProvider } from "./adapters/storage/s3-compatible-storage-provider.js";
 import { PgVectorStore } from "./adapters/vector/pg-vector-store.js";
@@ -230,9 +232,13 @@ export function createStorageProviderFromEnv(
   return new ProviderFactory(config, registry).createStorageProvider();
 }
 
+export interface ClosableQueueProvider extends IQueueProvider {
+  close(): Promise<void>;
+}
+
 export function createQueueProviderFromEnv(
   environment: NodeJS.ProcessEnv = process.env,
-): RedisQueueProvider {
+): ClosableQueueProvider {
   const config = loadProviderConfig(environment);
   const registry: ProviderRegistry = {
     auth: {},
@@ -242,6 +248,7 @@ export function createQueueProviderFromEnv(
     queue: {
       redis: () =>
         new RedisQueueProvider(loadRedisQueueConfig(environment)),
+      sqs: () => new SqsQueueProvider(loadSqsQueueConfig(environment)),
     },
     storage: {},
     vectorStore: {},
@@ -252,8 +259,11 @@ export function createQueueProviderFromEnv(
     registry,
   ).createQueueProvider();
 
-  if (!(queueProvider instanceof RedisQueueProvider)) {
-    throw new TypeError("Resolved queue provider is not RedisQueueProvider");
+  if (
+    !(queueProvider instanceof RedisQueueProvider) &&
+    !(queueProvider instanceof SqsQueueProvider)
+  ) {
+    throw new TypeError("Resolved queue provider cannot be closed");
   }
 
   return queueProvider;

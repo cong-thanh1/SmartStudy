@@ -23,6 +23,7 @@ import { BedrockLLMProvider } from "../src/adapters/llm/bedrock-llm-provider.js"
 import { GeminiLLMProvider } from "../src/adapters/llm/gemini-llm-provider.js";
 import { LlamaCppLLMProvider } from "../src/adapters/llm/llama-cpp-llm-provider.js";
 import { RedisQueueProvider } from "../src/adapters/queue/redis-queue-provider.js";
+import { SqsQueueProvider } from "../src/adapters/queue/sqs-queue-provider.js";
 import { S3CompatibleStorageProvider } from "../src/adapters/storage/s3-compatible-storage-provider.js";
 import { PgVectorStore } from "../src/adapters/vector/pg-vector-store.js";
 import type { PrismaClient } from "../src/generated/prisma/client.js";
@@ -179,6 +180,15 @@ describe("ProviderFactory", () => {
     ).toBeInstanceOf(RedisQueueProvider);
   });
 
+  it("composes the SQS queue adapter without static credentials", () => {
+    expect(
+      createQueueProviderFromEnv({
+        QUEUE_PROVIDER: "sqs",
+        SQS_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/123/queue",
+      }),
+    ).toBeInstanceOf(SqsQueueProvider);
+  });
+
   it("composes the local BGE-M3 embedding adapter", () => {
     expect(
       createEmbeddingProviderFromEnv({
@@ -251,16 +261,6 @@ describe("ProviderFactory", () => {
         VECTOR_STORE: "pgvector",
       }),
     ).toBeInstanceOf(PgVectorStore);
-  });
-
-  it("fails fast for a queue adapter that is not implemented yet", () => {
-    expect(() =>
-      createQueueProviderFromEnv({
-        QUEUE_PROVIDER: "sqs",
-      }),
-    ).toThrow(
-      new ProviderNotRegisteredError("queue", "sqs"),
-    );
   });
 
   it("fails fast for a vector store adapter that is not implemented yet", () => {
