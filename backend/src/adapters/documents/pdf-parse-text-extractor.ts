@@ -1,4 +1,4 @@
-import { PDFParse } from "pdf-parse";
+import { getDocument } from "pdfjs-dist-legacy/legacy/build/pdf.js";
 
 import type {
   ExtractedPdfDocument,
@@ -30,19 +30,17 @@ export interface PdfParseTextExtractorDependencies {
 }
 
 export class PdfParseTextExtractor implements IPdfTextExtractor {
-  private readonly createParser: CreatePdfParser;
+  private readonly createParser: CreatePdfParser | undefined;
 
   constructor(dependencies: PdfParseTextExtractorDependencies = {}) {
-    this.createParser =
-      dependencies.createParser ??
-      ((data) =>
-        new PDFParse({
-          data,
-          disableFontFace: true,
-        }));
+    this.createParser = dependencies.createParser;
   }
 
   async extract(pdf: Uint8Array): Promise<ExtractedPdfDocument> {
+    if (!this.createParser) {
+      return extractWithPdfJs(pdf);
+    }
+
     const parser = this.createParser(pdf);
 
     try {
@@ -61,5 +59,29 @@ export class PdfParseTextExtractor implements IPdfTextExtractor {
     } finally {
       await parser.destroy();
     }
+  }
+}
+
+async function extractWithPdfJs(pdf: Uint8Array): Promise<ExtractedPdfDocument> {
+  // pdf.js rejects Buffer (a Uint8Array subclass); copy into a plain Uint8Array.
+  const data = new Uint8Array(pdf);
+  const document = await getDocument({ data }).promise;
+
+  try {
+    const pages = await Promise.all(
+      Array.from({ length: document.numPages }, async (_, index) => {
+        const page = await document.getPage(index + 1);
+        const content = await page.getTextContent();
+        return {
+          pageNumber: index + 1,
+          text: content.items
+            .map((item) => ("str" in item ? item.str : ""))
+            .join(" "),
+        };
+      }),
+    );
+    return { pageCount: document.numPages, pages };
+  } finally {
+    await document.destroy();
   }
 }
