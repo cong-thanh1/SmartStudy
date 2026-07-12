@@ -143,6 +143,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       sortKey: { name: "documentCreatedAt", type: dynamodb.AttributeType.STRING },
     });
     const usersTable = createTable(this, "UsersTable", "ownerId");
+    const summariesTable = createTable(this, "SummariesTable", "summaryKey");
 
     new cdk.CfnOutput(this, "CognitoClientId", { value: userPoolClient.userPoolClientId });
     new cdk.CfnOutput(this, "CognitoUserPoolId", { value: userPool.userPoolId });
@@ -155,6 +156,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     });
     new cdk.CfnOutput(this, "DocumentQueueUrl", { value: documentQueue.queueUrl });
     new cdk.CfnOutput(this, "UsersTableName", { value: usersTable.tableName });
+    new cdk.CfnOutput(this, "SummariesTableName", { value: summariesTable.tableName });
     new cdk.CfnOutput(this, "QuizzesTableName", { value: quizzesTable.tableName });
     new cdk.CfnOutput(this, "ExamsTableName", { value: examsTable.tableName });
   }
