@@ -105,7 +105,7 @@ tạo branch → code + test → commit (Conventional Commits) → push
 - [ ] **DoD Phase 4:** demo end-to-end 8 module, mỗi task có lịch sử PR riêng biệt trên `develop`
 
 ### Phase 5 — Migrate AWS (chỉ làm khi được yêu cầu rõ ràng)
-- [ ] `feat(llm): BedrockLLMProvider + BedrockEmbeddingProvider`
+- [x] `feat(llm): BedrockLLMProvider + BedrockEmbeddingProvider`
 - [ ] `chore(infra): migrate Postgres sang RDS/Aurora (pgvector)`
 - [ ] `chore(infra): đổi STORAGE_ENDPOINT sang S3 thật`
 - [ ] `chore(infra): containerize + deploy ECS Fargate/App Runner`
