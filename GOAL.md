@@ -110,7 +110,7 @@ tạo branch → code + test → commit (Conventional Commits) → push
 - [ ] `chore(infra): đổi STORAGE_ENDPOINT sang S3 thật`
 - [ ] `chore(infra): containerize + deploy ECS Fargate/App Runner`
 - [ ] (tuỳ chọn) `feat(queue): SqsQueueProvider`
-- [ ] (tuỳ chọn) `feat(auth): CognitoAuthProvider`
+- [x] (tuỳ chọn) `feat(auth): CognitoAuthProvider`
 - [ ] `chore(observability): CloudWatch logs/alarms`
 - [ ] **DoD Phase 5:** hệ thống chạy trên AWS, chạy lại toàn bộ test tích hợp Phase 0-4 và pass 100%, mỗi thay đổi migrate có PR riêng, không merge thẳng lên `main` mà không qua `develop`/review
 
