@@ -41,6 +41,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # NodejsFunction bundles the production handlers from ../backend.
+      - name: Install Lambda source dependencies
+        run: npm ci --prefix ../backend
+
       - name: Typecheck
         run: npm run build
 

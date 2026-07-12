@@ -1,14 +1,12 @@
 import "dotenv/config";
 
-import { PrismaAuthRepository } from "./adapters/auth/prisma-auth-repository.js";
-import { PrismaChatRepository } from "./adapters/chat/prisma-chat-repository.js";
-import { PrismaDocumentRepository } from "./adapters/documents/prisma-document-repository.js";
-import { PrismaExamRepository } from "./adapters/exam/prisma-exam-repository.js";
-import { PrismaQuizRepository } from "./adapters/quiz/prisma-quiz-repository.js";
-import { PrismaSummaryRepository } from "./adapters/summary/prisma-summary-repository.js";
+import { DynamoDbChatRepository } from "./adapters/chat/dynamodb-chat-repository.js";
+import { DynamoDbDocumentRepository } from "./adapters/documents/dynamodb-document-repository.js";
+import { DynamoDbExamRepository } from "./adapters/exam/dynamodb-exam-repository.js";
+import { DynamoDbQuizRepository } from "./adapters/quiz/dynamodb-quiz-repository.js";
+import { DynamoDbSummaryRepository } from "./adapters/summary/dynamodb-summary-repository.js";
 import { createApp } from "./app.js";
 import { createLambdaHandler } from "./lambda-handler.js";
-import { createPrismaClient } from "./database/prisma-client.js";
 import { ChatService } from "./modules/chat/chat-service.js";
 import { loadDocumentConfig } from "./modules/documents/document-config.js";
 import { DocumentService } from "./modules/documents/document-service.js";
@@ -25,23 +23,20 @@ import {
   createVectorStoreFromEnv,
 } from "./provider-factory.js";
 
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required");
-}
-
-const prisma = createPrismaClient(databaseUrl);
 const documentConfig = loadDocumentConfig();
 const queueProvider = createQueueProviderFromEnv();
 const storageProvider = createStorageProviderFromEnv();
 const embeddingProvider = createEmbeddingProviderFromEnv();
 const llmProvider = createLazyLLMProviderFromEnv();
-const documentRepository = new PrismaDocumentRepository(prisma);
-const quizRepository = new PrismaQuizRepository(prisma);
-const authProvider = createAuthProviderFromEnv(
-  new PrismaAuthRepository(prisma),
-);
+const tableNames = loadTableNames();
+const documentRepository = new DynamoDbDocumentRepository({
+  chunksTableName: tableNames.documentChunks,
+  documentsTableName: tableNames.documents,
+});
+const quizRepository = new DynamoDbQuizRepository({
+  quizzesTableName: tableNames.quizzes,
+});
+const authProvider = createAuthProviderFromEnv(undefined);
 const documentService = new DocumentService(
   documentRepository,
   storageProvider,
@@ -51,23 +46,29 @@ const documentService = new DocumentService(
 const app = createApp({
   authProvider,
   chatService: new ChatService(
-    new PrismaChatRepository(prisma),
+    new DynamoDbChatRepository({
+      conversationMessagesTableName: tableNames.conversationMessages,
+      conversationsTableName: tableNames.conversations,
+    }),
     documentRepository,
     embeddingProvider,
-    createVectorStoreFromEnv(prisma),
+    createVectorStoreFromEnv(undefined),
     llmProvider,
   ),
   documentConfig,
   documentService,
   examService: new ExamService(
-    new PrismaExamRepository(prisma),
+    new DynamoDbExamRepository({
+      attemptsTableName: tableNames.attempts,
+      examsTableName: tableNames.exams,
+    }),
     documentRepository,
     quizRepository,
     llmProvider,
   ),
   quizService: new QuizService(quizRepository, documentRepository, llmProvider),
   summaryService: new SummaryService(
-    new PrismaSummaryRepository(prisma),
+    new DynamoDbSummaryRepository(tableNames.summaries),
     documentRepository,
     llmProvider,
   ),
@@ -75,3 +76,39 @@ const app = createApp({
 });
 
 export const handler = createLambdaHandler(app);
+
+function loadTableNames(): {
+  readonly attempts: string;
+  readonly conversationMessages: string;
+  readonly conversations: string;
+  readonly documentChunks: string;
+  readonly documents: string;
+  readonly exams: string;
+  readonly quizzes: string;
+  readonly summaries: string;
+} {
+  const required = [
+    "ATTEMPTS_TABLE_NAME",
+    "CONVERSATION_MESSAGES_TABLE_NAME",
+    "CONVERSATIONS_TABLE_NAME",
+    "DOCUMENT_CHUNKS_TABLE_NAME",
+    "DOCUMENTS_TABLE_NAME",
+    "EXAMS_TABLE_NAME",
+    "QUIZZES_TABLE_NAME",
+    "SUMMARIES_TABLE_NAME",
+  ] as const;
+  const missing = required.filter((name) => !process.env[name]?.trim());
+  if (missing.length > 0) {
+    throw new Error(`Missing required DynamoDB table configuration: ${missing.join(", ")}`);
+  }
+  return {
+    attempts: process.env.ATTEMPTS_TABLE_NAME!,
+    conversationMessages: process.env.CONVERSATION_MESSAGES_TABLE_NAME!,
+    conversations: process.env.CONVERSATIONS_TABLE_NAME!,
+    documentChunks: process.env.DOCUMENT_CHUNKS_TABLE_NAME!,
+    documents: process.env.DOCUMENTS_TABLE_NAME!,
+    exams: process.env.EXAMS_TABLE_NAME!,
+    quizzes: process.env.QUIZZES_TABLE_NAME!,
+    summaries: process.env.SUMMARIES_TABLE_NAME!,
+  };
+}

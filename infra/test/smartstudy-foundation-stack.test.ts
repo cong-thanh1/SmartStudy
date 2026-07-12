@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { SmartStudyFoundationStack } from "../lib/smartstudy-foundation-stack.js";
 
 describe("SmartStudyFoundationStack", () => {
-  it("creates encrypted private storage, a DLQ-backed queue, Cognito, and DynamoDB tables", () => {
+  it("creates encrypted storage, KB ingestion, API Lambdas, Cognito, and DynamoDB tables", () => {
     const app = new cdk.App();
     const stack = new SmartStudyFoundationStack(app, "TestStack", {
       environment: "test",
@@ -15,11 +15,13 @@ describe("SmartStudyFoundationStack", () => {
     template.resourceCountIs("AWS::S3::Bucket", 1);
     template.resourceCountIs("AWS::SQS::Queue", 2);
     template.resourceCountIs("AWS::Cognito::UserPool", 1);
-    template.resourceCountIs("AWS::Lambda::Function", 1);
+    template.resourceCountIs("AWS::Lambda::Function", 3);
     template.resourceCountIs("AWS::DynamoDB::Table", 9);
+    template.resourceCountIs("AWS::Bedrock::DataSource", 1);
+    template.resourceCountIs("AWS::ApiGatewayV2::Api", 1);
     template.hasResourceProperties("AWS::SQS::Queue", {
       ReceiveMessageWaitTimeSeconds: 20,
-      VisibilityTimeout: 120,
+      VisibilityTimeout: 900,
     });
   });
 });

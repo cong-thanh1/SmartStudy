@@ -253,6 +253,7 @@ describe("ChatService", () => {
     expect(vectorStore.similaritySearch).toHaveBeenCalledWith({
       documentId,
       embedding: expect.any(Array),
+      queryText: "What is Newton's first law?",
       topK: 5,
       userId,
     });

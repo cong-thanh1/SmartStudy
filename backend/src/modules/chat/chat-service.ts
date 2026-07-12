@@ -125,6 +125,7 @@ export class ChatService implements IChatService {
     const sources = await this.vectorStore.similaritySearch({
       documentId: document.id,
       embedding: queryEmbedding,
+      queryText: content,
       topK: CHAT_RETRIEVAL_TOP_K,
       userId: input.userId,
     });

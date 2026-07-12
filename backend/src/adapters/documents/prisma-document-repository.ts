@@ -220,6 +220,9 @@ export class PrismaDocumentRepository implements IDocumentRepository {
       });
 
       for (const chunk of input.chunks) {
+        if (!chunk.embedding) {
+          throw new Error("pgvector document chunks require an embedding");
+        }
         await transaction.$executeRaw`
           INSERT INTO "document_chunks" (
             "document_id",
