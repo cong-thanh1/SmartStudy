@@ -132,6 +132,7 @@ describe("RAG user isolation", () => {
     expect(vectorStore.similaritySearch).toHaveBeenCalledWith({
       documentId: userOneDocumentId,
       embedding: expect.any(Array),
+      queryText: "What do mitochondria do?",
       topK: 5,
       userId: userOneId,
     });

@@ -4,7 +4,9 @@ import { SmartStudyFoundationStack } from "../lib/smartstudy-foundation-stack.js
 
 const app = new cdk.App();
 const environment = app.node.tryGetContext("environment") ?? "dev";
+const frontendOrigin = app.node.tryGetContext("frontendOrigin");
 
 new SmartStudyFoundationStack(app, `SmartStudy-${environment}-Foundation`, {
   environment,
+  ...(typeof frontendOrigin === "string" ? { frontendOrigin } : {}),
 });
