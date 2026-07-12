@@ -45,6 +45,7 @@
     "express": "^5.0.0",
     "jsonwebtoken": "^9.0.3",
     "pdf-parse": "^2.4.5",
+    "pdfjs-dist-legacy": "npm:pdfjs-dist@^3.11.174",
     "pg": "^8.22.0",
     "zod": "^4.4.3"
   },
