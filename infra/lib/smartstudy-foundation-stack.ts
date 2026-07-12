@@ -244,6 +244,19 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     };
     const apiFunction = new lambdaNodejs.NodejsFunction(this, "ApiFunction", {
       bundling: {
+        commandHooks: {
+          afterBundling(inputDir: string, outputDir: string) {
+            return [
+              `node -e "require('node:fs').copyFileSync(process.argv[1],process.argv[2])" "${path.join(inputDir, "node_modules/pdfjs-dist-legacy/legacy/build/pdf.worker.js")}" "${path.join(outputDir, "pdf.worker.js")}"`,
+            ];
+          },
+          beforeBundling() {
+            return [];
+          },
+          beforeInstall() {
+            return [];
+          },
+        },
         esbuildArgs: {
           "--alias:@huggingface/transformers": path.join(
             __dirname,
@@ -262,6 +275,19 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     });
     const ingestionFunction = new lambdaNodejs.NodejsFunction(this, "DocumentIngestionFunction", {
       bundling: {
+        commandHooks: {
+          afterBundling(inputDir: string, outputDir: string) {
+            return [
+              `node -e "require('node:fs').copyFileSync(process.argv[1],process.argv[2])" "${path.join(inputDir, "node_modules/pdfjs-dist-legacy/legacy/build/pdf.worker.js")}" "${path.join(outputDir, "pdf.worker.js")}"`,
+            ];
+          },
+          beforeBundling() {
+            return [];
+          },
+          beforeInstall() {
+            return [];
+          },
+        },
         esbuildArgs: {
           "--alias:@huggingface/transformers": path.join(
             __dirname,
