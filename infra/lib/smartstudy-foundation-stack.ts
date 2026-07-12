@@ -232,6 +232,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       LLM_PROVIDER: "bedrock",
       AUTH_PROVIDER: "cognito",
       EMBEDDING_PROVIDER: "bedrock",
+      DOCUMENT_PROCESSING_QUEUE: `smartstudy-${suffix}-document-processing`,
       QUEUE_PROVIDER: "sqs",
       SQS_QUEUE_NAME: `smartstudy-${suffix}-document-processing`,
       SQS_QUEUE_URL: documentQueue.queueUrl,
