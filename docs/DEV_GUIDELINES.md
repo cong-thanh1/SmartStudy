@@ -6,9 +6,14 @@
 
 - `main`: phiên bản ổn định.
 - `develop`: nhánh tích hợp, phải luôn chạy được.
+- `staging`: môi trường kiểm thử trước production; chỉ nhận thay đổi từ `develop` qua pull request.
 - Mỗi task bắt đầu từ `develop` trên nhánh
   `feature/<phase>-<mo-ta-ngan>`; lỗi sau merge dùng `bugfix/...`.
 - Một nhánh và một pull request chỉ giải quyết một task trong `GOAL.md`.
+
+Luồng phát hành: `feature/*`/`bugfix/*` → PR vào `develop` → PR vào
+`staging` (triển khai kiểm thử) → PR vào `main` (triển khai production).
+Không push hoặc deploy trực tiếp từ nhánh `develop` vào production.
 
 ### 1.2 Conventional Commits
 
