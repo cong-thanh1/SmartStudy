@@ -11,6 +11,8 @@ import {
 } from "./provider-config.js";
 import { ProviderConfigurationError } from "./provider-errors.js";
 import { BcryptPasswordHasher } from "./adapters/auth/bcrypt-password-hasher.js";
+import { loadCognitoAuthConfig } from "./adapters/auth/cognito-auth-config.js";
+import { CognitoAuthProvider } from "./adapters/auth/cognito-auth-provider.js";
 import { loadJwtAuthConfig } from "./adapters/auth/jwt-auth-config.js";
 import { JwtAuthProvider } from "./adapters/auth/jwt-auth-provider.js";
 import { loadBedrockEmbeddingConfig } from "./adapters/embedding/bedrock-embedding-config.js";
@@ -185,6 +187,7 @@ export function createAuthProviderFromEnv(
   const config = loadProviderConfig(environment);
   const registry: ProviderRegistry = {
     auth: {
+      cognito: () => new CognitoAuthProvider(loadCognitoAuthConfig(environment)),
       jwt: () => {
         const jwtConfig = loadJwtAuthConfig(environment);
         return new JwtAuthProvider(

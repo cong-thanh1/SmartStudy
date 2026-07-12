@@ -15,6 +15,7 @@ import {
   type Providers,
 } from "../src/provider-factory.js";
 import { JwtAuthProvider } from "../src/adapters/auth/jwt-auth-provider.js";
+import { CognitoAuthProvider } from "../src/adapters/auth/cognito-auth-provider.js";
 import { BedrockEmbeddingProvider } from "../src/adapters/embedding/bedrock-embedding-provider.js";
 import { LocalBgeM3Provider } from "../src/adapters/embedding/local-bge-m3-provider.js";
 import { AnthropicLLMProvider } from "../src/adapters/llm/anthropic-llm-provider.js";
@@ -146,6 +147,18 @@ describe("ProviderFactory", () => {
     ).toBeInstanceOf(JwtAuthProvider);
   });
 
+  it("composes the Cognito adapter without static credentials", () => {
+    const repository = Object.freeze({}) as IAuthRepository;
+
+    expect(
+      createAuthProviderFromEnv(repository, {
+        AUTH_PROVIDER: "cognito",
+        COGNITO_CLIENT_ID: "client-id",
+        COGNITO_USER_POOL_ID: "us-east-1_example",
+      }),
+    ).toBeInstanceOf(CognitoAuthProvider);
+  });
+
   it("composes the S3-compatible storage adapter from environment config", () => {
     expect(
       createStorageProviderFromEnv({
@@ -238,18 +251,6 @@ describe("ProviderFactory", () => {
         VECTOR_STORE: "pgvector",
       }),
     ).toBeInstanceOf(PgVectorStore);
-  });
-
-  it("fails fast for an auth adapter that is not implemented yet", () => {
-    const repository = Object.freeze({}) as IAuthRepository;
-
-    expect(() =>
-      createAuthProviderFromEnv(repository, {
-        AUTH_PROVIDER: "cognito",
-      }),
-    ).toThrow(
-      new ProviderNotRegisteredError("auth", "cognito"),
-    );
   });
 
   it("fails fast for a queue adapter that is not implemented yet", () => {
