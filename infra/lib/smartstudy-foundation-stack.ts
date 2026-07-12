@@ -107,6 +107,18 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       partitionKey: { name: "ownerId", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "createdAt", type: dynamodb.AttributeType.STRING },
     });
+    const conversationMessagesTable = new dynamodb.Table(
+      this,
+      "ConversationMessagesTable",
+      {
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        encryption: dynamodb.TableEncryption.AWS_MANAGED,
+        partitionKey: { name: "conversationId", type: dynamodb.AttributeType.STRING },
+        pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+        removalPolicy: cdk.RemovalPolicy.RETAIN,
+        sortKey: { name: "messageSortKey", type: dynamodb.AttributeType.STRING },
+      },
+    );
     const attemptsTable = createTable(this, "AttemptsTable", "attemptId");
     attemptsTable.addGlobalSecondaryIndex({
       indexName: "ownerId-submittedAt-index",
@@ -120,6 +132,9 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     new cdk.CfnOutput(this, "DocumentsBucketName", { value: documentsBucket.bucketName });
     new cdk.CfnOutput(this, "DocumentChunksTableName", {
       value: documentChunksTable.tableName,
+    });
+    new cdk.CfnOutput(this, "ConversationMessagesTableName", {
+      value: conversationMessagesTable.tableName,
     });
     new cdk.CfnOutput(this, "DocumentQueueUrl", { value: documentQueue.queueUrl });
     new cdk.CfnOutput(this, "UsersTableName", { value: usersTable.tableName });
