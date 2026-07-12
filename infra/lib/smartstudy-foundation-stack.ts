@@ -57,10 +57,15 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     const knowledgeBaseRole = new iam.Role(this, "KnowledgeBaseRole", {
       assumedBy: new iam.ServicePrincipal("bedrock.amazonaws.com"),
     });
-    knowledgeBaseRole.addToPolicy(new iam.PolicyStatement({
-      actions: ["bedrock:InvokeModel", "s3:GetObject", "s3:ListBucket", "s3vectors:*"],
-      resources: ["*"],
-    }));
+    const knowledgeBasePolicy = new iam.Policy(this, "KnowledgeBasePolicy", {
+      roles: [knowledgeBaseRole],
+      statements: [
+        new iam.PolicyStatement({
+          actions: ["bedrock:InvokeModel", "s3:GetObject", "s3:ListBucket", "s3vectors:*"],
+          resources: ["*"],
+        }),
+      ],
+    });
     const knowledgeBase = new bedrock.CfnKnowledgeBase(this, "KnowledgeBase", {
       knowledgeBaseConfiguration: {
         type: "VECTOR",
@@ -78,6 +83,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
         },
       },
     });
+    knowledgeBase.node.addDependency(knowledgeBasePolicy);
 
     const documentDlq = new sqs.Queue(this, "DocumentProcessingDlq", {
       encryption: sqs.QueueEncryption.SQS_MANAGED,
