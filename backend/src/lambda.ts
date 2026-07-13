@@ -5,6 +5,8 @@ import { DynamoDbDocumentRepository } from "./adapters/documents/dynamodb-docume
 import { DynamoDbExamRepository } from "./adapters/exam/dynamodb-exam-repository.js";
 import { DynamoDbQuizRepository } from "./adapters/quiz/dynamodb-quiz-repository.js";
 import { DynamoDbSummaryRepository } from "./adapters/summary/dynamodb-summary-repository.js";
+import { DynamoDbAiJobRepository } from "./adapters/jobs/dynamodb-ai-job-repository.js";
+import { AiJobService } from "./modules/jobs/ai-job-service.js";
 import { createApp } from "./app.js";
 import { createLambdaHandler } from "./lambda-handler.js";
 import { ChatService } from "./modules/chat/chat-service.js";
@@ -43,6 +45,11 @@ const documentService = new DocumentService(
   queueProvider,
   documentConfig,
 );
+const aiJobService = new AiJobService(
+  new DynamoDbAiJobRepository(tableNames.aiJobs),
+  queueProvider,
+  documentConfig.processingQueue,
+);
 const app = createApp({
   authProvider,
   chatService: new ChatService(
@@ -57,6 +64,7 @@ const app = createApp({
   ),
   documentConfig,
   documentService,
+  aiJobService,
   examService: new ExamService(
     new DynamoDbExamRepository({
       attemptsTableName: tableNames.attempts,
@@ -78,6 +86,7 @@ const app = createApp({
 export const handler = createLambdaHandler(app);
 
 function loadTableNames(): {
+  readonly aiJobs: string;
   readonly attempts: string;
   readonly conversationMessages: string;
   readonly conversations: string;
@@ -88,6 +97,7 @@ function loadTableNames(): {
   readonly summaries: string;
 } {
   const required = [
+    "AI_JOBS_TABLE_NAME",
     "ATTEMPTS_TABLE_NAME",
     "CONVERSATION_MESSAGES_TABLE_NAME",
     "CONVERSATIONS_TABLE_NAME",
@@ -102,6 +112,7 @@ function loadTableNames(): {
     throw new Error(`Missing required DynamoDB table configuration: ${missing.join(", ")}`);
   }
   return {
+    aiJobs: process.env.AI_JOBS_TABLE_NAME!,
     attempts: process.env.ATTEMPTS_TABLE_NAME!,
     conversationMessages: process.env.CONVERSATION_MESSAGES_TABLE_NAME!,
     conversations: process.env.CONVERSATIONS_TABLE_NAME!,

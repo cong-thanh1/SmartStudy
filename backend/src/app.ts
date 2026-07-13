@@ -15,6 +15,8 @@ import { createSummaryRouter } from "./modules/summary/summary-routes.js";
 import type { ISummaryService } from "./modules/summary/summary-service.js";
 import { createTutorRouter } from "./modules/tutor/tutor-routes.js";
 import type { ITutorService } from "./modules/tutor/tutor-service.js";
+import type { AiJobService } from "./modules/jobs/ai-job-service.js";
+import { createJobRouter } from "./modules/jobs/job-routes.js";
 import type { IAuthProvider } from "./ports/index.js";
 
 export interface AppDependencies {
@@ -26,6 +28,7 @@ export interface AppDependencies {
   readonly quizService?: IQuizService;
   readonly summaryService: ISummaryService;
   readonly tutorService?: ITutorService;
+  readonly aiJobService?: AiJobService;
 }
 
 export function createApp(dependencies: AppDependencies): Express {
@@ -74,15 +77,16 @@ export function createApp(dependencies: AppDependencies): Express {
   if (dependencies.quizService) {
     app.use(
       "/api/v1",
-      createQuizRouter(dependencies.authProvider, dependencies.quizService),
+      createQuizRouter(dependencies.authProvider, dependencies.quizService, dependencies.aiJobService),
     );
   }
   if (dependencies.examService) {
     app.use(
       "/api/v1",
-      createExamRouter(dependencies.authProvider, dependencies.examService),
+      createExamRouter(dependencies.authProvider, dependencies.examService, dependencies.aiJobService),
     );
   }
+  if (dependencies.aiJobService) app.use("/api/v1/jobs", createJobRouter(dependencies.authProvider, dependencies.aiJobService));
   if (dependencies.tutorService) {
     app.use(
       "/api/v1",
