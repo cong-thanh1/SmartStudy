@@ -34,6 +34,16 @@ export function createApp(dependencies: AppDependencies): Express {
   app.disable("x-powered-by");
   app.use(express.json());
 
+  // API Gateway adds the CORS headers, but an explicit OPTIONS response must
+  // be returned before the authenticated route middleware sees a preflight.
+  app.use((request, response, next) => {
+    if (request.method === "OPTIONS") {
+      response.status(204).end();
+      return;
+    }
+    next();
+  });
+
   app.get("/health", (_request, response) => {
     response.status(200).json({
       service: "smartstudy-api",
