@@ -8,7 +8,7 @@ describe("Gemini LLM config", () => {
     expect(loadGeminiLLMConfig({ GEMINI_API_KEY: "test-api-key" })).toEqual({
       apiKey: "test-api-key",
       defaultMaxTokens: 4_096,
-      model: "gemini-2.5-flash",
+      model: "gemini-flash-latest",
       timeoutMilliseconds: 120_000,
     });
   });
