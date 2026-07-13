@@ -43,6 +43,7 @@ export interface DocumentDetail extends DocumentSummary {
 }
 
 export interface DocumentListItem extends DocumentSummary {
+  readonly chunkCount: number;
   readonly pageCount: number | null;
 }
 
@@ -264,8 +265,21 @@ export class DocumentService implements IDocumentService {
       ...(input.status ? { status: input.status } : {}),
     });
 
+    const documents = await Promise.all(
+      result.documents.map(async (document) => ({
+        ...toDocumentListItem(document),
+        chunkCount:
+          document.status === "ready"
+            ? (await this.repository.listChunks({
+                documentId: document.id,
+                userId: input.userId,
+              })).length
+            : 0,
+      })),
+    );
+
     return {
-      documents: result.documents.map(toDocumentListItem),
+      documents,
       pagination: {
         limit: input.limit,
         page: input.page,
@@ -358,6 +372,7 @@ function toDocumentDetail(document: DocumentRecord): DocumentDetail {
 function toDocumentListItem(document: DocumentRecord): DocumentListItem {
   return {
     ...toDocumentSummary(document),
+    chunkCount: 0,
     pageCount: document.pageCount,
   };
 }

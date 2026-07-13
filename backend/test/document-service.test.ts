@@ -365,6 +365,15 @@ describe("DocumentService", () => {
       ],
       total: 21,
     });
+    vi.mocked(repository.listChunks).mockResolvedValueOnce([
+      {
+        chapterTitle: "Chapter 1",
+        chunkText: "First extracted chunk",
+        id: "chunk-1",
+        pageEnd: 3,
+        pageStart: 1,
+      },
+    ]);
 
     await expect(
       service.listDocuments({
@@ -378,6 +387,7 @@ describe("DocumentService", () => {
       documents: [
         {
           createdAt,
+          chunkCount: 1,
           id: documentId,
           pageCount: 3,
           sizeBytes: 42,
@@ -399,6 +409,7 @@ describe("DocumentService", () => {
       status: "ready",
       userId,
     });
+    expect(repository.listChunks).toHaveBeenCalledWith({ documentId, userId });
   });
 
   it("returns document detail without exposing storage internals", async () => {
