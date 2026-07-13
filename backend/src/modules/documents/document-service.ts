@@ -7,6 +7,7 @@ import {
   type PresignedUpload,
 } from "../../ports/index.js";
 import { PDF_CONTENT_TYPE, type DocumentConfig } from "./document-config.js";
+import { normalizeExtractedText } from "./pdf-processing.js";
 import {
   DocumentNotFoundError,
   InvalidDocumentStateError,
@@ -246,7 +247,7 @@ export class DocumentService implements IDocumentService {
         chapterTitle: chunk.chapterTitle,
         pageEnd: chunk.pageEnd,
         pageStart: chunk.pageStart,
-        text: chunk.chunkText,
+        text: normalizeExtractedText(chunk.chunkText),
       })),
     };
   }

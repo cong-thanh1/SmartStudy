@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   EmptyPdfTextError,
   planDocumentChunks,
+  normalizeExtractedText,
   type ExtractedPdfDocument,
 } from "../src/modules/documents/pdf-processing.js";
 
@@ -119,5 +120,11 @@ describe("PDF processing planner", () => {
         },
       ),
     ).toThrow(RangeError);
+  });
+
+  it("repairs separated glyphs and private-use bullet characters", () => {
+    expect(normalizeExtractedText("Đ ị a ch ỉ  m u l t i c a s t")).toBe(
+      "Đ ị a ch ỉ • m u l t i c a s t",
+    );
   });
 });
