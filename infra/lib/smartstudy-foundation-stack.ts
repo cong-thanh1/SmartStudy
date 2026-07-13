@@ -236,7 +236,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       DOCUMENT_INGESTION_MODE: "dynamodb",
       EMBEDDING_PROVIDER: "none",
       GEMINI_API_KEY_PARAMETER: `/smartstudy/${suffix}/gemini-api-key`,
-      GEMINI_MODEL: "gemini-flash-latest",
+      GEMINI_MODEL: "gemini-2.0-flash",
       LLM_PROVIDER: "gemini",
       AUTH_PROVIDER: "cognito",
       DOCUMENT_PROCESSING_QUEUE: `smartstudy-${suffix}-document-processing`,
