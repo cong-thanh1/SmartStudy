@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 const geminiLLMEnvironmentSchema = z.object({
-  GEMINI_API_KEY: z.string().trim().min(1),
+  GEMINI_API_KEY: z.string().trim().min(1).optional(),
+  GEMINI_API_KEY_PARAMETER: z.string().trim().min(1).optional(),
   GEMINI_MAX_TOKENS: z.coerce
     .number()
     .int()
@@ -18,7 +19,8 @@ const geminiLLMEnvironmentSchema = z.object({
 });
 
 export interface GeminiLLMConfig {
-  readonly apiKey: string;
+  readonly apiKey?: string;
+  readonly apiKeyParameter?: string;
   readonly defaultMaxTokens: number;
   readonly model: string;
   readonly timeoutMilliseconds: number;
@@ -28,9 +30,15 @@ export function loadGeminiLLMConfig(
   environment: NodeJS.ProcessEnv = process.env,
 ): GeminiLLMConfig {
   const parsed = geminiLLMEnvironmentSchema.parse(environment);
+  if (!parsed.GEMINI_API_KEY && !parsed.GEMINI_API_KEY_PARAMETER) {
+    throw new Error("GEMINI_API_KEY or GEMINI_API_KEY_PARAMETER is required");
+  }
 
   return {
-    apiKey: parsed.GEMINI_API_KEY,
+    ...(parsed.GEMINI_API_KEY === undefined ? {} : { apiKey: parsed.GEMINI_API_KEY }),
+    ...(parsed.GEMINI_API_KEY_PARAMETER === undefined
+      ? {}
+      : { apiKeyParameter: parsed.GEMINI_API_KEY_PARAMETER }),
     defaultMaxTokens: parsed.GEMINI_MAX_TOKENS,
     model: parsed.GEMINI_MODEL,
     timeoutMilliseconds: parsed.GEMINI_TIMEOUT_MILLISECONDS,
