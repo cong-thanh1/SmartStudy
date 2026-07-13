@@ -6,7 +6,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import * as fs from 'fs';
 import { uniqueTitle, createMinimalPdfBuffer, createCorruptPdfBuffer } from '../utils/test-data';
-import { deleteDocumentsByTitlePrefix } from '../utils/api-helpers';
 
 /**
  * Group 1 — Documents: Upload PDF
@@ -88,7 +87,7 @@ async function fillAndSubmitUpload(page: Page, title: string, filePath: string):
 test.describe('Nhóm 1 — Tải lên tài liệu PDF', () => {
   let uploadedDocIds: string[] = [];
 
-  test.afterAll(async ({ request }) => {
+  test.afterAll(() => {
     // Clean up all test documents created in this suite
     // Note: token injection via API helpers requires the stored token from auth setup
     // The cleanup prefix ensures we only delete documents created by this suite

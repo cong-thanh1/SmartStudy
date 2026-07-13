@@ -141,7 +141,7 @@ describe("QuizService", () => {
       const result = await service.generateQuiz({
         difficulty: "medium",
         documentId,
-        numQuestions: 5,
+        numQuestions: 1,
         userId,
       });
 
@@ -155,7 +155,7 @@ describe("QuizService", () => {
             correct_answer: "Option A",
             explanation: "Clear explanation.",
             options: ["Option A", "Option B", "Option C", "Option D"],
-            question_id: "q-10",
+            question_id: "q-1",
             question_text: "Sample Question?",
           },
         ],
@@ -178,7 +178,7 @@ describe("QuizService", () => {
         ],
       }) as T);
 
-      await service.generateQuiz({ documentId, userId });
+      await service.generateQuiz({ documentId, numQuestions: 1, userId });
 
       expect(quizRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -216,11 +216,62 @@ describe("QuizService", () => {
           ],
         }) as T);
 
-      const result = await service.generateQuiz({ documentId, userId });
+      const result = await service.generateQuiz({
+        documentId,
+        numQuestions: 1,
+        userId,
+      });
 
       expect(generateStructuredJSON).toHaveBeenCalledTimes(2);
       expect(result.id).toBe(quizId);
       expect(quizRepository.save).toHaveBeenCalledTimes(1);
+    });
+
+    it("retries when the local LLM returns duplicate answer options", async () => {
+      const { generateStructuredJSON, quizRepository, service } =
+        createServiceStubs();
+      generateStructuredJSON
+        .mockImplementationOnce(
+          async <T>(): Promise<T> =>
+            ({
+              questions: [
+                {
+                  correct_answer: "Option A",
+                  explanation: "Duplicate options must be rejected.",
+                  options: ["Option A", "Option A", "Option C", "Option D"],
+                  question_id: "q-duplicate",
+                  question_text: "Invalid question?",
+                },
+              ],
+            }) as T,
+        )
+        .mockImplementationOnce(
+          async <T>(): Promise<T> =>
+            ({
+              questions: [
+                {
+                  correct_answer: "Option B",
+                  explanation: "Each option is unique.",
+                  options: ["Option A", "Option B", "Option C", "Option D"],
+                  question_id: "q-valid",
+                  question_text: "Valid question?",
+                },
+              ],
+            }) as T,
+        );
+
+      await service.generateQuiz({ documentId, numQuestions: 1, userId });
+
+      expect(generateStructuredJSON).toHaveBeenCalledTimes(2);
+      expect(quizRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          questions: [
+            expect.objectContaining({
+              options: ["Option A", "Option B", "Option C", "Option D"],
+            }),
+          ],
+        }),
+      );
     });
 
     it("throws QuizGenerationError after 3 failed retries", async () => {

@@ -72,13 +72,19 @@ export const documentService = {
     });
 
     // Step 2: Upload directly to storage provider (MinIO/S3)
-    const uploadHeaders: Record<string, string> = {
-      'Content-Type': file.type,
-      ...(presignedResp.data.upload.headers || {}),
-    };
+    // Header names are case-insensitive, but spreading a presigned `content-type`
+    // alongside `Content-Type` sends both values. MinIO stores that as
+    // "application/pdf, application/pdf", which the API correctly rejects.
+    const uploadHeaders = new Headers(presignedResp.data.upload.headers || {});
+    uploadHeaders.set('Content-Type', file.type);
+
+    // Sending an ArrayBuffer also prevents fetch from inferring another
+    // Content-Type header from a File/Blob body.
+    const fileBuffer = await file.arrayBuffer();
+
     const uploadResp = await fetch(presignedResp.data.upload.url, {
       method: 'PUT',
-      body: file,
+      body: fileBuffer,
       headers: uploadHeaders,
     });
     if (!uploadResp.ok) {
@@ -171,8 +177,17 @@ export const quizService = {
 // Phase 3: Exam & Grading Service
 // ==========================================
 export const examService = {
-  async generateExam(documentId: string, numQuestions: number = 10, timeLimitMinutes?: number): Promise<Exam> {
-    const response = await api.post<{ exam: Exam }>(`/documents/${documentId}/exams`, { numQuestions, timeLimitMinutes });
+  async generateExam(
+    documentId: string,
+    numQuestions: number = 10,
+    timeLimitMinutes?: number,
+    difficultyDistribution?: Record<'easy' | 'medium' | 'hard', number>,
+  ): Promise<Exam> {
+    const response = await api.post<{ exam: Exam }>(`/documents/${documentId}/exams`, {
+      numQuestions,
+      timeLimitMinutes,
+      ...(difficultyDistribution ? { difficultyDistribution } : {}),
+    });
     return response.data.exam;
   },
 

@@ -3,6 +3,7 @@ import {
   type GenerateContentParameters,
   type GenerateContentResponse,
 } from "@google/genai";
+import { GetParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
 
 import type {
   GeneratedText,
@@ -18,6 +19,7 @@ export type GenerateGeminiContent = (
 
 export interface GeminiLLMProviderDependencies {
   readonly generateContent?: GenerateGeminiContent;
+  readonly getApiKey?: (parameterName: string) => Promise<string>;
 }
 
 export class GeminiEmptyResponseError extends Error {
@@ -35,7 +37,10 @@ export class GeminiStructuredOutputParseError extends Error {
 }
 
 export class GeminiLLMProvider implements ILLMProvider {
-  private readonly generate: GenerateGeminiContent;
+  private readonly generate?: GenerateGeminiContent;
+  private readonly getApiKey: (parameterName: string) => Promise<string>;
+  private apiKey: string | undefined;
+  private client: GoogleGenAI | undefined;
 
   constructor(
     private readonly config: GeminiLLMConfig,
@@ -43,21 +48,13 @@ export class GeminiLLMProvider implements ILLMProvider {
   ) {
     if (dependencies.generateContent) {
       this.generate = dependencies.generateContent;
-      return;
     }
-
-    const client = new GoogleGenAI({
-      apiKey: config.apiKey,
-      httpOptions: {
-        timeout: config.timeoutMilliseconds,
-      },
-    });
-    this.generate = (input) => client.models.generateContent(input);
+    this.getApiKey = dependencies.getApiKey ?? getParameterValue;
   }
 
   async generateText(input: GenerateTextInput): Promise<GeneratedText> {
     validateInput(input);
-    const response = await this.generate(this.toRequest(input));
+    const response = await this.generateContent(this.toRequest(input));
 
     return toGeneratedText(response);
   }
@@ -98,7 +95,7 @@ export class GeminiLLMProvider implements ILLMProvider {
   ): Promise<GeneratedText> {
     validateInput(input);
     const request = this.toRequest(input);
-    const response = await this.generate({
+    const response = await this.generateContent({
       ...request,
       config: {
         ...request.config,
@@ -128,6 +125,33 @@ export class GeminiLLMProvider implements ILLMProvider {
       model: this.config.model,
     };
   }
+
+  private async generateContent(input: GenerateContentParameters): Promise<GenerateContentResponse> {
+    if (this.generate) return this.generate(input);
+    if (!this.client) {
+      this.client = new GoogleGenAI({
+        apiKey: await this.resolveApiKey(),
+        httpOptions: { timeout: this.config.timeoutMilliseconds },
+      });
+    }
+    return this.client.models.generateContent(input);
+  }
+
+  private async resolveApiKey(): Promise<string> {
+    if (this.apiKey) return this.apiKey;
+    this.apiKey = this.config.apiKey ?? await this.getApiKey(this.config.apiKeyParameter!);
+    return this.apiKey;
+  }
+}
+
+async function getParameterValue(parameterName: string): Promise<string> {
+  const response = await new SSMClient({}).send(new GetParameterCommand({
+    Name: parameterName,
+    WithDecryption: true,
+  }));
+  const value = response.Parameter?.Value?.trim();
+  if (!value) throw new Error(`Gemini API key parameter ${parameterName} is empty`);
+  return value;
 }
 
 function validateInput(input: GenerateTextInput): void {

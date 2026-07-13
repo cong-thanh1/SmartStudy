@@ -13,7 +13,8 @@ export interface DocumentChapter {
 export interface DocumentChunkInput {
   readonly chapterTitle: string | null;
   readonly chunkText: string;
-  readonly embedding: readonly number[];
+  /** Present for the legacy pgvector flow; managed KB ingestion does not store it. */
+  readonly embedding?: readonly number[];
   readonly pageEnd: number;
   readonly pageStart: number;
 }

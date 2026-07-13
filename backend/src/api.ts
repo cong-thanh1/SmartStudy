@@ -3,13 +3,18 @@ import "dotenv/config";
 import { PrismaAuthRepository } from "./adapters/auth/prisma-auth-repository.js";
 import { PrismaChatRepository } from "./adapters/chat/prisma-chat-repository.js";
 import { PrismaDocumentRepository } from "./adapters/documents/prisma-document-repository.js";
+import { PrismaExamRepository } from "./adapters/exam/prisma-exam-repository.js";
+import { PrismaQuizRepository } from "./adapters/quiz/prisma-quiz-repository.js";
 import { PrismaSummaryRepository } from "./adapters/summary/prisma-summary-repository.js";
 import { createApp } from "./app.js";
 import { createPrismaClient } from "./database/prisma-client.js";
 import { ChatService } from "./modules/chat/chat-service.js";
 import { loadDocumentConfig } from "./modules/documents/document-config.js";
 import { DocumentService } from "./modules/documents/document-service.js";
+import { ExamService } from "./modules/exam/exam-service.js";
+import { QuizService } from "./modules/quiz/quiz-service.js";
 import { SummaryService } from "./modules/summary/summary-service.js";
+import { TutorService } from "./modules/tutor/tutor-service.js";
 import {
   createAuthProviderFromEnv,
   createEmbeddingProviderFromEnv,
@@ -54,12 +59,28 @@ const summaryService = new SummaryService(
   documentRepository,
   llmProvider,
 );
+const quizRepository = new PrismaQuizRepository(prisma);
+const quizService = new QuizService(
+  quizRepository,
+  documentRepository,
+  llmProvider,
+);
+const examService = new ExamService(
+  new PrismaExamRepository(prisma),
+  documentRepository,
+  quizRepository,
+  llmProvider,
+);
+const tutorService = new TutorService(documentRepository, llmProvider);
 const app = createApp({
   authProvider,
   chatService,
   documentConfig,
   documentService,
+  examService,
+  quizService,
   summaryService,
+  tutorService,
 });
 
 const server = app.listen(port, "0.0.0.0", () => {

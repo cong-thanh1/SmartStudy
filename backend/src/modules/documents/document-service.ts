@@ -259,6 +259,12 @@ export class DocumentService implements IDocumentService {
       metadata.contentType !== PDF_CONTENT_TYPE ||
       metadata.contentLength !== document.sizeBytes
     ) {
+      console.error("METADATA MISMATCH:", {
+        metadataContentType: metadata.contentType,
+        expectedContentType: PDF_CONTENT_TYPE,
+        metadataContentLength: metadata.contentLength,
+        expectedContentLength: document.sizeBytes
+      });
       throw new UploadMetadataMismatchError();
     }
   }

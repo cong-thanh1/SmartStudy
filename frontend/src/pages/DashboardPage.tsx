@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   UploadCloud,
@@ -31,19 +31,24 @@ export const DashboardPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchDocs = async () => {
+  const fetchDocs = useCallback(async () => {
     setIsLoading(true);
     try {
       const docs = await documentService.listDocuments();
       setDocuments(docs);
+    } catch {
+      // Keep the last successful list visible while a transient refresh fails.
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchDocs();
-  }, []);
+    void fetchDocs();
+    const refreshId = window.setInterval(() => void fetchDocs(), 2_000);
+
+    return () => window.clearInterval(refreshId);
+  }, [fetchDocs]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -384,7 +389,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {uploadError && (
-            <div className="p-3 rounded-lg bg-[#FFDAD6] text-[#93000A] text-xs font-medium">
+            <div data-testid="upload-error" className="p-3 rounded-lg bg-[#FFDAD6] text-[#93000A] text-xs font-medium">
               {uploadError}
             </div>
           )}

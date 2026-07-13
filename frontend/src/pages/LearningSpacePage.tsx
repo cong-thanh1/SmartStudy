@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Button, Card, Badge, ChatBubble, LoadingSpinner } from '../components';
 import { documentService, chatService, summaryService, tutorService } from '../services';
-import { Document, Message, Summary, Citation } from '../types';
+import { Document, DocumentChapter, Message, Summary, Citation } from '../types';
 import { clsx } from 'clsx';
 
 export const LearningSpacePage: React.FC = () => {
@@ -35,7 +35,8 @@ export const LearningSpacePage: React.FC = () => {
   // Summary State
   const [summary, setSummary] = useState<Summary | null>(null);
   const [summaryType, setSummaryType] = useState<'FULL' | 'CHAPTER'>('FULL');
-  const [selectedChapter, setSelectedChapter] = useState(0);
+  const [chapters, setChapters] = useState<readonly DocumentChapter[]>([]);
+  const [selectedChapterRef, setSelectedChapterRef] = useState('');
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
 
   // Tutor State
@@ -43,6 +44,7 @@ export const LearningSpacePage: React.FC = () => {
   const [tutorAnswer, setTutorAnswer] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [isAskingTutor, setIsAskingTutor] = useState(false);
+  const [useDocumentTutorContext, setUseDocumentTutorContext] = useState(true);
 
   // Citation Preview Highlight in PDF Viewer
   const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
@@ -66,6 +68,14 @@ export const LearningSpacePage: React.FC = () => {
     if (selectedDocId) {
       setSearchParams({ docId: selectedDocId });
       setMessages([]);
+      documentService.getDocument(selectedDocId).then((document) => {
+        const nextChapters = document.chapters || [];
+        setChapters(nextChapters);
+        setSelectedChapterRef(nextChapters[0]?.chapterTitle || '');
+      }).catch(() => {
+        setChapters([]);
+        setSelectedChapterRef('');
+      });
       chatService.listConversations(selectedDocId).then(async (convs) => {
         if (convs.length > 0) {
           setActiveConversationId(convs[0].id);
@@ -121,12 +131,13 @@ export const LearningSpacePage: React.FC = () => {
     }
   };
 
-  const handleGenerateSummary = async (type: 'FULL' | 'CHAPTER', chapterIdx = 0) => {
+  const handleGenerateSummary = async (type: 'FULL' | 'CHAPTER') => {
     if (!selectedDocId) return;
+    if (type === 'CHAPTER' && !selectedChapterRef) return;
     setIsLoadingSummary(true);
     try {
       // Use generateSummary (POST) which triggers LLM generation
-      const chapterRef = type === 'CHAPTER' ? `Chapter ${chapterIdx + 1}` : undefined;
+      const chapterRef = type === 'CHAPTER' ? selectedChapterRef : undefined;
       const res = await summaryService.generateSummary(
         selectedDocId,
         type === 'FULL' ? 'full' : 'chapter',
@@ -136,7 +147,7 @@ export const LearningSpacePage: React.FC = () => {
     } catch {
       // If POST fails (already exists), try GET
       try {
-        const chapterRef = type === 'CHAPTER' ? `Chapter ${chapterIdx + 1}` : undefined;
+        const chapterRef = type === 'CHAPTER' ? selectedChapterRef : undefined;
         const res = await summaryService.getSummary(selectedDocId, type, chapterRef);
         setSummary(res);
       } catch {
@@ -153,8 +164,9 @@ export const LearningSpacePage: React.FC = () => {
     try {
       const res = await tutorService.askTutor({
         question: questionToAsk,
-        documentId: selectedDocId,
-        chapterIndex: selectedChapter,
+        ...(useDocumentTutorContext && selectedDocId
+          ? { documentId: selectedDocId }
+          : {}),
       });
       setTutorAnswer(res.answer);
       if (res.suggestedQuestions) {
@@ -257,6 +269,7 @@ export const LearningSpacePage: React.FC = () => {
         {/* Navigation Tabs Header */}
         <div className="flex items-center bg-white border-b border-[#E0E3E5] px-6 h-16 shrink-0 gap-2">
           <button
+            data-testid="chat-tab"
             onClick={() => setActiveTab('rag')}
             className={clsx(
               'flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all relative',
@@ -270,9 +283,9 @@ export const LearningSpacePage: React.FC = () => {
           </button>
 
           <button
+            data-testid="summary-tab"
             onClick={() => {
               setActiveTab('summary');
-              if (!summary) handleGenerateSummary('FULL');
             }}
             className={clsx(
               'flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all',
@@ -286,6 +299,7 @@ export const LearningSpacePage: React.FC = () => {
           </button>
 
           <button
+            data-testid="tutor-tab"
             onClick={() => setActiveTab('tutor')}
             className={clsx(
               'flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all',
@@ -324,6 +338,7 @@ export const LearningSpacePage: React.FC = () => {
             {/* Chat Input Box */}
             <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-[#E0E3E5] flex gap-2">
               <input
+                data-testid="chat-input"
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
@@ -332,6 +347,7 @@ export const LearningSpacePage: React.FC = () => {
                 className="flex-1 bg-[#F4F7F9] border border-[#E0E3E5] rounded-xl px-4 py-2.5 text-xs text-[#181C1E] placeholder-[#707882] focus:outline-none focus:ring-2 focus:ring-[#0073BB]"
               />
               <Button
+                data-testid="chat-send-button"
                 type="submit"
                 variant="primary"
                 size="md"
@@ -350,6 +366,7 @@ export const LearningSpacePage: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-[#E0E3E5] shadow-sm">
               <div className="flex items-center gap-2">
                 <Button
+                  data-testid="summary-full-btn"
                   variant={summaryType === 'FULL' ? 'primary' : 'ghost'}
                   size="sm"
                   onClick={() => {
@@ -360,12 +377,13 @@ export const LearningSpacePage: React.FC = () => {
                   Tóm tắt Toàn văn (Full Doc)
                 </Button>
                 <Button
+                  data-testid="summary-chapter-btn"
                   variant={summaryType === 'CHAPTER' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => {
                     setSummaryType('CHAPTER');
-                    handleGenerateSummary('CHAPTER', selectedChapter);
                   }}
+                  disabled={chapters.length === 0}
                 >
                   Tóm tắt theo Chương
                 </Button>
@@ -375,27 +393,29 @@ export const LearningSpacePage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-[#707882]">Chọn chương:</span>
                   <select
-                    value={selectedChapter}
+                    data-testid="summary-chapter-select"
+                    value={selectedChapterRef}
                     onChange={(e) => {
-                      const idx = Number(e.target.value);
-                      setSelectedChapter(idx);
-                      handleGenerateSummary('CHAPTER', idx);
+                      setSelectedChapterRef(e.target.value);
                     }}
                     className="bg-[#F4F7F9] border border-[#E0E3E5] rounded-lg px-3 py-1 text-xs font-semibold text-[#181C1E]"
                   >
-                    <option value={0}>Chương 1: Tổng quan RAG</option>
-                    <option value={1}>Chương 2: Kiểm thử &amp; QA</option>
-                    <option value={2}>Chương 3: Tối ưu MinIO Storage</option>
+                    {chapters.map((chapter) => (
+                      <option key={chapter.chapterTitle} value={chapter.chapterTitle}>
+                        {chapter.chapterTitle} (trang {chapter.startPage}-{chapter.endPage})
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}
 
               <Button
+                data-testid="summary-generate-btn"
                 variant="outline"
                 size="sm"
                 leftIcon={<RefreshCw size={14} className={clsx(isLoadingSummary && 'animate-spin')} />}
-                onClick={() => handleGenerateSummary(summaryType, selectedChapter)}
-                disabled={isLoadingSummary}
+                onClick={() => handleGenerateSummary(summaryType)}
+                disabled={isLoadingSummary || (summaryType === 'CHAPTER' && !selectedChapterRef)}
               >
                 Tạo lại
               </Button>
@@ -406,7 +426,7 @@ export const LearningSpacePage: React.FC = () => {
                 <LoadingSpinner text="Đang thực hiện thuật toán Map-Reduce tổng hợp ý chính..." variant="secondary" />
               </Card>
             ) : summary ? (
-              <Card variant="ai-glow" className="p-8 space-y-4 bg-white">
+              <Card data-testid="summary-result-card" variant="ai-glow" className="p-8 space-y-4 bg-white">
                 <div className="flex items-center justify-between border-b border-[#E0E3E5] pb-4">
                   <h4 className="font-bold text-base text-[#181C1E] flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-[#8A2BE2]" />
@@ -417,7 +437,7 @@ export const LearningSpacePage: React.FC = () => {
 
                 {/* Key Points */}
                 {summary.keyPoints && summary.keyPoints.length > 0 && (
-                  <div className="p-4 rounded-xl bg-[#D0E4FF]/30 border border-[#0073BB]/20">
+                  <div data-testid="summary-key-points" className="p-4 rounded-xl bg-[#D0E4FF]/30 border border-[#0073BB]/20">
                     <p className="font-bold text-xs text-[#0073BB] mb-2">📌 Điểm chính:</p>
                     <ul className="space-y-1">
                       {summary.keyPoints.map((kp, i) => (
@@ -431,6 +451,7 @@ export const LearningSpacePage: React.FC = () => {
                 )}
 
                 <div
+                  data-testid="summary-content"
                   className="space-y-3 text-xs leading-relaxed text-[#404751] whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{
                     __html: (summary.summaryText || summary.content || summary.summary || '')
@@ -466,6 +487,7 @@ export const LearningSpacePage: React.FC = () => {
               className="flex gap-2"
             >
               <input
+                data-testid="tutor-input"
                 type="text"
                 value={tutorQuestion}
                 onChange={(e) => setTutorQuestion(e.target.value)}
@@ -473,17 +495,27 @@ export const LearningSpacePage: React.FC = () => {
                 disabled={isAskingTutor}
                 className="flex-1 bg-white border border-[#E0E3E5] rounded-xl px-4 py-3 text-xs text-[#181C1E] placeholder-[#707882] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#8A2BE2]"
               />
-              <Button type="submit" variant="ai" size="md" disabled={!tutorQuestion.trim() || isAskingTutor}>
+              <Button data-testid="tutor-ask-button" type="submit" variant="ai" size="md" disabled={!tutorQuestion.trim() || isAskingTutor}>
                 Hỏi Gia sư
               </Button>
             </form>
+
+            <label className="flex items-center gap-2 text-xs text-[#404751] cursor-pointer w-fit">
+              <input
+                data-testid="tutor-use-document-context"
+                type="checkbox"
+                checked={useDocumentTutorContext}
+                onChange={(event) => setUseDocumentTutorContext(event.target.checked)}
+              />
+              Dùng tài liệu đang chọn làm ngữ cảnh
+            </label>
 
             {isAskingTutor ? (
               <Card className="p-12 flex items-center justify-center">
                 <LoadingSpinner text="Gia sư AI đang soạn bài hướng dẫn chi tiết..." variant="secondary" />
               </Card>
             ) : tutorAnswer ? (
-              <Card className="p-6 space-y-4 bg-white border-l-4 border-l-[#8A2BE2]">
+              <Card data-testid="tutor-answer" className="p-6 space-y-4 bg-white border-l-4 border-l-[#8A2BE2]">
                 <div
                   className="space-y-2 text-xs leading-relaxed text-[#181C1E] whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{

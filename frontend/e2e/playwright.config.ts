@@ -22,19 +22,15 @@ export default defineConfig({
     ['json', { outputFile: '../playwright-report/results.json' }],
   ],
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:5173',
+    // E2E must exercise the Docker frontend proxy so API calls reach the
+    // compose `api` service, rather than an arbitrary host process on :3000.
+    baseURL: process.env.BASE_URL || 'http://localhost:8080',
     trace: 'on-first-retry',
-    video: 'retain-on-failure',
+    video: 'on',
     screenshot: 'only-on-failure',
     // Slow down interactions for observability in headed mode
     actionTimeout: 30_000,
     navigationTimeout: 30_000,
-  },
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: true,
-    timeout: 120_000,
   },
   projects: [
     // Auth setup — runs first, saves storageState

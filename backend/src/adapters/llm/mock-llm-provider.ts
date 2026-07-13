@@ -16,9 +16,10 @@ export class MockLLMProvider implements ILLMProvider {
       numQuestions = Number.parseInt(match[1], 10);
     }
 
+    const isExamSchema = input.schemaDescription.includes("difficulty");
     const questions = Array.from({ length: numQuestions }).map((_, i) => ({
       correct_answer: "Option A",
-      difficulty: "medium", // Used by exam, ignored by quiz
+      ...(isExamSchema ? { difficulty: "medium" } : {}),
       explanation: "This is a mock explanation for the correct answer.",
       options: ["Option A", "Option B", "Option C", "Option D"],
       question_id: `q${i + 1}`,

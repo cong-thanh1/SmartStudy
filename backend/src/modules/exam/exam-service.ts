@@ -100,55 +100,36 @@ export class ExamService implements IExamService {
       ? `Difficulty distribution: ${JSON.stringify(input.difficultyDistribution)}.`
       : "Balanced difficulty across easy, medium, and hard.";
 
-    const systemPrompt = `You are an expert academic examiner. Generate an examination with exactly ${numQuestions} multiple-choice questions based on the provided text. ${diffText} Each question MUST have exactly 4 options, 1 correct answer (matching one option exactly or A/B/C/D), an explanation, and an assigned difficulty (easy, medium, or hard). Return ONLY a JSON object matching the requested schema without markdown or extra text.`;
-    const schemaDescription =
-      "An object with property 'questions' which is an array of objects containing question_id (string), question_text (string), options (4 strings), correct_answer (string), explanation (string), and difficulty (string).";
+    const systemPrompt = `You are an expert academic examiner. Generate one multiple-choice question based on the provided text. ${diffText} The question MUST have exactly 4 distinct options, 1 correct answer matching one option exactly, a concise explanation, and an assigned difficulty (easy, medium, or hard). Return ONLY a JSON object matching the requested schema without markdown or extra text.`;
+    const generatedQuestions: GeneratedExamQuestion[] = [];
+    const requiredDifficulty = requiredDifficultyFrom(input.difficultyDistribution);
 
-    const maxAttempts = 3;
-    let lastError = "Unknown error during exam generation.";
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const rawResult = await this.llmProvider.generateStructuredJSON<unknown>(
-          {
-            messages: [{ content: sourceText, role: "user" }],
-            schemaDescription,
-            systemPrompt,
-            temperature: 0.4,
-          },
-        );
-
-        const parsed = generatedExamSchema.safeParse(rawResult);
-        if (!parsed.success) {
-          lastError = `Zod validation failed: ${parsed.error.message}`;
-          continue;
-        }
-
-        const { answerKey, questions } = this.splitQuestionsAndAnswerKey(
-          parsed.data.questions,
-        );
-        if (questions.length === 0 || answerKey.length === 0) {
-          lastError = "No valid questions after parsing.";
-          continue;
-        }
-
-        return await this.examRepository.save({
-          answerKey,
-          difficultyDistribution: input.difficultyDistribution ?? null,
-          documentId: input.documentId,
-          numQuestions: questions.length,
-          questions,
-          timeLimitMinutes: input.timeLimitMinutes ?? null,
-          userId: input.userId,
-        });
-      } catch (error) {
-        lastError = error instanceof Error ? error.message : String(error);
-      }
+    for (let index = 0; index < numQuestions; index++) {
+      const generated = await this.generateOneQuestion(
+        sourceText,
+        `${systemPrompt}\nThis is question ${index + 1} of ${numQuestions}.`,
+        requiredDifficulty,
+      );
+      generatedQuestions.push({
+        ...generated,
+        question_id: `eq-${index + 1}`,
+      });
     }
 
-    throw new ExamGenerationError(
-      `Failed to generate exam after ${maxAttempts} attempts. Last error: ${lastError}`,
-    );
+    const { answerKey, questions } = this.splitQuestionsAndAnswerKey(generatedQuestions);
+    if (questions.length !== numQuestions || answerKey.length !== numQuestions) {
+      throw new ExamGenerationError("A generated exam contained an invalid question.");
+    }
+
+    return this.examRepository.save({
+      answerKey,
+      difficultyDistribution: input.difficultyDistribution ?? null,
+      documentId: input.documentId,
+      numQuestions: questions.length,
+      questions,
+      timeLimitMinutes: input.timeLimitMinutes ?? null,
+      userId: input.userId,
+    });
   }
 
   async getExam(input: GetExamInput): Promise<ExamRecord> {
@@ -345,6 +326,36 @@ export class ExamService implements IExamService {
     return { answerKey, questions: cleanQuestions };
   }
 
+  private async generateOneQuestion(
+    sourceText: string,
+    systemPrompt: string,
+    requiredDifficulty?: "easy" | "medium" | "hard",
+  ): Promise<GeneratedExamQuestion> {
+    let lastError = "Unknown error during question generation.";
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const rawResult = await this.llmProvider.generateStructuredJSON<unknown>({
+          messages: [{ content: sourceText, role: "user" }],
+          maxTokens: 320,
+          schemaDescription: JSON.stringify(examJsonSchema(1, requiredDifficulty)),
+          systemPrompt,
+          temperature: 0.2,
+        });
+        const parsed = generatedExamSchema.safeParse(rawResult);
+        const question = parsed.success ? parsed.data.questions[0] : undefined;
+        if (question) return question;
+        lastError = parsed.success ? "LLM returned no question." : parsed.error.message;
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
+      }
+    }
+
+    throw new ExamGenerationError(
+      `Failed to generate a valid exam question. Last error: ${lastError}`,
+    );
+  }
+
   private async generateAiFeedback(
     score: number,
     maxScore: number,
@@ -382,4 +393,64 @@ export class ExamService implements IExamService {
     }
     return `You scored ${score}/${maxScore}. Please review the detailed explanations for the questions you missed to strengthen your understanding of those concepts.`;
   }
+}
+
+function examJsonSchema(
+  numQuestions: number,
+  requiredDifficulty?: "easy" | "medium" | "hard",
+): Record<string, unknown> {
+  return {
+    additionalProperties: false,
+    properties: {
+      questions: {
+        items: {
+          additionalProperties: false,
+          properties: {
+            correct_answer: { type: "string" },
+            difficulty: {
+              enum: requiredDifficulty
+                ? [requiredDifficulty]
+                : ["easy", "medium", "hard"],
+              type: "string",
+            },
+            explanation: { type: "string" },
+            options: {
+              items: { type: "string" },
+              maxItems: 4,
+              minItems: 4,
+              type: "array",
+            },
+            question_id: { type: "string" },
+            question_text: { type: "string" },
+          },
+          required: [
+            "question_id",
+            "question_text",
+            "options",
+            "correct_answer",
+            "explanation",
+            "difficulty",
+          ],
+          type: "object",
+        },
+        maxItems: numQuestions,
+        minItems: numQuestions,
+        type: "array",
+      },
+    },
+    required: ["questions"],
+    type: "object",
+  };
+}
+
+function requiredDifficultyFrom(
+  distribution: Record<string, number> | undefined,
+): "easy" | "medium" | "hard" | undefined {
+  if (!distribution) return undefined;
+
+  for (const difficulty of ["easy", "medium", "hard"] as const) {
+    if (distribution[difficulty] === 100) return difficulty;
+  }
+
+  return undefined;
 }

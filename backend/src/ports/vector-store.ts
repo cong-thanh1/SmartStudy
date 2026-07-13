@@ -12,6 +12,11 @@ export interface VectorRecord {
 export interface VectorSearchQuery {
   readonly documentId: string;
   readonly embedding: readonly number[];
+  /**
+   * Natural-language query used by managed stores such as Bedrock Knowledge
+   * Bases.  Local pgvector stores continue to use the embedding above.
+   */
+  readonly queryText?: string;
   readonly topK?: number;
   readonly userId: string;
 }
