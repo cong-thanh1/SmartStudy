@@ -85,7 +85,7 @@ export class QuizService implements IQuizService {
       ? `Focus specifically on chapter "${input.chapterRef}".`
       : "Cover the key concepts of the document.";
 
-    const systemPrompt = `You are an expert educational assessment creator. Generate one multiple-choice question based on the provided study material. ${difficultyText} ${chapterText} The question MUST have exactly 4 distinct options, 1 correct answer matching one option exactly, and a concise explanation. Return ONLY a JSON object matching the requested schema without markdown formatting or commentary.`;
+    const systemPrompt = `You are an expert educational assessment creator. Generate one multiple-choice question based on the provided study material. ${difficultyText} ${chapterText} Write every question, option, answer, and explanation only in Vietnamese or English; never use Chinese, Japanese, Korean, or another writing system. The question MUST have exactly 4 distinct options, 1 correct answer matching one option exactly, and a concise explanation. Return ONLY a JSON object matching the requested schema without markdown formatting or commentary.`;
     const generatedQuestions: GeneratedQuizQuestion[] = [];
 
     // Small CPU-only models are much more reliable when grammar-constrained
