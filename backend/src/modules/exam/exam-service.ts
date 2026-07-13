@@ -100,7 +100,7 @@ export class ExamService implements IExamService {
       ? `Difficulty distribution: ${JSON.stringify(input.difficultyDistribution)}.`
       : "Balanced difficulty across easy, medium, and hard.";
 
-    const systemPrompt = `You are an expert academic examiner. Generate one multiple-choice question based on the provided text. ${diffText} The question MUST have exactly 4 distinct options, 1 correct answer matching one option exactly, a concise explanation, and an assigned difficulty (easy, medium, or hard). Return ONLY a JSON object matching the requested schema without markdown or extra text.`;
+    const systemPrompt = `You are an expert academic examiner. Generate one multiple-choice question based on the provided text. ${diffText} Write every question, option, answer, and explanation only in Vietnamese or English; never use Chinese, Japanese, Korean, or another writing system. The question MUST have exactly 4 distinct options, 1 correct answer matching one option exactly, a concise explanation, and an assigned difficulty (easy, medium, or hard). Return ONLY a JSON object matching the requested schema without markdown or extra text.`;
     const generatedQuestions: GeneratedExamQuestion[] = [];
     const requiredDifficulty = requiredDifficultyFrom(input.difficultyDistribution);
 
