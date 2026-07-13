@@ -6,6 +6,7 @@ import { LlamaCppLLMProvider } from "../src/adapters/llm/llama-cpp-llm-provider.
 const config: LlamaCppLLMConfig = {
   baseUrl: "http://llama-cpp:8080",
   maxTokens: 1_024,
+  model: "qwen2.5:7b",
   timeoutMilliseconds: 1_000,
 };
 
@@ -46,6 +47,7 @@ describe("LlamaCppLLMProvider", () => {
             { content: "Be concise", role: "system" },
             { content: "Question", role: "user" },
           ],
+          model: "qwen2.5:7b",
           stream: false,
           temperature: 0.3,
         }),

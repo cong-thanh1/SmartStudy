@@ -51,6 +51,7 @@ export class LlamaCppLLMProvider implements ILLMProvider {
         body: JSON.stringify({
           max_tokens: input.maxTokens ?? this.config.maxTokens,
           messages: toMessages(input.messages, input.systemPrompt),
+          model: this.config.model,
           // llama.cpp only enables its JSON grammar when a schema is supplied.
           // A plain `json_object` response format is only a prompt hint for some
           // small local models, which caused malformed/truncated JSON in the
