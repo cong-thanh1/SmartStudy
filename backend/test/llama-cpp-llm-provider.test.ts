@@ -47,6 +47,7 @@ describe("LlamaCppLLMProvider", () => {
             { content: "Be concise", role: "system" },
             { content: "Question", role: "user" },
           ],
+          model: "qwen2.5:7b",
           stream: false,
           temperature: 0.3,
         }),
