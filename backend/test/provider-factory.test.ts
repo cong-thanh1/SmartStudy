@@ -18,6 +18,7 @@ import { JwtAuthProvider } from "../src/adapters/auth/jwt-auth-provider.js";
 import { CognitoAuthProvider } from "../src/adapters/auth/cognito-auth-provider.js";
 import { BedrockEmbeddingProvider } from "../src/adapters/embedding/bedrock-embedding-provider.js";
 import { LocalBgeM3Provider } from "../src/adapters/embedding/local-bge-m3-provider.js";
+import { NoOpEmbeddingProvider } from "../src/adapters/embedding/no-op-embedding-provider.js";
 import { AnthropicLLMProvider } from "../src/adapters/llm/anthropic-llm-provider.js";
 import { BedrockLLMProvider } from "../src/adapters/llm/bedrock-llm-provider.js";
 import { GeminiLLMProvider } from "../src/adapters/llm/gemini-llm-provider.js";
@@ -26,8 +27,10 @@ import { RedisQueueProvider } from "../src/adapters/queue/redis-queue-provider.j
 import { SqsQueueProvider } from "../src/adapters/queue/sqs-queue-provider.js";
 import { S3CompatibleStorageProvider } from "../src/adapters/storage/s3-compatible-storage-provider.js";
 import { PgVectorStore } from "../src/adapters/vector/pg-vector-store.js";
+import { DynamoDbChunkStore } from "../src/adapters/vector/dynamodb-chunk-store.js";
 import type { PrismaClient } from "../src/generated/prisma/client.js";
 import type { IAuthRepository } from "../src/modules/auth/auth-repository.js";
+import type { IDocumentRepository } from "../src/modules/documents/document-repository.js";
 import { loadProviderConfig } from "../src/provider-config.js";
 import { ProviderConfigurationError } from "../src/provider-errors.js";
 import type {
@@ -206,6 +209,11 @@ describe("ProviderFactory", () => {
     ).toBeInstanceOf(BedrockEmbeddingProvider);
   });
 
+  it("composes the no-op embedding adapter for DynamoDB chunk retrieval", () => {
+    expect(createEmbeddingProviderFromEnv({ EMBEDDING_PROVIDER: "none" }))
+      .toBeInstanceOf(NoOpEmbeddingProvider);
+  });
+
   it("composes the Anthropic LLM adapter", () => {
     expect(
       createLLMProviderFromEnv({
@@ -272,5 +280,11 @@ describe("ProviderFactory", () => {
         VECTOR_STORE: "bedrock-kb",
       }),
     ).not.toThrow();
+  });
+
+  it("constructs the DynamoDB chunk vector-store fallback", () => {
+    const repository = { listChunks: vi.fn() } as unknown as IDocumentRepository;
+    expect(createVectorStoreFromEnv(undefined, { VECTOR_STORE: "dynamodb-chunks" }, repository))
+      .toBeInstanceOf(DynamoDbChunkStore);
   });
 });

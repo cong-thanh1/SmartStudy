@@ -19,6 +19,7 @@ import { loadBedrockEmbeddingConfig } from "./adapters/embedding/bedrock-embeddi
 import { BedrockEmbeddingProvider } from "./adapters/embedding/bedrock-embedding-provider.js";
 import { loadLocalBgeM3Config } from "./adapters/embedding/local-bge-m3-config.js";
 import { LocalBgeM3Provider } from "./adapters/embedding/local-bge-m3-provider.js";
+import { NoOpEmbeddingProvider } from "./adapters/embedding/no-op-embedding-provider.js";
 import { loadAnthropicLLMConfig } from "./adapters/llm/anthropic-llm-config.js";
 import { AnthropicLLMProvider } from "./adapters/llm/anthropic-llm-provider.js";
 import { loadBedrockLLMConfig } from "./adapters/llm/bedrock-llm-config.js";
@@ -37,8 +38,10 @@ import { S3CompatibleStorageProvider } from "./adapters/storage/s3-compatible-st
 import { PgVectorStore } from "./adapters/vector/pg-vector-store.js";
 import { loadBedrockKnowledgeBaseConfig } from "./adapters/vector/bedrock-knowledge-base-config.js";
 import { BedrockKnowledgeBaseStore } from "./adapters/vector/bedrock-knowledge-base-store.js";
+import { DynamoDbChunkStore } from "./adapters/vector/dynamodb-chunk-store.js";
 import type { PrismaClient } from "./generated/prisma/client.js";
 import type { IAuthRepository } from "./modules/auth/auth-repository.js";
+import type { IDocumentRepository } from "./modules/documents/document-repository.js";
 import type {
   IAuthProvider,
   IEmailProvider,
@@ -289,6 +292,7 @@ export function createEmbeddingProviderFromEnv(
         new BedrockEmbeddingProvider(loadBedrockEmbeddingConfig(environment)),
       local: () =>
         new LocalBgeM3Provider(loadLocalBgeM3Config(environment)),
+      none: () => new NoOpEmbeddingProvider(),
     },
     llm: {},
     queue: {},
@@ -336,6 +340,7 @@ export function createLLMProviderFromEnv(
 export function createVectorStoreFromEnv(
   prisma: PrismaClient | undefined,
   environment: NodeJS.ProcessEnv = process.env,
+  documentRepository?: IDocumentRepository,
 ): IVectorStore {
   const config = loadProviderConfig(environment);
   const registry: ProviderRegistry = {
@@ -357,6 +362,15 @@ export function createVectorStoreFromEnv(
       },
       "bedrock-kb": () =>
         new BedrockKnowledgeBaseStore(loadBedrockKnowledgeBaseConfig(environment)),
+      "dynamodb-chunks": () => {
+        if (!documentRepository) {
+          throw new ProviderConfigurationError(
+            "vectorStore",
+            { cause: new Error("A document repository is required for VECTOR_STORE=dynamodb-chunks") },
+          );
+        }
+        return new DynamoDbChunkStore(documentRepository);
+      },
     },
   };
 
