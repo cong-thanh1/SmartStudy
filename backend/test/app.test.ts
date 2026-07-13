@@ -17,4 +17,12 @@ describe("API health endpoint", () => {
     });
     expect(response.headers["x-powered-by"]).toBeUndefined();
   });
+
+  it("accepts unauthenticated CORS preflight requests", async () => {
+    const response = await request(createTestApp(authProvider))
+      .options("/api/v1/documents")
+      .set("Origin", "https://example.test");
+
+    expect(response.status).toBe(204);
+  });
 });
