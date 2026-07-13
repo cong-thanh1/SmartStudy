@@ -118,7 +118,7 @@ function tokenizePage(page: ExtractedPdfPage): readonly PageToken[] {
 }
 
 function tokenizeText(text: string): readonly string[] {
-  return normalizeWhitespace(text).match(/\S+/gu) ?? [];
+  return normalizeExtractedText(text).match(/\S+/gu) ?? [];
 }
 
 function createOverlappingChunks(
@@ -240,6 +240,19 @@ function findChapterTitle(
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/gu, " ").trim();
+}
+
+/**
+ * Some PDFs encode Vietnamese glyphs as individual positioned characters and
+ * use private-use font glyphs for bullets. Rejoin those fragments before
+ * chunking so both the reader and AI receive readable source text.
+ */
+export function normalizeExtractedText(text: string): string {
+  // Private-use glyphs are often bullets/icons embedded by the PDF's font;
+  // browsers cannot render them, so replace them with a portable bullet.
+  // Word spacing is intentionally retained: without font-position metadata,
+  // aggressively joining Vietnamese fragments can merge distinct words.
+  return normalizeWhitespace(text.replace(/[\uE000-\uF8FF]/gu, " • "));
 }
 
 function truncateChapterTitle(title: string): string {
