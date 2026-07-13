@@ -235,9 +235,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       // is restored. Bedrock resources remain provisioned for a later switch.
       DOCUMENT_INGESTION_MODE: "dynamodb",
       EMBEDDING_PROVIDER: "none",
-      GEMINI_API_KEY: cdk.SecretValue.ssmSecure(
-        `/smartstudy/${suffix}/gemini-api-key`,
-      ).unsafeUnwrap(),
+      GEMINI_API_KEY_PARAMETER: `/smartstudy/${suffix}/gemini-api-key`,
       GEMINI_MODEL: "gemini-2.5-flash",
       LLM_PROVIDER: "gemini",
       AUTH_PROVIDER: "cognito",
@@ -366,6 +364,12 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     apiFunction.addToRolePolicy(new iam.PolicyStatement({
       actions: ["cognito-idp:InitiateAuth", "cognito-idp:RevokeToken", "cognito-idp:SignUp"],
       resources: [userPool.userPoolArn],
+    }));
+    apiFunction.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["ssm:GetParameter"],
+      resources: [
+        `arn:${cdk.Aws.PARTITION}:ssm:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:parameter/smartstudy/${suffix}/gemini-api-key`,
+      ],
     }));
     const httpApi = new apigatewayv2.HttpApi(this, "HttpApi", {
       corsPreflight: {

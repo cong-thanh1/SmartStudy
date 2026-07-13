@@ -29,8 +29,15 @@ describe("Gemini LLM config", () => {
     });
   });
 
+  it("accepts a Parameter Store name instead of a plaintext API key", () => {
+    expect(loadGeminiLLMConfig({
+      GEMINI_API_KEY_PARAMETER: "/smartstudy/staging/gemini-api-key",
+    })).toMatchObject({
+      apiKeyParameter: "/smartstudy/staging/gemini-api-key",
+    });
+  });
+
   it.each([
-    {},
     { GEMINI_API_KEY: " " },
     { GEMINI_API_KEY: "key", GEMINI_MAX_TOKENS: "0" },
     {
@@ -39,5 +46,9 @@ describe("Gemini LLM config", () => {
     },
   ])("rejects invalid config %#", (environment) => {
     expect(() => loadGeminiLLMConfig(environment)).toThrow(ZodError);
+  });
+
+  it("requires either a key or a Parameter Store name", () => {
+    expect(() => loadGeminiLLMConfig({})).toThrow("GEMINI_API_KEY or GEMINI_API_KEY_PARAMETER is required");
   });
 });
