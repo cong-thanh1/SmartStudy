@@ -210,7 +210,7 @@ export class QuizService implements IQuizService {
           // reproduced three times and generation always fails.
           temperature: 0.2 + attempt * 0.15,
         });
-        const parsed = generatedQuizSchema.safeParse(rawResult);
+        const parsed = generatedQuizSchema.safeParse(normalizeQuestionSet(rawResult));
         const question = parsed.success ? parsed.data.questions[0] : undefined;
         if (question) return question;
         lastError = parsed.success ? "LLM returned no question." : parsed.error.message;
@@ -223,6 +223,23 @@ export class QuizService implements IQuizService {
       `Failed to generate a valid quiz question. Last error: ${lastError}`,
     );
   }
+}
+
+function normalizeQuestionSet(raw: unknown): unknown {
+  if (!isRecord(raw) || Array.isArray(raw.questions)) return raw;
+  return {
+    questions: [{
+      correct_answer: raw.correct_answer ?? raw.answer,
+      explanation: raw.explanation,
+      options: raw.options,
+      question_id: raw.question_id ?? "generated-question",
+      question_text: raw.question_text ?? raw.question,
+    }],
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function questionSetJsonSchema(
