@@ -12,7 +12,8 @@ export class DynamoDbChunkStore implements IVectorStore {
     throw new Error("DynamoDB document chunks are deleted through the document repository");
   }
 
-  async upsertEmbeddings(_records: readonly VectorRecord[]): Promise<void> {
+  async upsertEmbeddings(records: readonly VectorRecord[]): Promise<void> {
+    void records;
     throw new Error("DynamoDB document chunks are written by document ingestion");
   }
 

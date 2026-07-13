@@ -7,7 +7,8 @@ import type { IEmbeddingProvider } from "../../ports/index.js";
 export class NoOpEmbeddingProvider implements IEmbeddingProvider {
   readonly dimensions = 0;
 
-  async embed(_text: string): Promise<number[]> {
+  async embed(text: string): Promise<number[]> {
+    void text;
     return [];
   }
 
