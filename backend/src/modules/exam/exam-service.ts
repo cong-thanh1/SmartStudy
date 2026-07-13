@@ -342,7 +342,9 @@ export class ExamService implements IExamService {
           systemPrompt,
           temperature: 0.2,
         });
-        const parsed = generatedExamSchema.safeParse(rawResult);
+        const parsed = generatedExamSchema.safeParse(
+          normalizeExamQuestionSet(rawResult, requiredDifficulty),
+        );
         const question = parsed.success ? parsed.data.questions[0] : undefined;
         if (question) return question;
         lastError = parsed.success ? "LLM returned no question." : parsed.error.message;
@@ -393,6 +395,27 @@ export class ExamService implements IExamService {
     }
     return `You scored ${score}/${maxScore}. Please review the detailed explanations for the questions you missed to strengthen your understanding of those concepts.`;
   }
+}
+
+function normalizeExamQuestionSet(
+  raw: unknown,
+  requiredDifficulty?: "easy" | "medium" | "hard",
+): unknown {
+  if (!isExamRecord(raw) || Array.isArray(raw.questions)) return raw;
+  return {
+    questions: [{
+      correct_answer: raw.correct_answer ?? raw.answer,
+      difficulty: raw.difficulty ?? requiredDifficulty ?? "medium",
+      explanation: raw.explanation,
+      options: raw.options,
+      question_id: raw.question_id ?? "generated-question",
+      question_text: raw.question_text ?? raw.question,
+    }],
+  };
+}
+
+function isExamRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function examJsonSchema(
