@@ -238,6 +238,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       EMBEDDING_PROVIDER: "none",
       LLAMA_CPP_API_KEY_PARAMETER: `/smartstudy/${suffix}/local-ai-gateway-key`,
       LLAMA_CPP_BASE_URL: props.localAiBaseUrl ?? "https://example.invalid",
+      LLAMA_CPP_MODEL: "qwen2.5:7b",
       LLAMA_CPP_TIMEOUT_MILLISECONDS: "120000",
       LLM_PROVIDER: "llama-cpp",
       AUTH_PROVIDER: "cognito",
