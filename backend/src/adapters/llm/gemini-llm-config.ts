@@ -9,7 +9,7 @@ const geminiLLMEnvironmentSchema = z.object({
     .min(1)
     .max(64_000)
     .default(4_096),
-  GEMINI_MODEL: z.string().trim().min(1).default("gemini-flash-latest"),
+  GEMINI_MODEL: z.string().trim().min(1).default("gemini-2.0-flash"),
   GEMINI_TIMEOUT_MILLISECONDS: z.coerce
     .number()
     .int()
