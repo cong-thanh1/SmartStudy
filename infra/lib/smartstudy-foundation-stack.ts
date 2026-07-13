@@ -3,10 +3,12 @@ import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigatewayv2Integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as bedrock from "aws-cdk-lib/aws-bedrock";
 import * as cognito from "aws-cdk-lib/aws-cognito";
+import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as logs from "aws-cdk-lib/aws-logs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as s3vectors from "aws-cdk-lib/aws-s3vectors";
@@ -269,6 +271,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       entry: path.join(__dirname, "../../backend/src/lambda.ts"),
       environment: sharedEnvironment,
       handler: "handler",
+      logRetention: logs.RetentionDays.ONE_MONTH,
       memorySize: 1024,
       runtime: lambda.Runtime.NODEJS_22_X,
       timeout: cdk.Duration.seconds(29),
@@ -303,6 +306,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
         BEDROCK_KNOWLEDGE_BASE_DATA_SOURCE_ID: knowledgeBaseDataSource.attrDataSourceId,
       },
       handler: "handler",
+      logRetention: logs.RetentionDays.ONE_MONTH,
       memorySize: 2048,
       runtime: lambda.Runtime.NODEJS_22_X,
       timeout: cdk.Duration.minutes(15),
@@ -310,6 +314,27 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     ingestionFunction.addEventSource(new lambdaEventSources.SqsEventSource(documentQueue, {
       batchSize: 1,
     }));
+
+    new cloudwatch.Alarm(this, "ApiFunctionErrorsAlarm", {
+      alarmDescription: "SmartStudy API Lambda returned one or more errors.",
+      evaluationPeriods: 1,
+      metric: apiFunction.metricErrors({ period: cdk.Duration.minutes(5) }),
+      threshold: 1,
+    });
+    new cloudwatch.Alarm(this, "DocumentIngestionErrorsAlarm", {
+      alarmDescription: "SmartStudy document-ingestion Lambda returned one or more errors.",
+      evaluationPeriods: 1,
+      metric: ingestionFunction.metricErrors({ period: cdk.Duration.minutes(5) }),
+      threshold: 1,
+    });
+    new cloudwatch.Alarm(this, "DocumentProcessingDlqMessagesAlarm", {
+      alarmDescription: "A document-processing message requires investigation in the DLQ.",
+      evaluationPeriods: 1,
+      metric: documentDlq.metricApproximateNumberOfMessagesVisible({
+        period: cdk.Duration.minutes(5),
+      }),
+      threshold: 1,
+    });
 
     const dataTables = [
       attemptsTable, conversationsTable, conversationMessagesTable,
