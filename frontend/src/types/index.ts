@@ -45,6 +45,18 @@ export interface Document {
   chapters?: readonly DocumentChapter[];
 }
 
+export interface DocumentPreviewChunk {
+  chapterTitle: string | null;
+  pageEnd: number | null;
+  pageStart: number | null;
+  text: string;
+}
+
+export interface DocumentPreview extends Document {
+  pageCount: number | null;
+  chunks: readonly DocumentPreviewChunk[];
+}
+
 export interface PresignedUploadResponse {
   // Backend DocumentUploadResult shape: { document: DocumentSummary, upload: PresignedUpload }
   document: {

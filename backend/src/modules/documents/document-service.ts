@@ -45,6 +45,17 @@ export interface DocumentListItem extends DocumentSummary {
   readonly pageCount: number | null;
 }
 
+export interface DocumentPreviewChunk {
+  readonly chapterTitle: string | null;
+  readonly pageEnd: number | null;
+  readonly pageStart: number | null;
+  readonly text: string;
+}
+
+export interface DocumentPreview extends DocumentDetail {
+  readonly chunks: readonly DocumentPreviewChunk[];
+}
+
 export interface ListDocumentsInput {
   readonly limit: number;
   readonly page: number;
@@ -81,6 +92,7 @@ export interface IDocumentService {
   ): Promise<DocumentSummary>;
   deleteDocument(documentId: string, userId: string): Promise<void>;
   getDocument(documentId: string, userId: string): Promise<DocumentDetail>;
+  getDocumentPreview(documentId: string, userId: string): Promise<DocumentPreview>;
   listDocuments(input: ListDocumentsInput): Promise<ListDocumentsResult>;
   requestUpload(
     input: RequestDocumentUploadInput,
@@ -216,6 +228,27 @@ export class DocumentService implements IDocumentService {
     }
 
     return toDocumentDetail(document);
+  }
+
+  async getDocumentPreview(
+    documentId: string,
+    userId: string,
+  ): Promise<DocumentPreview> {
+    const document = await this.repository.findOwnedById(documentId, userId);
+    if (!document) throw new DocumentNotFoundError();
+
+    const chunks = await this.repository.listChunks({ documentId, userId });
+    return {
+      ...toDocumentDetail(document),
+      // The reader needs enough source text to make document switching clear,
+      // while keeping the response bounded for large PDFs.
+      chunks: chunks.slice(0, 20).map((chunk) => ({
+        chapterTitle: chunk.chapterTitle,
+        pageEnd: chunk.pageEnd,
+        pageStart: chunk.pageStart,
+        text: chunk.chunkText,
+      })),
+    };
   }
 
   async listDocuments(

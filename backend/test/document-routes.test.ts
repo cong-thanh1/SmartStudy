@@ -69,6 +69,17 @@ describe("document HTTP routes", () => {
       chapters: [],
       pageCount: null,
     });
+    vi.mocked(documentService.getDocumentPreview).mockResolvedValue({
+      ...document,
+      chapters: [],
+      chunks: [{
+        chapterTitle: "Chapter 1",
+        pageEnd: 1,
+        pageStart: 1,
+        text: "Real document text",
+      }],
+      pageCount: 1,
+    });
     vi.mocked(documentService.listDocuments).mockResolvedValue({
       documents: [
         {
@@ -83,6 +94,18 @@ describe("document HTTP routes", () => {
         totalPages: 1,
       },
     });
+  });
+
+  it("returns a preview made from the selected document's real chunks", async () => {
+    const response = await request(
+      createTestApp(authProvider, documentService),
+    )
+      .get(`/api/v1/documents/${documentId}/preview`)
+      .set("Authorization", "Bearer access-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body.preview.chunks[0].text).toBe("Real document text");
+    expect(documentService.getDocumentPreview).toHaveBeenCalledWith(documentId, userId);
   });
 
   it("creates an authenticated presigned upload request", async () => {
