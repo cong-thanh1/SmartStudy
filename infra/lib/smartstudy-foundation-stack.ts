@@ -19,6 +19,7 @@ import { Construct } from "constructs";
 export interface SmartStudyFoundationStackProps extends cdk.StackProps {
   readonly environment: string;
   readonly frontendOrigin?: string;
+  readonly localAiBaseUrl?: string;
 }
 
 export class SmartStudyFoundationStack extends cdk.Stack {
@@ -235,9 +236,10 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       // is restored. Bedrock resources remain provisioned for a later switch.
       DOCUMENT_INGESTION_MODE: "dynamodb",
       EMBEDDING_PROVIDER: "none",
-      GEMINI_API_KEY_PARAMETER: `/smartstudy/${suffix}/gemini-api-key`,
-      GEMINI_MODEL: "gemini-2.0-flash",
-      LLM_PROVIDER: "gemini",
+      LLAMA_CPP_API_KEY_PARAMETER: `/smartstudy/${suffix}/local-ai-gateway-key`,
+      LLAMA_CPP_BASE_URL: props.localAiBaseUrl ?? "https://example.invalid",
+      LLAMA_CPP_TIMEOUT_MILLISECONDS: "120000",
+      LLM_PROVIDER: "llama-cpp",
       AUTH_PROVIDER: "cognito",
       DOCUMENT_PROCESSING_QUEUE: `smartstudy-${suffix}-document-processing`,
       QUEUE_PROVIDER: "sqs",
@@ -369,6 +371,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       actions: ["ssm:GetParameter"],
       resources: [
         `arn:${cdk.Aws.PARTITION}:ssm:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:parameter/smartstudy/${suffix}/gemini-api-key`,
+        `arn:${cdk.Aws.PARTITION}:ssm:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:parameter/smartstudy/${suffix}/local-ai-gateway-key`,
       ],
     }));
     const httpApi = new apigatewayv2.HttpApi(this, "HttpApi", {

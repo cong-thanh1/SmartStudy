@@ -5,6 +5,7 @@ import type {
   ILLMProvider,
   LLMMessage,
 } from "../../ports/index.js";
+import { GetParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
 import type { LlamaCppLLMConfig } from "./llama-cpp-llm-config.js";
 
 interface CompletionResponse {
@@ -13,6 +14,8 @@ interface CompletionResponse {
 }
 
 export class LlamaCppLLMProvider implements ILLMProvider {
+  private apiKey: string | undefined;
+
   constructor(private readonly config: LlamaCppLLMConfig) {}
 
   async generateStructuredJSON<T>(input: GenerateStructuredJsonInput): Promise<T> {
@@ -43,6 +46,7 @@ export class LlamaCppLLMProvider implements ILLMProvider {
     );
 
     try {
+      const apiKey = await this.resolveApiKey();
       const response = await fetch(`${this.config.baseUrl}/v1/chat/completions`, {
         body: JSON.stringify({
           max_tokens: input.maxTokens ?? this.config.maxTokens,
@@ -60,7 +64,10 @@ export class LlamaCppLLMProvider implements ILLMProvider {
           stream: false,
           temperature: input.temperature ?? 0.3,
         }),
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(apiKey === undefined ? {} : { "x-api-key": apiKey }),
+        },
         method: "POST",
         signal: controller.signal,
       });
@@ -96,6 +103,19 @@ export class LlamaCppLLMProvider implements ILLMProvider {
     } finally {
       clearTimeout(timeout);
     }
+  }
+
+  private async resolveApiKey(): Promise<string | undefined> {
+    if (!this.config.apiKeyParameter) return undefined;
+    if (this.apiKey) return this.apiKey;
+    const response = await new SSMClient({}).send(new GetParameterCommand({
+      Name: this.config.apiKeyParameter,
+      WithDecryption: true,
+    }));
+    const value = response.Parameter?.Value?.trim();
+    if (!value) throw new Error(`Local AI key parameter ${this.config.apiKeyParameter} is empty`);
+    this.apiKey = value;
+    return value;
   }
 }
 
