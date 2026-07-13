@@ -93,14 +93,18 @@ export const LearningSpacePage: React.FC = () => {
         setSelectedChapterRef('');
       });
       chatService.listConversations(selectedDocId).then(async (convs) => {
+        if (cancelled) return;
         if (convs.length > 0) {
-          setActiveConversationId(convs[0].id);
+          const conversation = convs[0]!;
+          setActiveConversationId(conversation.id);
+          const history = await chatService.listMessages(conversation.id);
+          if (!cancelled) setMessages(history);
         } else {
           const newConv = await chatService.createConversation('Hội thoại RAG: ' + selectedDocId, selectedDocId);
-          setActiveConversationId(newConv.id);
+          if (!cancelled) setActiveConversationId(newConv.id);
         }
       }).catch(() => {
-        setActiveConversationId('');
+        if (!cancelled) setActiveConversationId('');
       });
     }
 

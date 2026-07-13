@@ -67,6 +67,34 @@ describe("DynamoDbChatRepository", () => {
     ).resolves.toBeNull();
   });
 
+  it("lists the newest conversations for one owned document", async () => {
+    const client = new FakeDynamoDbClient([
+      {
+        Items: [
+          {
+            conversationId: "conversation-1",
+            createdAt: "2026-07-12T00:00:00.000Z",
+            documentId: "document-1",
+            ownerId: "user-1",
+            title: "Private",
+          },
+        ],
+      },
+    ]);
+    const repository = createRepository(client);
+
+    await expect(repository.listOwnedByDocument("document-1", "user-1")).resolves.toMatchObject([
+      { id: "conversation-1" },
+    ]);
+    expect(inputOf(client.commands[0])).toMatchObject({
+      FilterExpression: "documentId = :documentId",
+      IndexName: "ownerId-createdAt-index",
+      KeyConditionExpression: "ownerId = :ownerId",
+      ScanIndexForward: false,
+      TableName: "conversations",
+    });
+  });
+
   it("writes a user/assistant exchange atomically after checking the conversation", async () => {
     const client = new FakeDynamoDbClient([{}]);
     const repository = createRepository(client, ["user-message", "assistant-message"]);

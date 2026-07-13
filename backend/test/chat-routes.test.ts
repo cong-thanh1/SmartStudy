@@ -71,6 +71,18 @@ describe("chat HTTP routes", () => {
         role: "user",
       },
     });
+    vi.mocked(chatService.listConversations).mockResolvedValue([
+      { createdAt, documentId, id: conversationId, title: "Physics Notes" },
+    ]);
+    vi.mocked(chatService.listMessages).mockResolvedValue([
+      {
+        citations: [],
+        content: "What is inertia?",
+        createdAt,
+        id: "user-message",
+        role: "user",
+      },
+    ]);
   });
 
   function app() {
@@ -118,6 +130,22 @@ describe("chat HTTP routes", () => {
       conversationId,
       userId,
     });
+  });
+
+  it("lists the current user's document conversations and saved messages", async () => {
+    const conversations = await request(app())
+      .get(`/api/v1/chat/conversations?documentId=${documentId}`)
+      .set("Authorization", "Bearer access-token");
+    expect(conversations.status).toBe(200);
+    expect(conversations.body.conversations).toHaveLength(1);
+    expect(chatService.listConversations).toHaveBeenCalledWith(documentId, userId);
+
+    const messages = await request(app())
+      .get(`/api/v1/chat/conversations/${conversationId}/messages`)
+      .set("Authorization", "Bearer access-token");
+    expect(messages.status).toBe(200);
+    expect(messages.body.messages[0].content).toBe("What is inertia?");
+    expect(chatService.listMessages).toHaveBeenCalledWith(conversationId, userId);
   });
 
   it("rejects unauthenticated chat requests", async () => {

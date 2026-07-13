@@ -115,10 +115,20 @@ export const documentService = {
 // Phase 1: RAG Chat Service
 // ==========================================
 export const chatService = {
-  async listConversations(_documentId?: string): Promise<Conversation[]> {
+  async listConversations(documentId: string): Promise<Conversation[]> {
     // NOTE: Backend currently only supports POST /chat/conversations and POST /chat/conversations/:id/messages
     // GET /chat/conversations is not implemented — return empty array gracefully
-    return [];
+    const response = await api.get<{ conversations: Conversation[] }>('/chat/conversations', {
+      params: { documentId },
+    });
+    return response.data.conversations || [];
+  },
+
+  async listMessages(conversationId: string): Promise<Message[]> {
+    const response = await api.get<{ messages: Message[] }>(
+      `/chat/conversations/${conversationId}/messages`,
+    );
+    return response.data.messages || [];
   },
 
   async createConversation(title: string, documentId?: string): Promise<Conversation> {

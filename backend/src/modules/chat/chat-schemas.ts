@@ -7,6 +7,12 @@ export const createConversationSchema = z
   })
   .strict();
 
+export const listConversationsQuerySchema = z
+  .object({
+    documentId: z.string().uuid(),
+  })
+  .strict();
+
 export const conversationIdParamsSchema = z
   .object({
     conversationId: z.string().uuid(),

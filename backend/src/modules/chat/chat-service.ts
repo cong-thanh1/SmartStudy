@@ -64,6 +64,8 @@ export interface IChatService {
     input: CreateConversationRequest,
   ): Promise<ConversationSummary>;
   sendMessage(input: SendChatMessageRequest): Promise<SendChatMessageResult>;
+  listConversations(documentId: string, userId: string): Promise<readonly ConversationSummary[]>;
+  listMessages(conversationId: string, userId: string): Promise<readonly ChatMessage[]>;
 }
 
 export class ChatService implements IChatService {
@@ -163,6 +165,18 @@ export class ChatService implements IChatService {
       conversationId: conversation.id,
       userMessage: toChatMessage(exchange.userMessage),
     };
+  }
+
+  async listConversations(documentId: string, userId: string): Promise<readonly ConversationSummary[]> {
+    const document = await this.getReadyDocument(documentId, userId);
+    const conversations = await this.chatRepository.listOwnedByDocument(document.id, userId);
+    return conversations.map((conversation) => toConversationSummary(conversation, conversation.title ?? document.title));
+  }
+
+  async listMessages(conversationId: string, userId: string): Promise<readonly ChatMessage[]> {
+    const conversation = await this.chatRepository.findOwnedConversation(conversationId, userId);
+    if (!conversation) throw new ConversationNotFoundError();
+    return (await this.chatRepository.listRecentMessages(conversation.id, 100)).map(toChatMessage);
   }
 
   private async getReadyDocument(

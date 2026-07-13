@@ -93,6 +93,24 @@ export class PrismaChatRepository implements IChatRepository {
     return conversation ? mapConversation(conversation) : null;
   }
 
+  async listOwnedByDocument(
+    documentId: string,
+    userId: string,
+  ): Promise<readonly ConversationRecord[]> {
+    const conversations = await this.prisma.conversation.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: conversationSelection,
+      where: {
+        documentId,
+        userId,
+      },
+    });
+
+    return conversations.map(mapConversation);
+  }
+
   async listRecentMessages(
     conversationId: string,
     limit: number,

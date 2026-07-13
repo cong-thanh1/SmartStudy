@@ -163,6 +163,23 @@ export class DynamoDbChatRepository implements IChatRepository {
     return mapConversation(item);
   }
 
+  async listOwnedByDocument(
+    documentId: string,
+    userId: string,
+  ): Promise<readonly ConversationRecord[]> {
+    const response = (await this.client.send(
+      new QueryCommand({
+        ExpressionAttributeValues: { ":documentId": documentId, ":ownerId": userId },
+        FilterExpression: "documentId = :documentId",
+        IndexName: "ownerId-createdAt-index",
+        KeyConditionExpression: "ownerId = :ownerId",
+        ScanIndexForward: false,
+        TableName: this.config.conversationsTableName,
+      }),
+    )) as { Items?: DynamoConversationItem[] };
+    return (response.Items ?? []).map(mapConversation);
+  }
+
   async listRecentMessages(
     conversationId: string,
     limit: number,

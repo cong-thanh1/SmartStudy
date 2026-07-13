@@ -27,6 +27,8 @@ export const testDocumentConfig: DocumentConfig = {
 export function createChatServiceStub(): IChatService {
   return {
     createConversation: vi.fn(),
+    listConversations: vi.fn(),
+    listMessages: vi.fn(),
     sendMessage: vi.fn(),
   };
 }
