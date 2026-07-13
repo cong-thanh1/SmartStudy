@@ -274,6 +274,24 @@ describe("QuizService", () => {
       );
     });
 
+    it("retries a repeated learning objective instead of saving duplicate questions", async () => {
+      const { generateStructuredJSON, quizRepository, service } = createServiceStubs();
+      generateStructuredJSON
+        .mockImplementationOnce(async <T>(): Promise<T> => validQuestion("What is inertia?", "q-1") as T)
+        .mockImplementationOnce(async <T>(): Promise<T> => validQuestion("What is inertia?", "q-2") as T)
+        .mockImplementationOnce(async <T>(): Promise<T> => validQuestion("What is acceleration?", "q-2") as T);
+
+      await service.generateQuiz({ documentId, numQuestions: 2, userId });
+
+      expect(generateStructuredJSON).toHaveBeenCalledTimes(3);
+      expect(quizRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        questions: expect.arrayContaining([
+          expect.objectContaining({ question_text: "What is inertia?" }),
+          expect.objectContaining({ question_text: "What is acceleration?" }),
+        ]),
+      }));
+    });
+
     it("throws QuizGenerationError after 3 failed retries", async () => {
       const { generateStructuredJSON, service } = createServiceStubs();
       generateStructuredJSON.mockRejectedValue(
@@ -352,3 +370,15 @@ describe("QuizService", () => {
     });
   });
 });
+
+function validQuestion(questionText: string, questionId: string) {
+  return {
+    questions: [{
+      correct_answer: "Option A",
+      explanation: "Clear explanation.",
+      options: ["Option A", "Option B", "Option C", "Option D"],
+      question_id: questionId,
+      question_text: questionText,
+    }],
+  };
+}
