@@ -36,6 +36,7 @@ export function createDocumentServiceStub(): IDocumentService {
     completeUpload: vi.fn(),
     deleteDocument: vi.fn(),
     getDocument: vi.fn(),
+    getDocumentPreview: vi.fn(),
     listDocuments: vi.fn(),
     requestUpload: vi.fn(),
   };

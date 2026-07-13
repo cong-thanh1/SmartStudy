@@ -101,6 +101,11 @@ export const documentService = {
     return response.data.document;
   },
 
+  async getDocumentPreview(id: string): Promise<import('../types').DocumentPreview> {
+    const response = await api.get<{ preview: import('../types').DocumentPreview }>(`/documents/${id}/preview`);
+    return response.data.preview;
+  },
+
   async deleteDocument(id: string): Promise<void> {
     await api.delete(`/documents/${id}`);
   },
