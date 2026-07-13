@@ -11,10 +11,12 @@ import {
   submitAttemptRequestSchema,
 } from "./exam-schemas.js";
 import type { IExamService } from "./exam-service.js";
+import type { AiJobService } from "../jobs/ai-job-service.js";
 
 export function createExamRouter(
   authProvider: IAuthProvider,
   examService: IExamService,
+  jobs?: AiJobService,
 ): Router {
   const router = Router();
 
@@ -26,6 +28,16 @@ export function createExamRouter(
       const { documentId } = examDocumentIdParamsSchema.parse(request.params);
       const body = generateExamRequestSchema.parse(request.body);
       const claims = getAuthClaims(response);
+
+      if (jobs && (body.numQuestions ?? 10) >= 5) {
+        const job = await jobs.submit("exam", documentId, claims.sub, {
+          ...(body.difficultyDistribution === undefined ? {} : { difficultyDistribution: body.difficultyDistribution }),
+          numQuestions: body.numQuestions,
+          ...(body.timeLimitMinutes === undefined ? {} : { timeLimitMinutes: body.timeLimitMinutes }),
+        });
+        response.status(202).json({ job });
+        return;
+      }
 
       const exam = await examService.generateExam({
         documentId,

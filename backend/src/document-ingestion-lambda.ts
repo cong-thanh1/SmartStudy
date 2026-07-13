@@ -1,12 +1,19 @@
 import "dotenv/config";
 
 import { DynamoDbDocumentRepository } from "./adapters/documents/dynamodb-document-repository.js";
+import { DynamoDbAiJobRepository } from "./adapters/jobs/dynamodb-ai-job-repository.js";
+import { DynamoDbExamRepository } from "./adapters/exam/dynamodb-exam-repository.js";
+import { DynamoDbQuizRepository } from "./adapters/quiz/dynamodb-quiz-repository.js";
 import { PdfParseTextExtractor } from "./adapters/documents/pdf-parse-text-extractor.js";
 import { loadDocumentConfig } from "./modules/documents/document-config.js";
 import { BedrockDocumentIngestionService } from "./modules/documents/bedrock-document-ingestion-service.js";
 import { DynamoDbDocumentIngestionService } from "./modules/documents/dynamodb-document-ingestion-service.js";
 import type { ProcessDocumentJob } from "./modules/documents/document-service.js";
 import { createStorageProviderFromEnv } from "./provider-factory.js";
+import { createLazyLLMProviderFromEnv } from "./provider-factory.js";
+import { QuizService } from "./modules/quiz/quiz-service.js";
+import { ExamService } from "./modules/exam/exam-service.js";
+import { AiJobService } from "./modules/jobs/ai-job-service.js";
 
 const repository = new DynamoDbDocumentRepository({
     chunksTableName: required("DOCUMENT_CHUNKS_TABLE_NAME"),
@@ -32,11 +39,18 @@ const service = process.env.DOCUMENT_INGESTION_MODE === "dynamodb"
 
 export async function handler(event: { readonly Records?: readonly { readonly body: string }[] }): Promise<void> {
   for (const record of event.Records ?? []) {
-    const envelope = JSON.parse(record.body) as { data?: ProcessDocumentJob; name?: string };
+    const envelope = JSON.parse(record.body) as { data?: ProcessDocumentJob | { type?: string; jobId?: string }; name?: string };
     if (envelope.name !== documentConfig.processingQueue || !envelope.data) {
       throw new Error("Invalid document-processing SQS message");
     }
-    await service.process(envelope.data);
+    if ("type" in envelope.data && envelope.data.type === "ai-generation" && envelope.data.jobId) {
+      const jobs = new AiJobService(new DynamoDbAiJobRepository(required("AI_JOBS_TABLE_NAME")), { consume: async () => ({ close: async () => undefined }), enqueue: async () => ({ jobId: "unused" }) }, documentConfig.processingQueue);
+      const quizzes = new DynamoDbQuizRepository({ quizzesTableName: required("QUIZZES_TABLE_NAME") });
+      const exams = new DynamoDbExamRepository({ attemptsTableName: required("ATTEMPTS_TABLE_NAME"), examsTableName: required("EXAMS_TABLE_NAME") });
+      await jobs.process(envelope.data.jobId, new QuizService(quizzes, repository, createLazyLLMProviderFromEnv()), new ExamService(exams, repository, quizzes, createLazyLLMProviderFromEnv()));
+    } else {
+      await service.process(envelope.data as ProcessDocumentJob);
+    }
   }
 }
 

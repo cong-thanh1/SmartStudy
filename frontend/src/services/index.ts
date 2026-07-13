@@ -162,9 +162,9 @@ export const summaryService = {
 // Phase 2: Quiz Service
 // ==========================================
 export const quizService = {
-  async generateQuiz(documentId: string, _title?: string, numQuestions: number = 5): Promise<Quiz> {
-    const response = await api.post<{ quiz: Quiz }>(`/documents/${documentId}/quizzes`, { numQuestions });
-    return response.data.quiz;
+  async generateQuiz(documentId: string, _title?: string, numQuestions: number = 5): Promise<Quiz | import('../types').AiJob> {
+    const response = await api.post<{ quiz?: Quiz; job?: import('../types').AiJob }>(`/documents/${documentId}/quizzes`, { numQuestions });
+    return response.data.quiz || response.data.job!;
   },
 
   async listQuizzes(documentId: string): Promise<Quiz[]> {
@@ -187,13 +187,13 @@ export const examService = {
     numQuestions: number = 10,
     timeLimitMinutes?: number,
     difficultyDistribution?: Record<'easy' | 'medium' | 'hard', number>,
-  ): Promise<Exam> {
-    const response = await api.post<{ exam: Exam }>(`/documents/${documentId}/exams`, {
+  ): Promise<Exam | import('../types').AiJob> {
+    const response = await api.post<{ exam?: Exam; job?: import('../types').AiJob }>(`/documents/${documentId}/exams`, {
       numQuestions,
       timeLimitMinutes,
       ...(difficultyDistribution ? { difficultyDistribution } : {}),
     });
-    return response.data.exam;
+    return response.data.exam || response.data.job!;
   },
 
   async listExams(documentId: string): Promise<Exam[]> {
@@ -224,6 +224,13 @@ export const examService = {
   async listAttempts(examId: string): Promise<ExamAttempt[]> {
     const response = await api.get<{ attempts: ExamAttempt[] }>(`/exams/${examId}/attempts`);
     return response.data.attempts || [];
+  },
+};
+
+export const jobService = {
+  async getJob(jobId: string): Promise<import('../types').AiJob> {
+    const response = await api.get<{ job: import('../types').AiJob }>(`/jobs/${jobId}`);
+    return response.data.job;
   },
 };
 

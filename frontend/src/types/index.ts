@@ -142,6 +142,14 @@ export interface Quiz {
   createdAt: string;
 }
 
+export interface AiJob {
+  id: string;
+  kind: 'quiz' | 'exam';
+  status: 'queued' | 'running' | 'completed' | 'failed';
+  resultId: string | null;
+  errorMessage: string | null;
+}
+
 // Exam & AI Grading Types — matches backend exam-repository
 export interface ExamQuestion {
   question_id: string;
