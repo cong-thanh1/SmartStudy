@@ -231,9 +231,16 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       DOCUMENT_CHUNKS_TABLE_NAME: documentChunksTable.tableName,
       DOCUMENTS_TABLE_NAME: documentsTable.tableName,
       EXAMS_TABLE_NAME: examsTable.tableName,
-      LLM_PROVIDER: "bedrock",
+      // Gemini is the active production fallback until Bedrock account access
+      // is restored. Bedrock resources remain provisioned for a later switch.
+      DOCUMENT_INGESTION_MODE: "dynamodb",
+      EMBEDDING_PROVIDER: "none",
+      GEMINI_API_KEY: cdk.SecretValue.ssmSecure(
+        `/smartstudy/${suffix}/gemini-api-key`,
+      ).unsafeUnwrap(),
+      GEMINI_MODEL: "gemini-2.5-flash",
+      LLM_PROVIDER: "gemini",
       AUTH_PROVIDER: "cognito",
-      EMBEDDING_PROVIDER: "bedrock",
       DOCUMENT_PROCESSING_QUEUE: `smartstudy-${suffix}-document-processing`,
       QUEUE_PROVIDER: "sqs",
       SQS_QUEUE_NAME: `smartstudy-${suffix}-document-processing`,
@@ -242,7 +249,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       STORAGE_REGION: cdk.Aws.REGION,
       SUMMARIES_TABLE_NAME: summariesTable.tableName,
       QUIZZES_TABLE_NAME: quizzesTable.tableName,
-      VECTOR_STORE: "bedrock-kb",
+      VECTOR_STORE: "dynamodb-chunks",
     };
     const apiFunction = new lambdaNodejs.NodejsFunction(this, "ApiFunction", {
       bundling: {

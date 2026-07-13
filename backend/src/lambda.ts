@@ -52,7 +52,7 @@ const app = createApp({
     }),
     documentRepository,
     embeddingProvider,
-    createVectorStoreFromEnv(undefined),
+    createVectorStoreFromEnv(undefined, process.env, documentRepository),
     llmProvider,
   ),
   documentConfig,
