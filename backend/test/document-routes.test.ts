@@ -84,6 +84,7 @@ describe("document HTTP routes", () => {
       documents: [
         {
           ...document,
+          chunkCount: 0,
           pageCount: null,
         },
       ],
@@ -283,6 +284,7 @@ describe("document HTTP routes", () => {
       documents: [
         {
           ...document,
+          chunkCount: 0,
           pageCount: 4,
           status: "ready",
         },
