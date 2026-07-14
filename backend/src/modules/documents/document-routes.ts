@@ -70,6 +70,20 @@ export function createDocumentRouter(
   );
 
   router.get(
+    "/:documentId/preview",
+    handle(async (request, response) => {
+      const { documentId } = documentIdParamsSchema.parse(request.params);
+      const claims = getAuthClaims(response);
+      const preview = await documentService.getDocumentPreview(
+        documentId,
+        claims.sub,
+      );
+
+      response.status(200).json({ preview });
+    }),
+  );
+
+  router.get(
     "/:documentId",
     handle(async (request, response) => {
       const { documentId } = documentIdParamsSchema.parse(request.params);

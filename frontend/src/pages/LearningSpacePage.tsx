@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Button, Card, Badge, ChatBubble, LoadingSpinner } from '../components';
 import { documentService, chatService, summaryService, tutorService } from '../services';
-import { Document, DocumentChapter, Message, Summary, Citation } from '../types';
+import { Document, DocumentChapter, DocumentPreviewChunk, Message, Summary, Citation } from '../types';
 import { clsx } from 'clsx';
 
 export const LearningSpacePage: React.FC = () => {
@@ -36,8 +36,11 @@ export const LearningSpacePage: React.FC = () => {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [summaryType, setSummaryType] = useState<'FULL' | 'CHAPTER'>('FULL');
   const [chapters, setChapters] = useState<readonly DocumentChapter[]>([]);
+  const [previewChunks, setPreviewChunks] = useState<readonly DocumentPreviewChunk[]>([]);
+  const [previewPageCount, setPreviewPageCount] = useState<number | null>(null);
   const [selectedChapterRef, setSelectedChapterRef] = useState('');
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   // Tutor State
   const [tutorQuestion, setTutorQuestion] = useState('');
@@ -65,28 +68,51 @@ export const LearningSpacePage: React.FC = () => {
   }, [selectedDocId]);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (selectedDocId) {
       setSearchParams({ docId: selectedDocId });
       setMessages([]);
-      documentService.getDocument(selectedDocId).then((document) => {
+      setSummary(null);
+      setSummaryError(null);
+      setTutorAnswer(null);
+      setSuggestedQuestions([]);
+      setActiveCitation(null);
+      setPreviewChunks([]);
+      setPreviewPageCount(null);
+      documentService.getDocumentPreview(selectedDocId).then((document) => {
+        if (cancelled) return;
         const nextChapters = document.chapters || [];
         setChapters(nextChapters);
+        setPreviewChunks(document.chunks);
+        setPreviewPageCount(document.pageCount);
         setSelectedChapterRef(nextChapters[0]?.chapterTitle || '');
       }).catch(() => {
+        if (cancelled) return;
         setChapters([]);
+        setPreviewChunks([]);
+        setPreviewPageCount(null);
         setSelectedChapterRef('');
       });
       chatService.listConversations(selectedDocId).then(async (convs) => {
+        if (cancelled) return;
         if (convs.length > 0) {
-          setActiveConversationId(convs[0].id);
+          const conversation = convs[0]!;
+          setActiveConversationId(conversation.id);
+          const history = await chatService.listMessages(conversation.id);
+          if (!cancelled) setMessages(history);
         } else {
           const newConv = await chatService.createConversation('Hội thoại RAG: ' + selectedDocId, selectedDocId);
-          setActiveConversationId(newConv.id);
+          if (!cancelled) setActiveConversationId(newConv.id);
         }
       }).catch(() => {
-        setActiveConversationId('');
+        if (!cancelled) setActiveConversationId('');
       });
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedDocId, setSearchParams]);
 
   const scrollToBottom = () => {
@@ -135,6 +161,7 @@ export const LearningSpacePage: React.FC = () => {
     if (!selectedDocId) return;
     if (type === 'CHAPTER' && !selectedChapterRef) return;
     setIsLoadingSummary(true);
+    setSummaryError(null);
     try {
       // Use generateSummary (POST) which triggers LLM generation
       const chapterRef = type === 'CHAPTER' ? selectedChapterRef : undefined;
@@ -151,7 +178,7 @@ export const LearningSpacePage: React.FC = () => {
         const res = await summaryService.getSummary(selectedDocId, type, chapterRef);
         setSummary(res);
       } catch {
-        // Summary not available yet
+        setSummaryError('Chưa thể tạo tóm tắt. Hãy kiểm tra máy AI local đang bật và kết nối, sau đó bấm “Tạo lại”.');
       }
     } finally {
       setIsLoadingSummary(false);
@@ -202,7 +229,7 @@ export const LearningSpacePage: React.FC = () => {
           <Badge variant="ai" size="sm" className="ml-2 shrink-0">pgvector Ready</Badge>
         </div>
 
-        {/* Simulated PDF Viewer Body */}
+        {/* Extracted text preview for the selected document */}
         <div className="flex-1 bg-[#F4F7F9] p-6 overflow-y-auto space-y-6 relative">
           {activeCitation && (
             <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-400 shadow-md animate-bounce">
@@ -222,44 +249,30 @@ export const LearningSpacePage: React.FC = () => {
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-[#E0E3E5] space-y-4">
             <div className="border-b border-[#E0E3E5] pb-4 flex items-center justify-between">
               <h3 className="font-bold text-base text-[#181C1E]">{currentDoc?.title || 'Tài liệu giáo trình AI'}</h3>
-              <span className="text-xs font-semibold text-[#707882]">Trang 1 / 45</span>
+              <span className="text-xs font-semibold text-[#707882]">
+                {previewPageCount ? `${previewPageCount} trang` : 'Đang tải nội dung'}
+              </span>
             </div>
 
-            <div className="space-y-3 text-xs leading-relaxed text-[#404751]">
-              <p className="font-bold text-sm text-[#232F3E]">Chương 1: Kiến trúc Hexagonal &amp; Retrieval-Augmented Generation (RAG)</p>
-              <p>
-                Trong phát triển ứng dụng AI hiện đại, kiến trúc Ports &amp; Adapters (hay Hexagonal Architecture) đóng vai
-                trò tối quan trọng trong việc cách ly logic nghiệp vụ cốt lõi khỏi sự phụ thuộc vào cơ sở hạ tầng bên
-                ngoài...
-              </p>
-              <p>
-                Cơ chế RAG cho phép kết hợp sức mạnh của mô hình ngôn ngữ lớn (LLM) như Gemini 1.5 Pro với cơ sở tri
-                thức cục bộ. Khi người dùng đặt câu hỏi, hệ thống chuyển đổi câu hỏi thành vector nhúng thông qua mô
-                hình embedding, sau đó thực hiện tìm kiếm k-NN trên chỉ mục HNSW của pgvector để trích xuất ngữ cảnh.
-              </p>
-              <div className="p-3 bg-[#D0E4FF]/30 rounded-xl border-l-4 border-[#0073BB]">
-                <p className="font-semibold text-[#00497A]">
-                  📌 Định lý quan trọng: Một hệ thống RAG không có chỉ mục HNSW sẽ suy giảm hiệu năng logarit khi dung
-                  lượng tài liệu vượt quá 10,000 chunks.
-                </p>
+            {previewChunks.length > 0 ? (
+              <div className="space-y-5 text-xs leading-relaxed text-[#404751]">
+                {previewChunks.map((chunk, index) => (
+                  <section key={`${chunk.pageStart ?? 'unknown'}-${index}`} className="space-y-2">
+                    {(chunk.chapterTitle || chunk.pageStart) && (
+                      <p className="font-bold text-sm text-[#232F3E]">
+                        {chunk.chapterTitle || 'Nội dung tài liệu'}
+                        {chunk.pageStart ? ` — Trang ${chunk.pageStart}${chunk.pageEnd && chunk.pageEnd !== chunk.pageStart ? `–${chunk.pageEnd}` : ''}` : ''}
+                      </p>
+                    )}
+                    <p className="whitespace-pre-wrap">{chunk.text}</p>
+                  </section>
+                ))}
               </div>
-              <p>
-                Để đảm bảo tính toàn vẹn dữ liệu, các tác vụ nặng như phân mảnh (chunking) và sinh vector phải được đẩy
-                vào hàng đợi bất đồng bộ quản lý bởi Redis và BullMQ.
+            ) : (
+              <p className="text-xs text-[#707882]">
+                Chưa có nội dung trích xuất. Hãy chờ tài liệu xử lý xong hoặc tải lại trang.
               </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-[#E0E3E5] space-y-4">
-            <div className="border-b border-[#E0E3E5] pb-4 flex items-center justify-between">
-              <span className="font-bold text-xs text-[#707882] uppercase tracking-wider">Chương 2: Kiểm thử tự động &amp; Quality Assurance</span>
-              <span className="text-xs font-semibold text-[#707882]">Trang 12 / 45</span>
-            </div>
-            <p className="text-xs leading-relaxed text-[#404751]">
-              Theo quy định DEV_GUIDELINES.md của nhóm, mọi thay đổi trong nghiệp vụ chấm điểm trắc nghiệm phải được
-              kiểm chứng bằng unit test đạt 100% test coverage. Việc kiểm thử giúp loại bỏ hoàn toàn các lỗi suy thoái
-              (regression)...
-            </p>
+            )}
           </div>
         </div>
       </Card>
@@ -424,6 +437,11 @@ export const LearningSpacePage: React.FC = () => {
             {isLoadingSummary ? (
               <Card className="p-16 flex items-center justify-center">
                 <LoadingSpinner text="Đang thực hiện thuật toán Map-Reduce tổng hợp ý chính..." variant="secondary" />
+              </Card>
+            ) : summaryError ? (
+              <Card className="p-8 text-center space-y-3 bg-white border-l-4 border-l-amber-500">
+                <p className="text-sm font-bold text-[#232F3E]">Không thể tạo tóm tắt</p>
+                <p className="text-xs text-[#707882]">{summaryError}</p>
               </Card>
             ) : summary ? (
               <Card data-testid="summary-result-card" variant="ai-glow" className="p-8 space-y-4 bg-white">

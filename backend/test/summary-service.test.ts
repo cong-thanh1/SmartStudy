@@ -9,7 +9,6 @@ import {
   SummaryChapterNotFoundError,
   SummaryDocumentNotFoundError,
   SummaryDocumentNotReadyError,
-  SummaryGenerationFailedError,
   SummarySourceNotFoundError,
 } from "../src/modules/summary/summary-errors.js";
 import type {
@@ -378,24 +377,24 @@ describe("SummaryService", () => {
     expect(summaryRepository.saveFullDocumentSummary).not.toHaveBeenCalled();
   });
 
-  it("throws when the LLM returns invalid summary JSON", async () => {
+  it("saves an extractive summary when the LLM is unavailable", async () => {
     const { llmProvider, service, summaryRepository } = createService();
     vi.mocked(llmProvider.generateStructuredJSON).mockImplementation(
-      async <T>(): Promise<T> =>
-        ({
-          keyPoints: [],
-          summaryText: "",
-        }) as T,
+      async (): Promise<never> => {
+        throw new Error("LLM unavailable");
+      },
     );
     vi.mocked(llmProvider.generateText).mockRejectedValue(
       new Error("LLM fallback unavailable"),
     );
 
-    await expect(
-      service.summarizeFullDocument({ documentId, userId }),
-    ).rejects.toThrow(SummaryGenerationFailedError);
+    await expect(service.summarizeFullDocument({ documentId, userId })).resolves.toMatchObject({
+      keyPoints: ["Chunk content 1", "Chunk content 2", "Chunk content 3"],
+      scope: "full",
+      summaryText: "1. Chunk content 1\n\n2. Chunk content 2\n\n3. Chunk content 3",
+    });
     expect(llmProvider.generateStructuredJSON).toHaveBeenCalledTimes(3);
-    expect(summaryRepository.saveFullDocumentSummary).not.toHaveBeenCalled();
+    expect(summaryRepository.saveFullDocumentSummary).toHaveBeenCalledOnce();
   });
 
   it("gets a cached full-document summary without generation", async () => {

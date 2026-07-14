@@ -8,10 +8,12 @@ import {
   quizIdParamsSchema,
 } from "./quiz-schemas.js";
 import type { IQuizService } from "./quiz-service.js";
+import type { AiJobService } from "../jobs/ai-job-service.js";
 
 export function createQuizRouter(
   authProvider: IAuthProvider,
   quizService: IQuizService,
+  jobs?: AiJobService,
 ): Router {
   const router = Router();
 
@@ -23,6 +25,16 @@ export function createQuizRouter(
       const { documentId } = quizDocumentIdParamsSchema.parse(request.params);
       const body = generateQuizRequestSchema.parse(request.body);
       const claims = getAuthClaims(response);
+
+      if (jobs && (body.numQuestions ?? 5) >= 5) {
+        const job = await jobs.submit("quiz", documentId, claims.sub, {
+          ...(body.chapterRef === undefined ? {} : { chapterRef: body.chapterRef }),
+          ...(body.difficulty === undefined ? {} : { difficulty: body.difficulty }),
+          numQuestions: body.numQuestions,
+        });
+        response.status(202).json({ job });
+        return;
+      }
 
       const quiz = await quizService.generateQuiz({
         documentId,

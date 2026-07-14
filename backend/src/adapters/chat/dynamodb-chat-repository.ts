@@ -75,17 +75,22 @@ export class DynamoDbChatRepository implements IChatRepository {
   async appendExchange(
     input: AppendConversationExchangeInput,
   ): Promise<ConversationExchange> {
+    const createdAt = this.now().toISOString();
     const userMessage = this.createMessage(
       input.conversationId,
       "user",
       input.userContent,
       [],
+      createdAt,
+      "0",
     );
     const assistantMessage = this.createMessage(
       input.conversationId,
       "assistant",
       input.assistantContent,
       input.citations,
+      createdAt,
+      "1",
     );
 
     await this.client.send(
@@ -163,6 +168,23 @@ export class DynamoDbChatRepository implements IChatRepository {
     return mapConversation(item);
   }
 
+  async listOwnedByDocument(
+    documentId: string,
+    userId: string,
+  ): Promise<readonly ConversationRecord[]> {
+    const response = (await this.client.send(
+      new QueryCommand({
+        ExpressionAttributeValues: { ":documentId": documentId, ":ownerId": userId },
+        FilterExpression: "documentId = :documentId",
+        IndexName: "ownerId-createdAt-index",
+        KeyConditionExpression: "ownerId = :ownerId",
+        ScanIndexForward: false,
+        TableName: this.config.conversationsTableName,
+      }),
+    )) as { Items?: DynamoConversationItem[] };
+    return (response.Items ?? []).map(mapConversation);
+  }
+
   async listRecentMessages(
     conversationId: string,
     limit: number,
@@ -177,7 +199,9 @@ export class DynamoDbChatRepository implements IChatRepository {
       }),
     )) as { Items?: DynamoMessageItem[] };
 
-    return (response.Items ?? []).reverse().map(mapMessage);
+    return (response.Items ?? [])
+      .map(mapMessage)
+      .sort(compareMessagesInConversation);
   }
 
   private createMessage(
@@ -185,9 +209,10 @@ export class DynamoDbChatRepository implements IChatRepository {
     role: ChatMessageRole,
     content: string,
     citations: readonly ChatCitation[],
+    createdAt: string,
+    exchangePosition: "0" | "1",
   ): DynamoMessageItem {
     const messageId = this.newId();
-    const createdAt = this.now().toISOString();
 
     return {
       citations,
@@ -195,10 +220,25 @@ export class DynamoDbChatRepository implements IChatRepository {
       conversationId,
       createdAt,
       messageId,
-      messageSortKey: `${createdAt}#${messageId}`,
+      // The user question must always sort before its assistant answer, even
+      // when both records are written in the same millisecond.
+      messageSortKey: `${createdAt}#${exchangePosition}#${messageId}`,
       role,
     };
   }
+}
+
+function compareMessagesInConversation(
+  left: ChatMessageRecord,
+  right: ChatMessageRecord,
+): number {
+  const createdAtComparison = left.createdAt.getTime() - right.createdAt.getTime();
+  if (createdAtComparison !== 0) return createdAtComparison;
+
+  // Legacy records did not have the exchange-position segment in their sort
+  // key. This keeps a user question above its answer when they share a time.
+  if (left.role !== right.role) return left.role === "user" ? -1 : 1;
+  return left.id.localeCompare(right.id);
 }
 
 function mapConversation(item: DynamoConversationItem): ConversationRecord {

@@ -89,6 +89,7 @@ function createChatRepository(): IChatRepository {
       userId: input.userId,
     })),
     findOwnedConversation: vi.fn(async () => createConversation()),
+    listOwnedByDocument: vi.fn(async () => [createConversation()]),
     listRecentMessages: vi.fn(async () => [
       createMessage("user", "Earlier question", "history-user"),
       createMessage("assistant", "Earlier answer", "history-assistant"),
@@ -212,6 +213,20 @@ describe("ChatService", () => {
       title: "Mechanics review",
       userId,
     });
+  });
+
+  it("lists conversations and messages only for the owning user", async () => {
+    const { chatRepository, documentRepository, service } = createService();
+
+    await expect(service.listConversations(documentId, userId)).resolves.toEqual([
+      { createdAt, documentId, id: conversationId, title: "Physics Notes" },
+    ]);
+    expect(documentRepository.findOwnedById).toHaveBeenCalledWith(documentId, userId);
+    expect(chatRepository.listOwnedByDocument).toHaveBeenCalledWith(documentId, userId);
+
+    await expect(service.listMessages(conversationId, userId)).resolves.toHaveLength(2);
+    expect(chatRepository.findOwnedConversation).toHaveBeenCalledWith(conversationId, userId);
+    expect(chatRepository.listRecentMessages).toHaveBeenCalledWith(conversationId, 100);
   });
 
   it("rejects missing and non-ready documents", async () => {

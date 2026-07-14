@@ -7,6 +7,7 @@ import {
   type PresignedUpload,
 } from "../../ports/index.js";
 import { PDF_CONTENT_TYPE, type DocumentConfig } from "./document-config.js";
+import { normalizeExtractedText } from "./pdf-processing.js";
 import {
   DocumentNotFoundError,
   InvalidDocumentStateError,
@@ -42,7 +43,19 @@ export interface DocumentDetail extends DocumentSummary {
 }
 
 export interface DocumentListItem extends DocumentSummary {
+  readonly chunkCount: number;
   readonly pageCount: number | null;
+}
+
+export interface DocumentPreviewChunk {
+  readonly chapterTitle: string | null;
+  readonly pageEnd: number | null;
+  readonly pageStart: number | null;
+  readonly text: string;
+}
+
+export interface DocumentPreview extends DocumentDetail {
+  readonly chunks: readonly DocumentPreviewChunk[];
 }
 
 export interface ListDocumentsInput {
@@ -81,6 +94,7 @@ export interface IDocumentService {
   ): Promise<DocumentSummary>;
   deleteDocument(documentId: string, userId: string): Promise<void>;
   getDocument(documentId: string, userId: string): Promise<DocumentDetail>;
+  getDocumentPreview(documentId: string, userId: string): Promise<DocumentPreview>;
   listDocuments(input: ListDocumentsInput): Promise<ListDocumentsResult>;
   requestUpload(
     input: RequestDocumentUploadInput,
@@ -218,6 +232,27 @@ export class DocumentService implements IDocumentService {
     return toDocumentDetail(document);
   }
 
+  async getDocumentPreview(
+    documentId: string,
+    userId: string,
+  ): Promise<DocumentPreview> {
+    const document = await this.repository.findOwnedById(documentId, userId);
+    if (!document) throw new DocumentNotFoundError();
+
+    const chunks = await this.repository.listChunks({ documentId, userId });
+    return {
+      ...toDocumentDetail(document),
+      // The reader needs enough source text to make document switching clear,
+      // while keeping the response bounded for large PDFs.
+      chunks: chunks.slice(0, 20).map((chunk) => ({
+        chapterTitle: chunk.chapterTitle,
+        pageEnd: chunk.pageEnd,
+        pageStart: chunk.pageStart,
+        text: normalizeExtractedText(chunk.chunkText),
+      })),
+    };
+  }
+
   async listDocuments(
     input: ListDocumentsInput,
   ): Promise<ListDocumentsResult> {
@@ -230,8 +265,21 @@ export class DocumentService implements IDocumentService {
       ...(input.status ? { status: input.status } : {}),
     });
 
+    const documents = await Promise.all(
+      result.documents.map(async (document) => ({
+        ...toDocumentListItem(document),
+        chunkCount:
+          document.status === "ready"
+            ? (await this.repository.listChunks({
+                documentId: document.id,
+                userId: input.userId,
+              })).length
+            : 0,
+      })),
+    );
+
     return {
-      documents: result.documents.map(toDocumentListItem),
+      documents,
       pagination: {
         limit: input.limit,
         page: input.page,
@@ -324,6 +372,7 @@ function toDocumentDetail(document: DocumentRecord): DocumentDetail {
 function toDocumentListItem(document: DocumentRecord): DocumentListItem {
   return {
     ...toDocumentSummary(document),
+    chunkCount: 0,
     pageCount: document.pageCount,
   };
 }

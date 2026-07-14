@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - develop
+      - staging
       - main
     paths:
       - infra/**
@@ -11,6 +12,7 @@ on:
   push:
     branches:
       - develop
+      - staging
       - main
     paths:
       - infra/**
