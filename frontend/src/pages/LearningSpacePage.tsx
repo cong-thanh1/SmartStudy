@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MessageSquare,
   Sparkles,
@@ -11,6 +11,8 @@ import {
   RefreshCw,
   HelpCircle,
   Lightbulb,
+  FileQuestion,
+  BarChart3,
   ArrowLeft,
   FileText,
   MoreHorizontal,
@@ -24,6 +26,7 @@ import { clsx } from 'clsx';
 
 export const LearningSpacePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const docIdParam = searchParams.get('docId');
 
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -376,6 +379,23 @@ export const LearningSpacePage: React.FC = () => {
           >
             <GraduationCap size={16} />
             <span>Gia sư AI 1-kèm-1</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate(`/exam-center${selectedDocId ? `?docId=${selectedDocId}` : ''}`)}
+            className="flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-900"
+          >
+            <FileQuestion size={16} />
+            <span>Bài kiểm tra</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/results')}
+            className="flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-900"
+          >
+            <BarChart3 size={16} />
+            <span>Kết quả</span>
           </button>
         </div>
 
