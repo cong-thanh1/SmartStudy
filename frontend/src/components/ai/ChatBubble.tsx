@@ -1,5 +1,5 @@
-import React from 'react';
-import { Sparkles, User as UserIcon } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, Copy, Sparkles, ThumbsDown, ThumbsUp, User as UserIcon } from 'lucide-react';
 import { Message, Citation } from '../../types';
 import { CitationBadge } from './CitationBadge';
 import { clsx } from 'clsx';
@@ -11,6 +11,13 @@ export interface ChatBubbleProps {
 
 export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSelectCitation }) => {
   const isAi = message.role === 'assistant';
+  const [copied, setCopied] = useState(false);
+
+  const copyMessage = async () => {
+    await navigator.clipboard?.writeText(message.content);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1_800);
+  };
 
   // Simple formatter to convert markdown bold (**text**) and bullet lists to HTML
   const renderFormattedContent = (content: string) => {
@@ -30,13 +37,13 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSelectCitatio
   return (
     <div
       data-testid={isAi ? 'chat-assistant-message' : 'chat-user-message'}
-      className={clsx('flex gap-3.5 max-w-[85%] animate-fadeIn', isAi ? 'self-start' : 'self-end flex-row-reverse')}
+      className={clsx('flex gap-3.5 animate-fadeIn', isAi ? 'max-w-[85%] self-start' : 'max-w-[70%] self-end flex-row-reverse')}
     >
       {/* Avatar */}
       <div
         className={clsx(
           'w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm font-semibold text-white',
-          isAi ? 'ai-gradient ai-glow' : 'bg-[#232F3E]'
+          isAi ? 'bg-indigo-600' : 'bg-slate-700'
         )}
       >
         {isAi ? <Sparkles className="w-4 h-4 animate-pulse" /> : <UserIcon className="w-4 h-4" />}
@@ -45,10 +52,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSelectCitatio
       {/* Bubble Box */}
       <div
         className={clsx(
-          'p-4 rounded-2xl flex flex-col gap-2.5 shadow-sm relative',
+          'relative flex flex-col gap-2.5 rounded-xl p-4 shadow-sm',
           isAi
-            ? 'bg-white border border-[#E0E3E5] text-[#181C1E] rounded-tl-none'
-            : 'bg-[#0073BB] text-white rounded-tr-none'
+            ? 'border border-slate-200 bg-white text-slate-900'
+            : 'bg-indigo-600 text-white'
         )}
       >
         {/* Role Header */}
@@ -64,8 +71,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSelectCitatio
 
         {/* Citations List if available */}
         {isAi && message.citations && message.citations.length > 0 && (
-          <div className="mt-2 pt-3 border-t border-[#E0E3E5] flex flex-col gap-1.5">
-            <span className="text-xs font-semibold text-[#404751] flex items-center gap-1">
+          <div className="mt-2 flex flex-col gap-1.5 border-t border-slate-200 pt-3">
+            <span className="flex items-center gap-1 text-xs font-semibold text-slate-600">
               <span>📚 Nguồn trích dẫn từ tài liệu:</span>
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -78,6 +85,15 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSelectCitatio
                 />
               ))}
             </div>
+          </div>
+        )}
+        {isAi && (
+          <div className="mt-1 flex items-center gap-1 border-t border-slate-100 pt-2 text-slate-400">
+            <button type="button" onClick={copyMessage} className="rounded-md p-1.5 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Sao chép câu trả lời">
+              {copied ? <Check size={15} className="text-emerald-600" /> : <Copy size={15} />}
+            </button>
+            <button type="button" className="rounded-md p-1.5 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Câu trả lời hữu ích"><ThumbsUp size={15} /></button>
+            <button type="button" className="rounded-md p-1.5 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Câu trả lời chưa hữu ích"><ThumbsDown size={15} /></button>
           </div>
         )}
       </div>
