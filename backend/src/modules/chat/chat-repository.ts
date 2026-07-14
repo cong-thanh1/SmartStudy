@@ -52,6 +52,10 @@ export interface IChatRepository {
     conversationId: string,
     userId: string,
   ): Promise<ConversationRecord | null>;
+  listOwnedByDocument(
+    documentId: string,
+    userId: string,
+  ): Promise<readonly ConversationRecord[]>;
   listRecentMessages(
     conversationId: string,
     limit: number,

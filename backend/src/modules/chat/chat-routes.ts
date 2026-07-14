@@ -5,6 +5,7 @@ import type { IAuthProvider } from "../../ports/index.js";
 import {
   conversationIdParamsSchema,
   createConversationSchema,
+  listConversationsQuerySchema,
   sendChatMessageSchema,
 } from "./chat-schemas.js";
 import type { IChatService } from "./chat-service.js";
@@ -31,6 +32,24 @@ export function createChatRouter(
       response.status(201).json({
         conversation,
       });
+    }),
+  );
+
+  router.get(
+    "/conversations",
+    handle(async (request, response) => {
+      const { documentId } = listConversationsQuerySchema.parse(request.query);
+      const conversations = await chatService.listConversations(documentId, getAuthClaims(response).sub);
+      response.status(200).json({ conversations });
+    }),
+  );
+
+  router.get(
+    "/conversations/:conversationId/messages",
+    handle(async (request, response) => {
+      const { conversationId } = conversationIdParamsSchema.parse(request.params);
+      const messages = await chatService.listMessages(conversationId, getAuthClaims(response).sub);
+      response.status(200).json({ messages });
     }),
   );
 

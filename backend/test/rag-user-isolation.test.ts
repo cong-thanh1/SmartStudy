@@ -248,6 +248,11 @@ function createChatRepository(): IChatRepository {
     findOwnedConversation: vi.fn(async (conversationId, userId) =>
       conversations.get(conversationKey(conversationId, userId)) ?? null,
     ),
+    listOwnedByDocument: vi.fn(async (documentId, userId) =>
+      Array.from(conversations.values()).filter(
+        (conversation) => conversation.documentId === documentId && conversation.userId === userId,
+      ),
+    ),
     listRecentMessages: vi.fn(async () => []),
   };
 }

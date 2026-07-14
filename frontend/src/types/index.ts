@@ -45,6 +45,18 @@ export interface Document {
   chapters?: readonly DocumentChapter[];
 }
 
+export interface DocumentPreviewChunk {
+  chapterTitle: string | null;
+  pageEnd: number | null;
+  pageStart: number | null;
+  text: string;
+}
+
+export interface DocumentPreview extends Document {
+  pageCount: number | null;
+  chunks: readonly DocumentPreviewChunk[];
+}
+
 export interface PresignedUploadResponse {
   // Backend DocumentUploadResult shape: { document: DocumentSummary, upload: PresignedUpload }
   document: {
@@ -128,6 +140,14 @@ export interface Quiz {
   title?: string;
   questions: QuizQuestion[];
   createdAt: string;
+}
+
+export interface AiJob {
+  id: string;
+  kind: 'quiz' | 'exam';
+  status: 'queued' | 'running' | 'completed' | 'failed';
+  resultId: string | null;
+  errorMessage: string | null;
 }
 
 // Exam & AI Grading Types — matches backend exam-repository

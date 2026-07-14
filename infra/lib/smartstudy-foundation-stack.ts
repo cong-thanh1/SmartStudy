@@ -219,9 +219,11 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     });
     const usersTable = createTable(this, "UsersTable", "ownerId");
     const summariesTable = createTable(this, "SummariesTable", "summaryKey");
+    const aiJobsTable = createTable(this, "AiJobsTable", "jobId");
 
     const sharedEnvironment = {
       ATTEMPTS_TABLE_NAME: attemptsTable.tableName,
+      AI_JOBS_TABLE_NAME: aiJobsTable.tableName,
       BEDROCK_KNOWLEDGE_BASE_ID: knowledgeBase.attrKnowledgeBaseId,
       BEDROCK_REGION: cdk.Aws.REGION,
       COGNITO_CLIENT_ID: userPoolClient.userPoolClientId,
@@ -346,16 +348,21 @@ export class SmartStudyFoundationStack extends cdk.Stack {
 
     const dataTables = [
       attemptsTable, conversationsTable, conversationMessagesTable,
-      documentChunksTable, documentsTable, examsTable, quizzesTable, summariesTable,
+      aiJobsTable, documentChunksTable, documentsTable, examsTable, quizzesTable, summariesTable,
     ];
     for (const table of dataTables) {
       table.grantReadWriteData(apiFunction);
     }
     documentsTable.grantReadWriteData(ingestionFunction);
     documentChunksTable.grantReadWriteData(ingestionFunction);
+    aiJobsTable.grantReadWriteData(ingestionFunction);
+    quizzesTable.grantReadWriteData(ingestionFunction);
+    examsTable.grantReadWriteData(ingestionFunction);
+    attemptsTable.grantReadWriteData(ingestionFunction);
     documentsBucket.grantReadWrite(apiFunction);
     documentsBucket.grantReadWrite(ingestionFunction);
     documentQueue.grantSendMessages(apiFunction);
+    ingestionFunction.addToRolePolicy(new iam.PolicyStatement({ actions: ["ssm:GetParameter"], resources: [`arn:${cdk.Aws.PARTITION}:ssm:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:parameter/smartstudy/${suffix}/local-ai-gateway-key`] }));
     apiFunction.addToRolePolicy(new iam.PolicyStatement({
       actions: ["bedrock:InvokeModel", "bedrock:Retrieve"],
       resources: ["*"],

@@ -231,6 +231,7 @@ describe("DoD Phase 1: End-to-End RAG workflow", () => {
         if (conv && conv.userId === ownerId) return conv;
         return null;
       }),
+      listOwnedByDocument: vi.fn(async () => Array.from(conversations.values())),
       listRecentMessages: vi.fn(async () => []),
     };
 

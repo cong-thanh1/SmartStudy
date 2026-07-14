@@ -365,6 +365,15 @@ describe("DocumentService", () => {
       ],
       total: 21,
     });
+    vi.mocked(repository.listChunks).mockResolvedValueOnce([
+      {
+        chapterTitle: "Chapter 1",
+        chunkText: "First extracted chunk",
+        id: "chunk-1",
+        pageEnd: 3,
+        pageStart: 1,
+      },
+    ]);
 
     await expect(
       service.listDocuments({
@@ -378,6 +387,7 @@ describe("DocumentService", () => {
       documents: [
         {
           createdAt,
+          chunkCount: 1,
           id: documentId,
           pageCount: 3,
           sizeBytes: 42,
@@ -399,6 +409,7 @@ describe("DocumentService", () => {
       status: "ready",
       userId,
     });
+    expect(repository.listChunks).toHaveBeenCalledWith({ documentId, userId });
   });
 
   it("returns document detail without exposing storage internals", async () => {
@@ -437,6 +448,39 @@ describe("DocumentService", () => {
     await expect(service.getDocument(documentId, userId)).rejects.toThrow(
       DocumentNotFoundError,
     );
+  });
+
+  it("returns only the selected owner's extracted chunks for the document preview", async () => {
+    vi.mocked(repository.findOwnedById).mockResolvedValueOnce({
+      ...createDocument("ready"),
+      pageCount: 1,
+    });
+    vi.mocked(repository.listChunks).mockResolvedValueOnce([
+      {
+        chapterTitle: "Chapter 1",
+        chunkText: "Text extracted from this document.",
+        id: "chunk-1",
+        pageEnd: 1,
+        pageStart: 1,
+      },
+    ]);
+
+    await expect(service.getDocumentPreview(documentId, userId)).resolves.toEqual({
+      chapters: [],
+      chunks: [{
+        chapterTitle: "Chapter 1",
+        pageEnd: 1,
+        pageStart: 1,
+        text: "Text extracted from this document.",
+      }],
+      createdAt,
+      id: documentId,
+      pageCount: 1,
+      sizeBytes: 42,
+      status: "ready",
+      title: "Study guide",
+    });
+    expect(repository.listChunks).toHaveBeenCalledWith({ documentId, userId });
   });
 
   it("deletes storage before soft-deleting the owned document", async () => {

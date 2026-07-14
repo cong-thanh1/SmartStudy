@@ -73,10 +73,6 @@ export class QuizService implements IQuizService {
       );
     }
 
-    const sourceText = chunks
-      .slice(0, 15)
-      .map((c) => c.chunkText)
-      .join("\n\n");
     const numQuestions = input.numQuestions ?? 5;
     const difficultyText = input.difficulty
       ? `Difficulty level: ${input.difficulty}.`
@@ -85,16 +81,24 @@ export class QuizService implements IQuizService {
       ? `Focus specifically on chapter "${input.chapterRef}".`
       : "Cover the key concepts of the document.";
 
-    const systemPrompt = `You are an expert educational assessment creator. Generate one multiple-choice question based on the provided study material. ${difficultyText} ${chapterText} The question MUST have exactly 4 distinct options, 1 correct answer matching one option exactly, and a concise explanation. Return ONLY a JSON object matching the requested schema without markdown formatting or commentary.`;
+    const systemPrompt = `You are an expert educational assessment creator. Generate one multiple-choice question based on the provided study material. ${difficultyText} ${chapterText} Each question in this quiz MUST assess a different fact, concept, event, skill, or conclusion. Do not rephrase, repeat, or test the same learning objective as any earlier question. Write every question, option, answer, and explanation only in Vietnamese or English; never use Chinese, Japanese, Korean, or another writing system. The question MUST have exactly 4 distinct options, 1 correct answer matching one option exactly, and a concise explanation. Return ONLY a JSON object matching the requested schema without markdown formatting or commentary.`;
     const generatedQuestions: GeneratedQuizQuestion[] = [];
 
     // Small CPU-only models are much more reliable when grammar-constrained
     // output contains one question, rather than a long array that can exhaust
     // the context window halfway through JSON generation.
     for (let index = 0; index < numQuestions; index++) {
+      const sourceText = selectQuestionSource(chunks, index, numQuestions);
+      const earlierQuestions = generatedQuestions
+        .map((question) => `- ${question.question_text}`)
+        .join("\n");
       const generated = await this.generateOneQuestion(
         sourceText,
-        `${systemPrompt}\nThis is question ${index + 1} of ${numQuestions}.`,
+        `${systemPrompt}\nThis is question ${index + 1} of ${numQuestions}.` +
+          (earlierQuestions
+            ? `\nEarlier questions that must NOT be repeated:\n${earlierQuestions}`
+            : ""),
+        generatedQuestions.map((question) => question.question_text),
       );
       generatedQuestions.push({
         ...generated,
@@ -195,6 +199,7 @@ export class QuizService implements IQuizService {
   private async generateOneQuestion(
     sourceText: string,
     systemPrompt: string,
+    earlierQuestionTexts: readonly string[],
   ): Promise<GeneratedQuizQuestion> {
     let lastError = "Unknown error during question generation.";
 
@@ -212,8 +217,12 @@ export class QuizService implements IQuizService {
         });
         const parsed = generatedQuizSchema.safeParse(normalizeQuestionSet(rawResult));
         const question = parsed.success ? parsed.data.questions[0] : undefined;
-        if (question) return question;
-        lastError = parsed.success ? "LLM returned no question." : parsed.error.message;
+        if (question && !isDuplicateQuestion(question.question_text, earlierQuestionTexts)) {
+          return question;
+        }
+        lastError = parsed.success
+          ? "LLM returned a question that duplicates an earlier learning objective."
+          : parsed.error.message;
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
       }
@@ -223,6 +232,44 @@ export class QuizService implements IQuizService {
       `Failed to generate a valid quiz question. Last error: ${lastError}`,
     );
   }
+}
+
+function selectQuestionSource(
+  chunks: readonly { readonly chunkText: string }[],
+  questionIndex: number,
+  numQuestions: number,
+): string {
+  const start = Math.floor((questionIndex * chunks.length) / numQuestions);
+  return chunks
+    .slice(start, Math.min(start + 2, chunks.length))
+    .map((chunk) => chunk.chunkText)
+    .join("\n\n");
+}
+
+function isDuplicateQuestion(
+  candidate: string,
+  earlierQuestions: readonly string[],
+): boolean {
+  const candidateTokens = normalizedTokens(candidate);
+  if (candidateTokens.size === 0) return true;
+
+  return earlierQuestions.some((earlier) => {
+    const earlierTokens = normalizedTokens(earlier);
+    if (earlierTokens.size === 0) return false;
+    const overlap = [...candidateTokens].filter((token) => earlierTokens.has(token)).length;
+    const similarity = overlap / Math.min(candidateTokens.size, earlierTokens.size);
+    return similarity >= 0.7;
+  });
+}
+
+function normalizedTokens(value: string): Set<string> {
+  return new Set(
+    value
+      .toLocaleLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .split(/\s+/)
+      .filter((token) => token.length >= 3),
+  );
 }
 
 function normalizeQuestionSet(raw: unknown): unknown {

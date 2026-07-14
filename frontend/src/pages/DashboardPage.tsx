@@ -31,24 +31,40 @@ export const DashboardPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchDocs = useCallback(async () => {
-    setIsLoading(true);
+  const fetchDocs = useCallback(async (showLoading = false) => {
+    if (showLoading) {
+      setIsLoading(true);
+    }
     try {
       const docs = await documentService.listDocuments();
       setDocuments(docs);
     } catch {
       // Keep the last successful list visible while a transient refresh fails.
     } finally {
-      setIsLoading(false);
+      if (showLoading) {
+        setIsLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    void fetchDocs();
-    const refreshId = window.setInterval(() => void fetchDocs(), 2_000);
-
-    return () => window.clearInterval(refreshId);
+    void fetchDocs(true);
   }, [fetchDocs]);
+
+  useEffect(() => {
+    const hasProcessingDocument = documents.some(
+      (document) => document.status === 'uploading' || document.status === 'processing',
+    );
+
+    // Refresh only while an uploaded document is being processed. Polling a
+    // completed library creates needless requests and makes the UI flicker.
+    if (!hasProcessingDocument) {
+      return;
+    }
+
+    const refreshId = window.setInterval(() => void fetchDocs(), 3_000);
+    return () => window.clearInterval(refreshId);
+  }, [documents, fetchDocs]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

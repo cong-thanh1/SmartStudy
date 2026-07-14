@@ -27,6 +27,8 @@ export const testDocumentConfig: DocumentConfig = {
 export function createChatServiceStub(): IChatService {
   return {
     createConversation: vi.fn(),
+    listConversations: vi.fn(),
+    listMessages: vi.fn(),
     sendMessage: vi.fn(),
   };
 }
@@ -36,6 +38,7 @@ export function createDocumentServiceStub(): IDocumentService {
     completeUpload: vi.fn(),
     deleteDocument: vi.fn(),
     getDocument: vi.fn(),
+    getDocumentPreview: vi.fn(),
     listDocuments: vi.fn(),
     requestUpload: vi.fn(),
   };

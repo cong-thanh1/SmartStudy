@@ -11,7 +11,7 @@ import {
   Send,
 } from 'lucide-react';
 import { Button, Card, Badge, LoadingSpinner } from '../components';
-import { documentService, quizService, examService } from '../services';
+import { documentService, quizService, examService, jobService } from '../services';
 import { Document, Exam, Quiz } from '../types';
 import { clsx } from 'clsx';
 
@@ -73,7 +73,8 @@ export const ExamCenterPage: React.FC = () => {
     if (!selectedDocId) return;
     setIsGenerating(true);
     try {
-      const quiz = await quizService.generateQuiz(selectedDocId, undefined, numQuestions);
+      const generated = await quizService.generateQuiz(selectedDocId, undefined, numQuestions);
+      const quiz = 'status' in generated ? await waitForQuiz(generated.id) : generated;
       setActiveQuiz(quiz);
       setActiveExam(null);
       setUserAnswers({});
@@ -94,18 +95,37 @@ export const ExamCenterPage: React.FC = () => {
           : difficulty === 'medium'
             ? { easy: 0, medium: 100, hard: 0 }
             : { easy: 0, medium: 0, hard: 100 };
-      const exam = await examService.generateExam(
+      const generated = await examService.generateExam(
         selectedDocId,
         numQuestions,
         durationMinutes,
         difficultyDistribution,
       );
+      const exam = 'status' in generated ? await waitForExam(generated.id) : generated;
       setActiveExam(exam);
       setActiveQuiz(null);
       setUserAnswers({});
       setTimeLeftSeconds(durationMinutes * 60);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const waitForQuiz = async (jobId: string): Promise<Quiz> => {
+    for (;;) {
+      const job = await jobService.getJob(jobId);
+      if (job.status === 'completed' && job.resultId) return quizService.getQuiz(job.resultId);
+      if (job.status === 'failed') throw new Error(job.errorMessage || 'Tạo quiz thất bại');
+      await new Promise((resolve) => window.setTimeout(resolve, 2_000));
+    }
+  };
+
+  const waitForExam = async (jobId: string): Promise<Exam> => {
+    for (;;) {
+      const job = await jobService.getJob(jobId);
+      if (job.status === 'completed' && job.resultId) return examService.getExam(job.resultId, 'take');
+      if (job.status === 'failed') throw new Error(job.errorMessage || 'Tạo đề thi thất bại');
+      await new Promise((resolve) => window.setTimeout(resolve, 2_000));
     }
   };
 
