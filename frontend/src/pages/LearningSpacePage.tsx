@@ -40,6 +40,7 @@ export const LearningSpacePage: React.FC = () => {
   const [previewPageCount, setPreviewPageCount] = useState<number | null>(null);
   const [selectedChapterRef, setSelectedChapterRef] = useState('');
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   // Tutor State
   const [tutorQuestion, setTutorQuestion] = useState('');
@@ -73,6 +74,7 @@ export const LearningSpacePage: React.FC = () => {
       setSearchParams({ docId: selectedDocId });
       setMessages([]);
       setSummary(null);
+      setSummaryError(null);
       setTutorAnswer(null);
       setSuggestedQuestions([]);
       setActiveCitation(null);
@@ -159,6 +161,7 @@ export const LearningSpacePage: React.FC = () => {
     if (!selectedDocId) return;
     if (type === 'CHAPTER' && !selectedChapterRef) return;
     setIsLoadingSummary(true);
+    setSummaryError(null);
     try {
       // Use generateSummary (POST) which triggers LLM generation
       const chapterRef = type === 'CHAPTER' ? selectedChapterRef : undefined;
@@ -175,7 +178,7 @@ export const LearningSpacePage: React.FC = () => {
         const res = await summaryService.getSummary(selectedDocId, type, chapterRef);
         setSummary(res);
       } catch {
-        // Summary not available yet
+        setSummaryError('Chưa thể tạo tóm tắt. Hãy kiểm tra máy AI local đang bật và kết nối, sau đó bấm “Tạo lại”.');
       }
     } finally {
       setIsLoadingSummary(false);
@@ -434,6 +437,11 @@ export const LearningSpacePage: React.FC = () => {
             {isLoadingSummary ? (
               <Card className="p-16 flex items-center justify-center">
                 <LoadingSpinner text="Đang thực hiện thuật toán Map-Reduce tổng hợp ý chính..." variant="secondary" />
+              </Card>
+            ) : summaryError ? (
+              <Card className="p-8 text-center space-y-3 bg-white border-l-4 border-l-amber-500">
+                <p className="text-sm font-bold text-[#232F3E]">Không thể tạo tóm tắt</p>
+                <p className="text-xs text-[#707882]">{summaryError}</p>
               </Card>
             ) : summary ? (
               <Card data-testid="summary-result-card" variant="ai-glow" className="p-8 space-y-4 bg-white">

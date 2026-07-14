@@ -120,6 +120,22 @@ describe("DynamoDbChatRepository", () => {
         TableName: "conversations",
       },
     });
+    expect(transactionItems[1]).toMatchObject({
+      Put: {
+        Item: {
+          messageSortKey: "2026-07-12T00:00:00.000Z#0#user-message",
+          role: "user",
+        },
+      },
+    });
+    expect(transactionItems[2]).toMatchObject({
+      Put: {
+        Item: {
+          messageSortKey: "2026-07-12T00:00:00.000Z#1#assistant-message",
+          role: "assistant",
+        },
+      },
+    });
   });
 
   it("returns recent messages in chronological order", async () => {
@@ -142,6 +158,23 @@ describe("DynamoDbChatRepository", () => {
       ScanIndexForward: false,
       TableName: "messages",
     });
+  });
+
+  it("puts a legacy user question above its assistant answer at the same time", async () => {
+    const client = new FakeDynamoDbClient([
+      {
+        Items: [
+          messageItem({ messageId: "assistant", role: "assistant" }),
+          messageItem({ messageId: "user", role: "user" }),
+        ],
+      },
+    ]);
+    const repository = createRepository(client);
+
+    await expect(repository.listRecentMessages("conversation-1", 10)).resolves.toMatchObject([
+      { id: "user", role: "user" },
+      { id: "assistant", role: "assistant" },
+    ]);
   });
 });
 
