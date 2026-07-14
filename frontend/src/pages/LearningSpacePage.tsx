@@ -11,6 +11,11 @@ import {
   RefreshCw,
   HelpCircle,
   Lightbulb,
+  ArrowLeft,
+  FileText,
+  MoreHorizontal,
+  PanelRightClose,
+  PanelRightOpen,
 } from 'lucide-react';
 import { Button, Card, Badge, ChatBubble, LoadingSpinner } from '../components';
 import { documentService, chatService, summaryService, tutorService } from '../services';
@@ -24,6 +29,7 @@ export const LearningSpacePage: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDocId, setSelectedDocId] = useState<string>(docIdParam || '');
   const [activeTab, setActiveTab] = useState<'rag' | 'summary' | 'tutor'>('rag');
+  const [isReaderOpen, setIsReaderOpen] = useState(true);
 
   // RAG Chat State
   const [activeConversationId, setActiveConversationId] = useState<string>('');
@@ -207,9 +213,55 @@ export const LearningSpacePage: React.FC = () => {
   const currentDoc = documents.find((d) => d.id === selectedDocId) || documents[0];
 
   return (
-    <div className="h-[calc(100vh-80px-64px)] flex flex-col lg:flex-row gap-6 animate-fadeIn max-w-7xl mx-auto">
+    <div className="mx-auto flex min-h-full w-full max-w-[1440px] flex-col gap-5 animate-fadeIn">
+      <header className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={() => window.history.back()}
+            aria-label="Quay lại danh sách tài liệu"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <ArrowLeft size={19} />
+          </button>
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
+            <FileText size={20} />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-base font-semibold text-slate-900">{currentDoc?.title || 'Tài liệu học tập'}</p>
+            <p className="mt-0.5 text-xs text-slate-500">{previewPageCount ? `${previewPageCount} trang` : 'Đang tải thông tin tài liệu'}</p>
+          </div>
+          <Badge variant={currentDoc?.status === 'ready' ? 'success' : 'warning'} size="sm" className="ml-1 shrink-0">
+            {currentDoc?.status === 'ready' ? 'Đã sẵn sàng' : 'Đang xử lý'}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            leftIcon={isReaderOpen ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
+            onClick={() => setIsReaderOpen((open) => !open)}
+          >
+            {isReaderOpen ? 'Ẩn tài liệu' : 'Mở tài liệu'}
+          </Button>
+          <button
+            type="button"
+            aria-label="Thao tác tài liệu"
+            className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <MoreHorizontal size={20} />
+          </button>
+        </div>
+      </header>
+
+      <div className={clsx(
+        'grid min-h-[calc(100vh-210px)] gap-5',
+        isReaderOpen ? 'lg:grid-cols-[minmax(0,1.38fr)_minmax(360px,1fr)]' : 'grid-cols-1',
+      )}>
       {/* Left Panel: PDF Viewer / Textbook Reader (45% width) */}
-      <Card className="lg:w-[45%] flex flex-col h-full p-0 overflow-hidden shadow-md">
+      {isReaderOpen && (
+      <Card className="order-2 flex min-h-[560px] flex-col p-0 shadow-sm lg:order-2">
         {/* Document Selector Header */}
         <div className="p-4 bg-[#232F3E] text-white flex items-center justify-between border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -276,19 +328,20 @@ export const LearningSpacePage: React.FC = () => {
           </div>
         </div>
       </Card>
+      )}
 
       {/* Right Panel: Interactive AI Workspace (55% width) */}
-      <Card className="lg:w-[55%] flex flex-col h-full p-0 overflow-hidden shadow-md">
+      <Card className="order-1 flex min-h-[560px] flex-col p-0 shadow-sm lg:order-1">
         {/* Navigation Tabs Header */}
-        <div className="flex items-center bg-white border-b border-[#E0E3E5] px-6 h-16 shrink-0 gap-2">
+        <div className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-white px-4 py-3 sm:px-5">
           <button
             data-testid="chat-tab"
             onClick={() => setActiveTab('rag')}
             className={clsx(
-              'flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all relative',
+              'flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all',
               activeTab === 'rag'
-                ? 'bg-[#0073BB] text-white shadow-sm'
-                : 'text-[#707882] hover:bg-[#F4F7F9] hover:text-[#181C1E]'
+                ? 'bg-indigo-50 text-indigo-700'
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
             )}
           >
             <MessageSquare size={16} />
@@ -301,10 +354,10 @@ export const LearningSpacePage: React.FC = () => {
               setActiveTab('summary');
             }}
             className={clsx(
-              'flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all',
+              'flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all',
               activeTab === 'summary'
-                ? 'bg-[#8A2BE2] text-white shadow-sm'
-                : 'text-[#707882] hover:bg-[#F4F7F9] hover:text-[#181C1E]'
+                ? 'bg-indigo-50 text-indigo-700'
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
             )}
           >
             <Layers size={16} />
@@ -315,10 +368,10 @@ export const LearningSpacePage: React.FC = () => {
             data-testid="tutor-tab"
             onClick={() => setActiveTab('tutor')}
             className={clsx(
-              'flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all',
+              'flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all',
               activeTab === 'tutor'
-                ? 'ai-gradient text-white shadow-sm ai-glow'
-                : 'text-[#707882] hover:bg-[#F4F7F9] hover:text-[#181C1E]'
+                ? 'bg-indigo-50 text-indigo-700'
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
             )}
           >
             <GraduationCap size={16} />
@@ -329,7 +382,14 @@ export const LearningSpacePage: React.FC = () => {
         {/* Tab 1: RAG Chat Content */}
         {activeTab === 'rag' && (
           <div className="flex-1 flex flex-col min-h-0 bg-[#F4F7F9]/50">
-            <div className="flex-1 p-6 overflow-y-auto space-y-4">
+            <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50/70 p-5 sm:p-6">
+              {messages.length === 0 && !isSending && (
+                <div className="mx-auto mt-12 max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+                  <MessageSquare className="mx-auto mb-3 h-7 w-7 text-indigo-600" />
+                  <h2 className="text-base font-semibold text-slate-900">Bạn muốn tìm hiểu gì từ tài liệu này?</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">SmartStudy AI sẽ trả lời dựa trên nội dung PDF và đưa nguồn trích dẫn để bạn kiểm tra.</p>
+                </div>
+              )}
               {messages.map((msg) => (
                 <ChatBubble
                   key={msg.id}
@@ -349,15 +409,22 @@ export const LearningSpacePage: React.FC = () => {
             </div>
 
             {/* Chat Input Box */}
-            <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-[#E0E3E5] flex gap-2">
-              <input
+            <form onSubmit={handleSendMessage} className="border-t border-slate-200 bg-white p-4">
+              <div className="flex items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100">
+              <textarea
                 data-testid="chat-input"
-                type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    event.currentTarget.form?.requestSubmit();
+                  }
+                }}
+                rows={1}
                 placeholder="Đặt câu hỏi về tài liệu (VD: Giải thích cơ chế HNSW pgvector...)"
                 disabled={isSending}
-                className="flex-1 bg-[#F4F7F9] border border-[#E0E3E5] rounded-xl px-4 py-2.5 text-xs text-[#181C1E] placeholder-[#707882] focus:outline-none focus:ring-2 focus:ring-[#0073BB]"
+                className="max-h-36 min-h-10 flex-1 resize-y bg-transparent px-2 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
               />
               <Button
                 data-testid="chat-send-button"
@@ -365,10 +432,13 @@ export const LearningSpacePage: React.FC = () => {
                 variant="primary"
                 size="md"
                 disabled={!inputMessage.trim() || isSending}
-                className="px-5 shrink-0"
+                aria-label="Gửi câu hỏi"
+                className="shrink-0 bg-indigo-600 px-4 hover:bg-indigo-700 focus:ring-indigo-500"
               >
                 <Send size={16} />
               </Button>
+              </div>
+              <p className="mt-2 text-xs text-slate-400">Enter để gửi · Shift + Enter để xuống dòng · Kiểm tra nguồn trích dẫn của AI trước khi sử dụng.</p>
             </form>
           </div>
         )}
@@ -593,6 +663,7 @@ export const LearningSpacePage: React.FC = () => {
           </div>
         )}
       </Card>
+      </div>
     </div>
   );
 };
