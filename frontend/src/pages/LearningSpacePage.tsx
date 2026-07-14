@@ -445,8 +445,8 @@ export const LearningSpacePage: React.FC = () => {
 
         {/* Tab 2: Map-Reduce Summary Content */}
         {activeTab === 'summary' && (
-          <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-[#F4F7F9]/50">
-            <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-[#E0E3E5] shadow-sm">
+          <div className="flex-1 space-y-6 overflow-y-auto bg-slate-50/70 p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <Button
                   data-testid="summary-full-btn"
@@ -548,7 +548,16 @@ export const LearningSpacePage: React.FC = () => {
                   }}
                 />
               </Card>
-            ) : null}
+            ) : (
+              <Card className="mx-auto mt-10 max-w-lg p-8 text-center">
+                <Layers className="mx-auto mb-3 h-8 w-8 text-indigo-600" />
+                <h2 className="text-lg font-semibold text-slate-900">Nắm nhanh nội dung chính</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-500">Tạo bản tóm tắt để xem các ý chính và ôn lại tài liệu hiệu quả hơn.</p>
+                <Button type="button" variant="primary" size="md" className="mt-5 bg-indigo-600 hover:bg-indigo-700" onClick={() => handleGenerateSummary('FULL')}>
+                  Tạo bản tóm tắt
+                </Button>
+              </Card>
+            )}
           </div>
         )}
 
