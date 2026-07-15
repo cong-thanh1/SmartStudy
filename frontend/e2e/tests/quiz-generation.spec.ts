@@ -95,6 +95,32 @@ async function ensureReadyDocument(page: Page): Promise<string> {
 
 test.describe('Nhóm 4 — Sinh câu hỏi trắc nghiệm (Quiz)', () => {
 
+  test('TC4.0 — Lỗi tạo quiz được catch và hiển thị thông báo thân thiện', async ({ page }) => {
+    const docId = await ensureReadyDocument(page);
+    await page.goto(`/exam-center?docId=${docId}`);
+
+    await page.route(`**/documents/${docId}/quizzes`, async (route) => {
+      await route.fulfill({
+        body: JSON.stringify({
+          error: {
+            code: 'QUIZ_GENERATION_ERROR',
+            message: 'Internal model stack trace that must not reach the UI',
+          },
+        }),
+        contentType: 'application/json',
+        status: 502,
+      });
+    });
+
+    await page.getByTestId('generate-quiz-button').click();
+
+    const alert = page.getByTestId('generation-error');
+    await expect(alert).toBeVisible();
+    await expect(alert).toContainText('Không thể tạo quiz lúc này');
+    await expect(alert).not.toContainText('Internal model stack trace');
+    await expect(page.getByTestId('generate-quiz-button')).toBeEnabled();
+  });
+
   // ─────────────────────────────────────────────────────────────────────────
   test('TC4.1 — Sinh quiz và kiểm tra cấu trúc: mỗi câu 4 đáp án + explanation', async ({ page }) => {
     const docId = await ensureReadyDocument(page);

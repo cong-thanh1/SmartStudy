@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
+  AlertTriangle,
   FileQuestion,
   Clock,
   CheckSquare,
@@ -26,6 +28,7 @@ export const ExamCenterPage: React.FC = () => {
   const [durationMinutes, setDurationMinutes] = useState(15);
   const [difficulty, setDifficulty] = useState<'balanced' | 'easy' | 'medium' | 'hard'>('balanced');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   // Active Exam / Quiz State
   const [activeExam, setActiveExam] = useState<Exam | null>(null);
@@ -36,13 +39,17 @@ export const ExamCenterPage: React.FC = () => {
 
   useEffect(() => {
     const init = async () => {
-      const docs = await documentService.listDocuments();
-      setDocuments(docs);
-      if (docs.length > 0 && !selectedDocId) {
-        setSelectedDocId(docs[0].id);
+      try {
+        const docs = await documentService.listDocuments();
+        setDocuments(docs);
+        if (docs.length > 0 && !selectedDocId) {
+          setSelectedDocId(docs[0].id);
+        }
+      } catch (error) {
+        setGenerationError(getGenerationErrorMessage(error, 'documents'));
       }
     };
-    init();
+    void init();
   }, [selectedDocId]);
 
   const submitRef = React.useRef<() => void>(() => {});
@@ -71,6 +78,7 @@ export const ExamCenterPage: React.FC = () => {
 
   const handleGenerateQuiz = async () => {
     if (!selectedDocId) return;
+    setGenerationError(null);
     setIsGenerating(true);
     try {
       const generated = await quizService.generateQuiz(selectedDocId, undefined, numQuestions);
@@ -79,6 +87,8 @@ export const ExamCenterPage: React.FC = () => {
       setActiveExam(null);
       setUserAnswers({});
       setTimeLeftSeconds(numQuestions * 60 * 2); // 2 mins per question for quiz
+    } catch (error) {
+      setGenerationError(getGenerationErrorMessage(error, 'quiz'));
     } finally {
       setIsGenerating(false);
     }
@@ -86,6 +96,7 @@ export const ExamCenterPage: React.FC = () => {
 
   const handleGenerateExam = async () => {
     if (!selectedDocId) return;
+    setGenerationError(null);
     setIsGenerating(true);
     try {
       const difficultyDistribution = difficulty === 'balanced'
@@ -106,6 +117,8 @@ export const ExamCenterPage: React.FC = () => {
       setActiveQuiz(null);
       setUserAnswers({});
       setTimeLeftSeconds(durationMinutes * 60);
+    } catch (error) {
+      setGenerationError(getGenerationErrorMessage(error, 'exam'));
     } finally {
       setIsGenerating(false);
     }
@@ -198,6 +211,29 @@ export const ExamCenterPage: React.FC = () => {
             </p>
           </div>
         </Card>
+
+        {generationError && (
+          <div
+            role="alert"
+            data-testid="generation-error"
+            className="flex items-start justify-between gap-4 rounded-2xl border border-[#BA1A1A]/30 bg-[#FFDAD6] p-4 text-[#93000A]"
+          >
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+              <div>
+                <p className="font-bold text-sm">Không thể hoàn tất thao tác</p>
+                <p className="mt-1 text-xs leading-relaxed">{generationError}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold hover:bg-[#BA1A1A]/10"
+              onClick={() => setGenerationError(null)}
+            >
+              Đóng
+            </button>
+          </div>
+        )}
 
         {isGenerating ? (
           <Card className="p-20 flex flex-col items-center justify-center space-y-4">
@@ -481,3 +517,42 @@ export const ExamCenterPage: React.FC = () => {
     </div>
   );
 };
+
+type GenerationOperation = 'documents' | 'exam' | 'quiz';
+
+interface ApiErrorPayload {
+  readonly error?: {
+    readonly code?: string;
+  };
+}
+
+function getGenerationErrorMessage(
+  error: unknown,
+  operation: GenerationOperation,
+): string {
+  const fallback = operation === 'documents'
+    ? 'Không thể tải danh sách tài liệu. Vui lòng kiểm tra kết nối và thử lại.'
+    : operation === 'exam'
+      ? 'Không thể tạo đề thi lúc này. Vui lòng thử lại sau.'
+      : 'Không thể tạo quiz lúc này. Các câu đã hợp lệ sẽ không bị mất; vui lòng thử lại sau.';
+
+  if (axios.isAxiosError<ApiErrorPayload>(error)) {
+    const code = error.response?.data?.error?.code;
+    if (!error.response) {
+      return 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.';
+    }
+    if (code === 'QUIZ_DOCUMENT_NOT_READY' || code === 'EXAM_DOCUMENT_NOT_READY') {
+      return 'Tài liệu vẫn đang được xử lý. Vui lòng đợi tài liệu chuyển sang trạng thái Sẵn sàng rồi thử lại.';
+    }
+    if (code === 'PROVIDER_NOT_CONFIGURED' || error.response.status === 503) {
+      return 'Dịch vụ AI hiện chưa sẵn sàng. Vui lòng bật máy AI local hoặc thử lại sau.';
+    }
+    return fallback;
+  }
+
+  if (error instanceof Error && /timeout|unavailable|provider|kết nối/i.test(error.message)) {
+    return 'Dịch vụ AI hiện chưa phản hồi. Vui lòng kiểm tra máy AI local và thử lại.';
+  }
+
+  return fallback;
+}
