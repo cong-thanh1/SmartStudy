@@ -96,7 +96,16 @@ async function ensureReadyDocument(page: Page): Promise<string> {
 test.describe('Nhóm 4 — Sinh câu hỏi trắc nghiệm (Quiz)', () => {
 
   test('TC4.0 — Lỗi tạo quiz được catch và hiển thị thông báo thân thiện', async ({ page }) => {
-    const docId = await ensureReadyDocument(page);
+    const docId = '11111111-1111-4111-8111-111111111111';
+    await page.route(/\/api\/v1\/documents(?:\?.*)?$/, async (route) => {
+      await route.fulfill({
+        body: JSON.stringify({
+          documents: [{ id: docId, status: 'ready', title: 'Quiz error fixture' }],
+        }),
+        contentType: 'application/json',
+        status: 200,
+      });
+    });
     await page.goto(`/exam-center?docId=${docId}`);
 
     await page.route(`**/documents/${docId}/quizzes`, async (route) => {
