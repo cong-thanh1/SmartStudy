@@ -274,7 +274,7 @@ describe("QuizService", () => {
       );
     });
 
-    it("retries a repeated learning objective instead of saving duplicate questions", async () => {
+    it("retries an exact repeated question and answer instead of saving it", async () => {
       const { generateStructuredJSON, quizRepository, service } = createServiceStubs();
       generateStructuredJSON
         .mockImplementationOnce(async <T>(): Promise<T> => validQuestion("What is inertia?", "q-1") as T)
@@ -292,7 +292,102 @@ describe("QuizService", () => {
       }));
     });
 
-    it("throws QuizGenerationError after 3 failed retries", async () => {
+    it("does not abort the quiz when one slot exhausts duplicate retries", async () => {
+      const { generateStructuredJSON, quizRepository, service } =
+        createServiceStubs();
+      generateStructuredJSON
+        .mockImplementationOnce(
+          async <T>(): Promise<T> => validQuestion("What is inertia?", "q-1") as T,
+        );
+      for (let attempt = 0; attempt < 5; attempt++) {
+        generateStructuredJSON.mockImplementationOnce(
+          async <T>(): Promise<T> => validQuestion("What is inertia?", "duplicate") as T,
+        );
+      }
+      generateStructuredJSON.mockImplementationOnce(
+        async <T>(): Promise<T> => validQuestion("How does acceleration change motion?", "q-2") as T,
+      );
+
+      const result = await service.generateQuiz({
+        documentId,
+        numQuestions: 2,
+        userId,
+      });
+
+      expect(generateStructuredJSON).toHaveBeenCalledTimes(7);
+      expect(result.questions).toHaveLength(2);
+      expect(quizRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        questions: [
+          expect.objectContaining({ question_text: "What is inertia?" }),
+          expect.objectContaining({ question_text: "How does acceleration change motion?" }),
+        ],
+      }));
+    });
+
+    it("allows the same topic when the question and answer are not equivalent", async () => {
+      const { generateStructuredJSON, quizRepository, service } =
+        createServiceStubs();
+      generateStructuredJSON
+        .mockImplementationOnce(async <T>(): Promise<T> => ({
+          questions: [{
+            correct_answer: "Resistance to motion change",
+            explanation: "This defines inertia.",
+            options: ["Resistance to motion change", "Speed", "Force", "Mass"],
+            question_id: "q-1",
+            question_text: "What is inertia?",
+          }],
+        }) as T)
+        .mockImplementationOnce(async <T>(): Promise<T> => ({
+          questions: [{
+            correct_answer: "Seat belts restrain continued forward motion",
+            explanation: "This is an application of inertia.",
+            options: [
+              "Seat belts restrain continued forward motion",
+              "Seat belts increase acceleration",
+              "Seat belts remove mass",
+              "Seat belts create gravity",
+            ],
+            question_id: "q-2",
+            question_text: "How do seat belts protect passengers because of inertia?",
+          }],
+        }) as T);
+
+      await service.generateQuiz({ documentId, numQuestions: 2, userId });
+
+      expect(generateStructuredJSON).toHaveBeenCalledTimes(2);
+      expect(quizRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        questions: expect.arrayContaining([
+          expect.objectContaining({ question_text: "What is inertia?" }),
+          expect.objectContaining({
+            question_text: "How do seat belts protect passengers because of inertia?",
+          }),
+        ]),
+      }));
+    });
+
+    it("saves accepted questions when a later slot cannot reach the model", async () => {
+      const { generateStructuredJSON, quizRepository, service } =
+        createServiceStubs();
+      generateStructuredJSON
+        .mockImplementationOnce(
+          async <T>(): Promise<T> => validQuestion("What is inertia?", "q-1") as T,
+        )
+        .mockRejectedValue(new Error("LLM provider unavailable"));
+
+      const result = await service.generateQuiz({
+        documentId,
+        numQuestions: 2,
+        userId,
+      });
+
+      expect(generateStructuredJSON).toHaveBeenCalledTimes(6);
+      expect(result.questions).toHaveLength(1);
+      expect(quizRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        questions: [expect.objectContaining({ question_text: "What is inertia?" })],
+      }));
+    });
+
+    it("throws QuizGenerationError after 5 failed model retries", async () => {
       const { generateStructuredJSON, service } = createServiceStubs();
       generateStructuredJSON.mockRejectedValue(
         new Error("LLM provider unavailable"),
@@ -301,7 +396,7 @@ describe("QuizService", () => {
       await expect(service.generateQuiz({ documentId, userId })).rejects.toThrow(
         QuizGenerationError,
       );
-      expect(generateStructuredJSON).toHaveBeenCalledTimes(3);
+      expect(generateStructuredJSON).toHaveBeenCalledTimes(5);
     });
 
     it("throws QuizDocumentNotFoundError when document not owned", async () => {
