@@ -54,6 +54,7 @@ export const LearningSpacePage: React.FC = () => {
   // Tutor State
   const [tutorQuestion, setTutorQuestion] = useState('');
   const [tutorAnswer, setTutorAnswer] = useState<string | null>(null);
+  const [tutorError, setTutorError] = useState<string | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [isAskingTutor, setIsAskingTutor] = useState(false);
   const [useDocumentTutorContext, setUseDocumentTutorContext] = useState(true);
@@ -85,6 +86,7 @@ export const LearningSpacePage: React.FC = () => {
       setSummary(null);
       setSummaryError(null);
       setTutorAnswer(null);
+      setTutorError(null);
       setSuggestedQuestions([]);
       setActiveCitation(null);
       setPreviewChunks([]);
@@ -197,6 +199,7 @@ export const LearningSpacePage: React.FC = () => {
   const handleAskTutor = async (questionToAsk: string) => {
     if (!questionToAsk.trim() || isAskingTutor) return;
     setIsAskingTutor(true);
+    setTutorError(null);
     try {
       const res = await tutorService.askTutor({
         question: questionToAsk,
@@ -208,6 +211,8 @@ export const LearningSpacePage: React.FC = () => {
       if (res.suggestedQuestions) {
         setSuggestedQuestions(res.suggestedQuestions);
       }
+    } catch {
+      setTutorError('Gia sư AI chưa thể trả lời. Hãy kiểm tra máy ASUS đang chạy Ollama và Cloudflare relay, rồi thử lại.');
     } finally {
       setIsAskingTutor(false);
     }
@@ -630,6 +635,10 @@ export const LearningSpacePage: React.FC = () => {
             {isAskingTutor ? (
               <Card className="p-12 flex items-center justify-center">
                 <LoadingSpinner text="Gia sư AI đang soạn bài hướng dẫn chi tiết..." variant="secondary" />
+              </Card>
+            ) : tutorError ? (
+              <Card data-testid="tutor-error" className="p-5 border border-red-200 bg-red-50 text-sm text-red-700">
+                {tutorError}
               </Card>
             ) : tutorAnswer ? (
               <Card data-testid="tutor-answer" className="p-6 space-y-4 bg-white border-l-4 border-l-[#8A2BE2]">
