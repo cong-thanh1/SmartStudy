@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "smartstudy-ai-relay",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-16",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "AI_RELAY",
+        "class_name": "AiRelay"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["AiRelay"]
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
