@@ -1,0 +1,57 @@
+name: Cloudflare AI Relay CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - staging
+      - main
+    paths:
+      - cloudflare-relay/**
+      - tools/cloudflare-ai-relay-agent.mjs
+      - scripts/start-cloudflare-ai-relay.ps1
+      - .github/workflows/cloudflare-relay-ci.yml
+  push:
+    branches:
+      - develop
+      - staging
+      - main
+    paths:
+      - cloudflare-relay/**
+      - tools/cloudflare-ai-relay-agent.mjs
+      - scripts/start-cloudflare-ai-relay.ps1
+      - .github/workflows/cloudflare-relay-ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: cloudflare-relay
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cloudflare-relay/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build Worker bundle
+        run: npm run build
