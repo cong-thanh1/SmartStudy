@@ -83,9 +83,40 @@ describe("TutorService", () => {
     expect(result.model).toBe("configured-llm");
     expect(llmProvider.generateText).toHaveBeenCalledWith(
       expect.objectContaining({
+        maxTokens: 192,
         systemPrompt: expect.stringContaining("Tutor reference text."),
       }),
     );
+  });
+
+  it("bounds document context and recent history for local inference", async () => {
+    const { documentRepository, llmProvider, service } = createServiceStubs();
+    vi.mocked(documentRepository.listChunks).mockResolvedValueOnce([
+      {
+        chapterTitle: "Large chapter",
+        chunkText: "A".repeat(8_000),
+        id: "large-chunk",
+        pageEnd: 2,
+        pageStart: 1,
+      },
+    ]);
+
+    await service.ask({
+      documentId,
+      history: Array.from({ length: 10 }, (_, index) => ({
+        content: `${index}:` + "H".repeat(1_200),
+        role: index % 2 === 0 ? "user" as const : "assistant" as const,
+      })),
+      question: "Explain the selected document.",
+      userId,
+    });
+
+    const request = vi.mocked(llmProvider.generateText).mock.calls[0]?.[0];
+    expect(request?.maxTokens).toBe(192);
+    expect(request?.messages).toHaveLength(7);
+    expect(request?.messages[0]?.content).not.toContain("0:");
+    expect(request?.messages[0]?.content.length).toBe(1_000);
+    expect(request?.systemPrompt?.length).toBeLessThan(5_000);
   });
 
   it("answers out-of-scope questions cleanly without document context or hallucinating references", async () => {
