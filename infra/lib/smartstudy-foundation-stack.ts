@@ -1,7 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigatewayv2Integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import * as bedrock from "aws-cdk-lib/aws-bedrock";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
@@ -11,7 +10,6 @@ import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as s3 from "aws-cdk-lib/aws-s3";
-import * as s3vectors from "aws-cdk-lib/aws-s3vectors";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as path from "node:path";
 import { Construct } from "constructs";
@@ -49,74 +47,6 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
       versioned: true,
     });
-    const vectorBucket = new s3vectors.CfnVectorBucket(this, "VectorBucket", {
-      vectorBucketName: `smartstudy-${suffix}-vectors`,
-    });
-    const vectorIndex = new s3vectors.CfnIndex(this, "VectorIndex", {
-      dataType: "float32",
-      dimension: 1024,
-      distanceMetric: "cosine",
-      indexName: `smartstudy-${suffix}-knowledge`,
-      vectorBucketArn: vectorBucket.attrVectorBucketArn,
-    });
-    const knowledgeBaseRole = new iam.Role(this, "KnowledgeBaseRole", {
-      assumedBy: new iam.ServicePrincipal("bedrock.amazonaws.com"),
-    });
-    const knowledgeBasePolicy = new iam.Policy(this, "KnowledgeBasePolicy", {
-      roles: [knowledgeBaseRole],
-      statements: [
-        new iam.PolicyStatement({
-          actions: ["bedrock:InvokeModel", "s3:GetObject", "s3:ListBucket", "s3vectors:*"],
-          resources: ["*"],
-        }),
-      ],
-    });
-    const knowledgeBase = new bedrock.CfnKnowledgeBase(this, "KnowledgeBase", {
-      knowledgeBaseConfiguration: {
-        type: "VECTOR",
-        vectorKnowledgeBaseConfiguration: {
-          embeddingModelArn: `arn:${cdk.Aws.PARTITION}:bedrock:${cdk.Aws.REGION}::foundation-model/amazon.titan-embed-text-v2:0`,
-        },
-      },
-      name: `smartstudy-${suffix}-knowledge`,
-      roleArn: knowledgeBaseRole.roleArn,
-      storageConfiguration: {
-        type: "S3_VECTORS",
-        s3VectorsConfiguration: {
-          indexArn: vectorIndex.attrIndexArn,
-          vectorBucketArn: vectorBucket.attrVectorBucketArn,
-        },
-      },
-    });
-    knowledgeBase.node.addDependency(knowledgeBasePolicy);
-    const knowledgeBaseDataSource = new bedrock.CfnDataSource(
-      this,
-      "KnowledgeBaseDocumentsDataSource",
-      {
-        dataSourceConfiguration: {
-          s3Configuration: {
-            bucketArn: documentsBucket.bucketArn,
-            inclusionPrefixes: ["users/"],
-          },
-          type: "S3",
-        },
-        description:
-          "Private SmartStudy PDFs and their Bedrock metadata sidecar files.",
-        knowledgeBaseId: knowledgeBase.attrKnowledgeBaseId,
-        name: `smartstudy-${suffix}-documents`,
-        vectorIngestionConfiguration: {
-          chunkingConfiguration: {
-            chunkingStrategy: "FIXED_SIZE",
-            fixedSizeChunkingConfiguration: {
-              maxTokens: 300,
-              overlapPercentage: 20,
-            },
-          },
-        },
-      },
-    );
-    knowledgeBaseDataSource.node.addDependency(knowledgeBase);
-
     const documentDlq = new sqs.Queue(this, "DocumentProcessingDlq", {
       encryption: sqs.QueueEncryption.SQS_MANAGED,
       queueName: `smartstudy-${suffix}-document-processing-dlq`,
@@ -224,8 +154,6 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     const sharedEnvironment = {
       ATTEMPTS_TABLE_NAME: attemptsTable.tableName,
       AI_JOBS_TABLE_NAME: aiJobsTable.tableName,
-      BEDROCK_KNOWLEDGE_BASE_ID: knowledgeBase.attrKnowledgeBaseId,
-      BEDROCK_REGION: cdk.Aws.REGION,
       COGNITO_CLIENT_ID: userPoolClient.userPoolClientId,
       COGNITO_REGION: cdk.Aws.REGION,
       COGNITO_USER_POOL_ID: userPool.userPoolId,
@@ -234,8 +162,8 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       DOCUMENT_CHUNKS_TABLE_NAME: documentChunksTable.tableName,
       DOCUMENTS_TABLE_NAME: documentsTable.tableName,
       EXAMS_TABLE_NAME: examsTable.tableName,
-      // Gemini is the active production fallback until Bedrock account access
-      // is restored. Bedrock resources remain provisioned for a later switch.
+      // Production currently uses the external local-AI relay and DynamoDB
+      // chunks. Provision Bedrock resources only when that runtime is enabled.
       DOCUMENT_INGESTION_MODE: "dynamodb",
       EMBEDDING_PROVIDER: "none",
       LLAMA_CPP_API_KEY_PARAMETER: `/smartstudy/${suffix}/local-ai-gateway-key`,
@@ -311,10 +239,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       },
       depsLockFilePath: path.join(__dirname, "../../backend/package-lock.json"),
       entry: path.join(__dirname, "../../backend/src/document-ingestion-lambda.ts"),
-      environment: {
-        ...sharedEnvironment,
-        BEDROCK_KNOWLEDGE_BASE_DATA_SOURCE_ID: knowledgeBaseDataSource.attrDataSourceId,
-      },
+      environment: sharedEnvironment,
       handler: "handler",
       logRetention: logs.RetentionDays.ONE_MONTH,
       memorySize: 2048,
@@ -364,14 +289,6 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     documentQueue.grantSendMessages(apiFunction);
     ingestionFunction.addToRolePolicy(new iam.PolicyStatement({ actions: ["ssm:GetParameter"], resources: [`arn:${cdk.Aws.PARTITION}:ssm:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:parameter/smartstudy/${suffix}/local-ai-gateway-key`] }));
     apiFunction.addToRolePolicy(new iam.PolicyStatement({
-      actions: ["bedrock:InvokeModel", "bedrock:Retrieve"],
-      resources: ["*"],
-    }));
-    ingestionFunction.addToRolePolicy(new iam.PolicyStatement({
-      actions: ["bedrock:StartIngestionJob", "bedrock:GetIngestionJob"],
-      resources: ["*"],
-    }));
-    apiFunction.addToRolePolicy(new iam.PolicyStatement({
       actions: ["cognito-idp:InitiateAuth", "cognito-idp:RevokeToken", "cognito-idp:SignUp"],
       resources: [userPool.userPoolArn],
     }));
@@ -408,10 +325,6 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     new cdk.CfnOutput(this, "DocumentQueueUrl", { value: documentQueue.queueUrl });
     new cdk.CfnOutput(this, "UsersTableName", { value: usersTable.tableName });
     new cdk.CfnOutput(this, "SummariesTableName", { value: summariesTable.tableName });
-    new cdk.CfnOutput(this, "KnowledgeBaseId", { value: knowledgeBase.attrKnowledgeBaseId });
-    new cdk.CfnOutput(this, "KnowledgeBaseDataSourceId", {
-      value: knowledgeBaseDataSource.attrDataSourceId,
-    });
     new cdk.CfnOutput(this, "QuizzesTableName", { value: quizzesTable.tableName });
     new cdk.CfnOutput(this, "ExamsTableName", { value: examsTable.tableName });
     new cdk.CfnOutput(this, "ApiUrl", { value: httpApi.apiEndpoint });
