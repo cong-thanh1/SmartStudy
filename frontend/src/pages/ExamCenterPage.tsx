@@ -11,6 +11,7 @@ import {
   Award,
   ArrowLeft,
   Send,
+  UploadCloud,
 } from 'lucide-react';
 import { Button, Card, Badge, LoadingSpinner } from '../components';
 import { documentService, quizService, examService, jobService } from '../services';
@@ -23,6 +24,7 @@ export const ExamCenterPage: React.FC = () => {
   const docIdParam = searchParams.get('docId');
 
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
   const [selectedDocId, setSelectedDocId] = useState<string>(docIdParam || '');
   const [numQuestions, setNumQuestions] = useState(3);
   const [durationMinutes, setDurationMinutes] = useState(15);
@@ -46,7 +48,10 @@ export const ExamCenterPage: React.FC = () => {
           setSelectedDocId(docs[0].id);
         }
       } catch (error) {
+        setDocuments([]);
         setGenerationError(getGenerationErrorMessage(error, 'documents'));
+      } finally {
+        setIsLoadingDocuments(false);
       }
     };
     void init();
@@ -198,16 +203,16 @@ export const ExamCenterPage: React.FC = () => {
   // ==========================================
   if (!activeExam && !activeQuiz) {
     return (
-      <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
-        <Card variant="ai-glow" className="p-8 bg-gradient-to-r from-[#232F3E] via-[#0073BB] to-[#8A2BE2] text-white">
+      <div className="page-enter mx-auto max-w-5xl space-y-6">
+        <Card className="relative overflow-hidden bg-[#18312A] p-7 text-white sm:p-9">
+          <div className="pointer-events-none absolute -right-12 -top-14 h-52 w-52 rounded-full border-[34px] border-white/5" />
           <div className="space-y-3">
-            <Badge variant="ai" size="sm" className="bg-white/20 text-white border-white/30">
-              <Sparkles className="w-3 h-3 mr-1" /> Automated Exam Engine v2.0
+            <Badge variant="success" size="sm" className="bg-white/10 text-[#B9E0D0]">
+              <Sparkles className="mr-1 h-3 w-3" /> Ôn đúng nội dung bạn đang học
             </Badge>
-            <h2 className="text-3xl font-extrabold">Trung tâm Khảo thí &amp; Tạo đề thi AI</h2>
-            <p className="text-sm text-[#9CCAFF] max-w-2xl leading-relaxed">
-              Hệ thống tự động phân tích ngữ nghĩa file PDF để tạo bộ câu hỏi trắc nghiệm độ chính xác cao. Đảm bảo
-              nguyên tắc kiểm thử 100% coverage cho hàm chấm điểm.
+            <h2 className="text-3xl font-black tracking-[-0.035em] sm:text-4xl">Tạo một bài luyện phù hợp với bạn</h2>
+            <p className="max-w-2xl text-sm leading-6 text-white/65">
+              Chọn tài liệu, số câu và độ khó. Câu hỏi sẽ được tạo từ chính nội dung bạn đã tải lên.
             </p>
           </div>
         </Card>
@@ -235,36 +240,46 @@ export const ExamCenterPage: React.FC = () => {
           </div>
         )}
 
-        {isGenerating ? (
-          <Card className="p-20 flex flex-col items-center justify-center space-y-4">
+        {isLoadingDocuments ? (
+          <Card className="flex min-h-[320px] items-center justify-center"><LoadingSpinner text="Đang mở tài liệu của bạn..." /></Card>
+        ) : documents.length === 0 ? (
+          <Card className="soft-grid flex min-h-[360px] flex-col items-center justify-center border-2 border-dashed border-[#CAD5D0] bg-white/75 p-8 text-center">
+            <div className="grid h-16 w-16 place-items-center rounded-3xl bg-[#E1EEE8] text-[#2F6B58]"><UploadCloud size={28} /></div>
+            <h3 className="mt-6 text-xl font-black">Bạn chưa có tài liệu để luyện tập</h3>
+            <p className="mt-2 max-w-md text-sm leading-6 text-[#6B7772]">Hãy tải lên giáo trình hoặc bài đọc. Sau đó SmartStudy có thể tạo câu hỏi từ chính nội dung đó.</p>
+            <Button className="mt-6" onClick={() => navigate('/dashboard')} leftIcon={<UploadCloud size={16} />}>Thêm tài liệu</Button>
+          </Card>
+        ) : isGenerating ? (
+          <Card className="flex min-h-[360px] flex-col items-center justify-center space-y-4 p-10">
             <LoadingSpinner size="xl" variant="secondary" />
             <div className="text-center space-y-1">
-              <h4 className="font-bold text-base text-[#181C1E]">AI đang quét tài liệu &amp; sinh câu hỏi trắc nghiệm...</h4>
-              <p className="text-xs text-[#707882]">Đang phân tích các khái niệm trọng tâm từ chỉ mục pgvector</p>
+              <h4 className="font-bold text-base text-[#17201E]">Đang chuẩn bị câu hỏi cho bạn...</h4>
+              <p className="text-xs text-[#74807B]">SmartStudy đang chọn những nội dung quan trọng trong tài liệu.</p>
             </div>
           </Card>
         ) : (
-          <Card className="p-8 space-y-6">
-            <div className="border-b border-[#E0E3E5] pb-4">
-              <h3 className="font-bold text-lg text-[#181C1E]">Cấu hình Bài kiểm tra</h3>
-              <p className="text-xs text-[#707882]">Tùy chỉnh thông số để AI sinh bộ đề phù hợp với mục tiêu học tập</p>
+          <Card className="space-y-7 p-6 sm:p-8">
+            <div className="border-b border-[#E3E8E4] pb-5">
+              <p className="text-[11px] font-black uppercase tracking-[0.17em] text-[#2F6B58]">Thiết lập nhanh</p>
+              <h3 className="mt-1 text-xl font-black tracking-[-0.025em] text-[#17201E]">Bạn muốn luyện như thế nào?</h3>
+              <p className="mt-1 text-sm text-[#74807B]">Chỉ mất vài giây để tạo một bài luyện mới.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Document Selector */}
               <div className="space-y-2 md:col-span-2">
                 <label className="font-semibold text-sm text-[#181C1E] flex items-center gap-2">
-                  <BookOpen size={16} className="text-[#0073BB]" /> Chọn tài liệu nguồn từ Thư viện
+                  <BookOpen size={16} className="text-[#2F6B58]" /> Tài liệu dùng để tạo câu hỏi
                 </label>
                 <select
                   data-testid="document-selector"
                   value={selectedDocId}
                   onChange={(e) => setSelectedDocId(e.target.value)}
-                  className="w-full bg-[#F4F7F9] border border-[#E0E3E5] rounded-xl px-4 py-3 text-sm font-medium text-[#181C1E] focus:outline-none focus:ring-2 focus:ring-[#0073BB]"
+                  className="w-full rounded-2xl border border-[#DCE2DE] bg-[#F8FAF7] px-4 py-3 text-sm font-semibold text-[#26332F] focus:outline-none focus:ring-4 focus:ring-[#2F6B58]/10"
                 >
                   {documents.map((doc) => (
                     <option key={doc.id} value={doc.id}>
-                      📄 {doc.title} ({doc.chunkCount} vector chunks)
+                      {doc.title}
                     </option>
                   ))}
                 </select>
@@ -273,7 +288,7 @@ export const ExamCenterPage: React.FC = () => {
               {/* Num Questions Selector */}
               <div className="space-y-2">
                 <label className="font-semibold text-sm text-[#181C1E] flex items-center gap-2">
-                  <FileQuestion size={16} className="text-[#8A2BE2]" /> Số lượng câu hỏi trắc nghiệm
+                  <FileQuestion size={16} className="text-[#ED7148]" /> Số câu hỏi
                 </label>
                 <div className="grid grid-cols-5 gap-2">
                   {[3, 5, 10, 15, 20].map((num) => (
@@ -285,8 +300,8 @@ export const ExamCenterPage: React.FC = () => {
                       className={clsx(
                         'py-2.5 rounded-xl font-bold text-xs border transition-all',
                         numQuestions === num
-                          ? 'bg-[#8A2BE2] text-white border-[#8A2BE2] shadow-sm'
-                          : 'bg-[#F4F7F9] text-[#404751] border-[#E0E3E5] hover:border-[#8A2BE2]'
+                          ? 'border-[#ED7148] bg-[#ED7148] text-white shadow-sm'
+                          : 'border-[#DCE2DE] bg-[#F8FAF7] text-[#56635E] hover:border-[#ED7148]'
                       )}
                     >
                       {num} câu
@@ -298,7 +313,7 @@ export const ExamCenterPage: React.FC = () => {
               {/* Duration Selector */}
               <div className="space-y-2">
                 <label className="font-semibold text-sm text-[#181C1E] flex items-center gap-2">
-                  <Clock size={16} className="text-[#0073BB]" /> Thời gian làm bài thi
+                  <Clock size={16} className="text-[#2F6B58]" /> Thời gian dự kiến
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[10, 15, 30].map((mins) => (
@@ -310,8 +325,8 @@ export const ExamCenterPage: React.FC = () => {
                       className={clsx(
                         'py-2.5 rounded-xl font-bold text-xs border transition-all',
                         durationMinutes === mins
-                          ? 'bg-[#0073BB] text-white border-[#0073BB] shadow-sm'
-                          : 'bg-[#F4F7F9] text-[#404751] border-[#E0E3E5] hover:border-[#0073BB]'
+                          ? 'border-[#2F6B58] bg-[#2F6B58] text-white shadow-sm'
+                          : 'border-[#DCE2DE] bg-[#F8FAF7] text-[#56635E] hover:border-[#2F6B58]'
                       )}
                     >
                       {mins} phút
@@ -322,7 +337,7 @@ export const ExamCenterPage: React.FC = () => {
 
               <div className="space-y-2 md:col-span-2">
                 <label className="font-semibold text-sm text-[#181C1E] flex items-center gap-2">
-                  <Sparkles size={16} className="text-[#8A2BE2]" /> Mức độ khó của đề thi
+                  <Sparkles size={16} className="text-[#ED7148]" /> Mức độ câu hỏi
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {([
@@ -339,8 +354,8 @@ export const ExamCenterPage: React.FC = () => {
                       className={clsx(
                         'py-2.5 rounded-xl font-bold text-xs border transition-all',
                         difficulty === value
-                          ? 'bg-[#8A2BE2] text-white border-[#8A2BE2] shadow-sm'
-                          : 'bg-[#F4F7F9] text-[#404751] border-[#E0E3E5] hover:border-[#8A2BE2]'
+                          ? 'border-[#ED7148] bg-[#ED7148] text-white shadow-sm'
+                          : 'border-[#DCE2DE] bg-[#F8FAF7] text-[#56635E] hover:border-[#ED7148]'
                       )}
                     >
                       {label}
@@ -351,27 +366,27 @@ export const ExamCenterPage: React.FC = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-6 border-t border-[#E0E3E5] grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3 border-t border-[#E3E8E4] pt-6 sm:grid-cols-2">
               <Button
                 data-testid="generate-quiz-button"
                 variant="outline"
                 size="lg"
-                className="w-full justify-center border-2 border-[#0073BB] text-[#0073BB] hover:bg-[#D0E4FF]/20 font-bold"
+                className="w-full justify-center font-bold"
                 leftIcon={<CheckSquare size={18} />}
                 onClick={handleGenerateQuiz}
               >
-                Sinh bài Quiz ôn tập nhanh
+                Luyện nhanh
               </Button>
 
               <Button
                 data-testid="generate-exam-button"
-                variant="ai"
+                variant="primary"
                 size="lg"
                 className="w-full justify-center font-bold"
                 leftIcon={<Award size={18} />}
                 onClick={handleGenerateExam}
               >
-                Tạo Đề thi chuẩn chỉnh (AI Grading)
+                Tạo bài kiểm tra
               </Button>
             </div>
           </Card>
@@ -384,9 +399,9 @@ export const ExamCenterPage: React.FC = () => {
   // View 2: Active Exam / Quiz Taking View
   // ==========================================
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-fadeIn pb-16">
+    <div className="page-enter mx-auto max-w-4xl space-y-6 pb-16">
       {/* Top Sticky Progress & Timer Header */}
-      <div className="sticky top-20 z-20 bg-white/95 backdrop-blur-md p-5 rounded-2xl border border-[#E0E3E5] shadow-md flex flex-wrap items-center justify-between gap-4">
+      <div className="sticky top-20 z-20 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[#DFE5E1] bg-white/95 p-4 shadow-[0_12px_35px_rgba(28,49,42,0.1)] backdrop-blur-md sm:p-5">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -403,17 +418,17 @@ export const ExamCenterPage: React.FC = () => {
           </Button>
           <div>
             <h3 className="font-bold text-base text-[#181C1E]">
-              {activeExam ? `Đề thi #${activeExam.id.slice(0, 8)}` : activeQuiz ? `Quiz #${activeQuiz.id.slice(0, 8)}` : 'Bài kiểm tra'}
+              {activeExam ? `Bài kiểm tra #${activeExam.id.slice(0, 8)}` : activeQuiz ? `Bài luyện #${activeQuiz.id.slice(0, 8)}` : 'Bài kiểm tra'}
             </h3>
-            <p className="text-xs text-[#707882]">Đã trả lời: {answeredCount} / {currentQuestions.length} câu</p>
+            <p className="text-xs text-[#74807B]">Đã trả lời {answeredCount}/{currentQuestions.length} câu</p>
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="flex-1 max-w-xs hidden sm:block">
-          <div className="w-full bg-[#F4F7F9] h-2 rounded-full overflow-hidden border border-[#E0E3E5]">
+          <div className="h-2 w-full overflow-hidden rounded-full border border-[#DCE2DE] bg-[#EFF3EF]">
             <div
-              className="bg-gradient-to-r from-[#0073BB] to-[#8A2BE2] h-full transition-all duration-300"
+              className="h-full bg-gradient-to-r from-[#2F6B58] to-[#ED7148] transition-all duration-300"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -426,7 +441,7 @@ export const ExamCenterPage: React.FC = () => {
               'flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono font-bold text-sm border',
               timeLeftSeconds < 60
                 ? 'bg-[#FFDAD6] text-[#93000A] border-[#BA1A1A] animate-pulse'
-                : 'bg-[#F4F7F9] text-[#232F3E] border-[#C0C7D2]'
+                : 'border-[#DCE2DE] bg-[#F7F9F6] text-[#26332F]'
             )}
           >
             <Clock size={16} />
@@ -441,7 +456,7 @@ export const ExamCenterPage: React.FC = () => {
             isLoading={isSubmitting}
             leftIcon={<Send size={16} />}
           >
-            Nộp bài ngay
+            Nộp bài
           </Button>
         </div>
       </div>
@@ -455,7 +470,7 @@ export const ExamCenterPage: React.FC = () => {
           return (
             <Card key={qId} data-testid={`question-card-${qIdx}`} className="p-6 space-y-4">
               <div className="flex items-start gap-3">
-                <span className="w-7 h-7 rounded-full bg-[#D0E4FF] text-[#00497A] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E1EEE8] text-xs font-bold text-[#285D4C]">
                   {qIdx + 1}
                 </span>
                 <h4 data-testid={`question-text-${qIdx}`} className="font-bold text-sm text-[#181C1E] leading-relaxed flex-1">
@@ -476,16 +491,16 @@ export const ExamCenterPage: React.FC = () => {
                       className={clsx(
                         'w-full text-left p-3.5 rounded-xl font-medium text-xs border transition-all flex items-center gap-3 cursor-pointer',
                         isSelected
-                          ? 'bg-[#D0E4FF]/40 border-[#0073BB] text-[#00497A] font-bold shadow-sm'
-                          : 'bg-white border-[#E0E3E5] text-[#404751] hover:border-[#0073BB]/50 hover:bg-[#F4F7F9]'
+                          ? 'border-[#2F6B58] bg-[#EDF6F1] font-bold text-[#285D4C] shadow-sm'
+                          : 'border-[#E0E6E2] bg-white text-[#56635E] hover:border-[#91B3A5] hover:bg-[#F7FAF8]'
                       )}
                     >
                       <span
                         className={clsx(
                           'w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors',
                           isSelected
-                            ? 'bg-[#0073BB] text-white border-[#0073BB]'
-                            : 'bg-[#F4F7F9] text-[#707882] border-[#C0C7D2]'
+                            ? 'border-[#2F6B58] bg-[#2F6B58] text-white'
+                            : 'border-[#DCE2DE] bg-[#F7F9F6] text-[#74807B]'
                         )}
                       >
                         {String.fromCharCode(65 + optIdx)}
@@ -504,14 +519,14 @@ export const ExamCenterPage: React.FC = () => {
       <div className="flex justify-center pt-6">
         <Button
           data-testid="submit-exam-button"
-          variant="ai"
+          variant="primary"
           size="lg"
           onClick={handleSubmitExam}
           isLoading={isSubmitting}
           className="px-12 shadow-xl text-base"
           leftIcon={<Send size={18} />}
         >
-          Hoàn tất &amp; Xem phân tích AI
+          Hoàn tất và xem kết quả
         </Button>
       </div>
     </div>

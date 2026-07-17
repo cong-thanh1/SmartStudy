@@ -21,21 +21,21 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg active:scale-[0.98]';
+  const baseStyles = 'inline-flex min-h-10 items-center justify-center rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 active:translate-y-px';
 
   const variantStyles = {
-    primary: 'bg-[#0073BB] hover:bg-[#0062A0] text-white shadow-sm hover:shadow focus:ring-[#0073BB]',
-    secondary: 'bg-[#8A2BE2] hover:bg-[#7822CA] text-white shadow-sm hover:shadow focus:ring-[#8A2BE2]',
-    ai: 'ai-gradient text-white shadow-md hover:shadow-lg hover:brightness-110 focus:ring-[#8A2BE2] ai-glow',
-    outline: 'border border-[#C0C7D2] hover:bg-black/5 text-[#181C1E] focus:ring-[#0073BB]',
-    ghost: 'hover:bg-black/5 text-[#404751] hover:text-[#181C1E] focus:ring-[#0073BB]',
-    danger: 'bg-[#BA1A1A] hover:bg-[#93000A] text-white shadow-sm focus:ring-[#BA1A1A]',
+    primary: 'bg-[#2F6B58] text-white shadow-[0_8px_20px_rgba(47,107,88,0.18)] hover:bg-[#285B4B] hover:shadow-[0_10px_24px_rgba(47,107,88,0.24)] focus:ring-[#2F6B58]/20',
+    secondary: 'bg-[#ED7148] text-white shadow-[0_8px_20px_rgba(237,113,72,0.18)] hover:bg-[#D9603A] focus:ring-[#ED7148]/20',
+    ai: 'bg-[#18312A] text-white shadow-[0_10px_26px_rgba(24,49,42,0.2)] hover:bg-[#244A3F] focus:ring-[#2F6B58]/20',
+    outline: 'border border-[#D7DEDA] bg-white text-[#26332F] shadow-sm hover:border-[#AEBBB5] hover:bg-[#F8FAF7] focus:ring-[#2F6B58]/15',
+    ghost: 'bg-transparent text-[#55635E] hover:bg-[#E9EFEB] hover:text-[#18312A] focus:ring-[#2F6B58]/12',
+    danger: 'bg-[#B42318] text-white shadow-sm hover:bg-[#912018] focus:ring-[#B42318]/20',
   };
 
   const sizeStyles = {
-    sm: 'text-xs px-3 py-1.5 gap-1.5',
-    md: 'text-sm px-4 py-2 gap-2',
-    lg: 'text-base px-6 py-3 gap-2.5 rounded-xl',
+    sm: 'min-h-8 px-3 py-1.5 text-xs gap-1.5 rounded-lg',
+    md: 'px-4 py-2.5 text-sm gap-2',
+    lg: 'min-h-12 px-6 py-3 text-[15px] gap-2.5 rounded-2xl',
   };
 
   return (
@@ -45,29 +45,11 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {isLoading ? (
-        <svg
-          className="animate-spin -ml-1 mr-2 h-4 w-4 text-current"
-          fill="none"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          />
-          <path
-            className="opacity-75"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            fill="currentColor"
-          />
+        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" />
         </svg>
-      ) : (
-        leftIcon
-      )}
+      ) : leftIcon}
       <span>{children}</span>
       {!isLoading && rightIcon}
     </button>

@@ -44,28 +44,29 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#10231D]/55 p-4 backdrop-blur-sm page-enter" role="dialog" aria-modal="true">
       <div
         className={twMerge(
           clsx(
-            'w-full bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-[#E0E3E5] overflow-hidden transform transition-all',
+            'w-full overflow-hidden rounded-3xl border border-white/70 bg-white shadow-[0_24px_80px_rgba(16,35,29,0.24)] transition-all',
             sizeStyles[size],
             className
           )
         )}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#E0E3E5] bg-[#F4F7F9]/50">
-            <h3 className="font-semibold text-lg text-[#181C1E]">{title}</h3>
+          <div className="flex items-center justify-between border-b border-[#E5EAE7] bg-[#FAFBF8] px-6 py-5">
+            <h3 className="font-bold text-lg text-[#17201E]">{title}</h3>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-[#707882] hover:text-[#181C1E] hover:bg-black/5 transition-colors"
+              className="rounded-xl p-2 text-[#69756F] transition-colors hover:bg-[#E9EFEB] hover:text-[#18312A]"
+              aria-label="Đóng"
             >
               <X size={20} />
             </button>
           </div>
         )}
-        <div className="p-6 max-h-[80vh] overflow-y-auto">{children}</div>
+        <div className="scrollbar-subtle max-h-[82vh] overflow-y-auto p-6">{children}</div>
       </div>
     </div>
   );
