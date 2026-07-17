@@ -18,6 +18,8 @@
 - Retired Singapore backend stack `smartstudy-backend-prod`.
 - Retired Singapore Cognito user pool and S3 documents bucket after archival.
 - Retired Singapore RDS instance after the final encrypted snapshot completed.
+- Empty `UsersTable` resources that were not configured in either Lambda.
+- Unused staging Gemini parameter and its unused Lambda IAM permission.
 
 ## Bedrock removal rationale
 

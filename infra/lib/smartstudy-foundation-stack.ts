@@ -147,7 +147,6 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       partitionKey: { name: "ownerId", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "documentCreatedAt", type: dynamodb.AttributeType.STRING },
     });
-    const usersTable = createTable(this, "UsersTable", "ownerId");
     const summariesTable = createTable(this, "SummariesTable", "summaryKey");
     const aiJobsTable = createTable(this, "AiJobsTable", "jobId");
 
@@ -295,7 +294,6 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     apiFunction.addToRolePolicy(new iam.PolicyStatement({
       actions: ["ssm:GetParameter"],
       resources: [
-        `arn:${cdk.Aws.PARTITION}:ssm:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:parameter/smartstudy/${suffix}/gemini-api-key`,
         `arn:${cdk.Aws.PARTITION}:ssm:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:parameter/smartstudy/${suffix}/local-ai-gateway-key`,
       ],
     }));
@@ -323,7 +321,6 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       value: conversationMessagesTable.tableName,
     });
     new cdk.CfnOutput(this, "DocumentQueueUrl", { value: documentQueue.queueUrl });
-    new cdk.CfnOutput(this, "UsersTableName", { value: usersTable.tableName });
     new cdk.CfnOutput(this, "SummariesTableName", { value: summariesTable.tableName });
     new cdk.CfnOutput(this, "QuizzesTableName", { value: quizzesTable.tableName });
     new cdk.CfnOutput(this, "ExamsTableName", { value: examsTable.tableName });

@@ -16,7 +16,7 @@ describe("SmartStudyFoundationStack", () => {
     template.resourceCountIs("AWS::SQS::Queue", 2);
     template.resourceCountIs("AWS::Cognito::UserPool", 1);
     template.resourceCountIs("AWS::Lambda::Function", 4);
-    template.resourceCountIs("AWS::DynamoDB::Table", 10);
+    template.resourceCountIs("AWS::DynamoDB::Table", 9);
     template.resourceCountIs("AWS::Bedrock::KnowledgeBase", 0);
     template.resourceCountIs("AWS::Bedrock::DataSource", 0);
     template.resourceCountIs("AWS::S3Vectors::VectorBucket", 0);
