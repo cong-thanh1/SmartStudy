@@ -1,23 +1,25 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  BookOpen,
-  FileQuestion,
-  BarChart2,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  Sparkles,
-  User as UserIcon,
-} from 'lucide-react';
+import { LayoutGrid, BookOpenText, ClipboardCheck, ChartNoAxesColumnIncreasing, LogOut, Sparkles, X, ArrowUpRight } from 'lucide-react';
 import { authService, getStoredUser } from '../../services';
 import { clsx } from 'clsx';
 
-export const Sidebar: React.FC = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+interface SidebarProps {
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+const navItems = [
+  { to: '/dashboard', label: 'Tổng quan', description: 'Tài liệu của bạn', icon: LayoutGrid },
+  { to: '/learning', label: 'Học cùng tài liệu', description: 'Đọc và đặt câu hỏi', icon: BookOpenText },
+  { to: '/exam-center', label: 'Luyện tập', description: 'Tạo bài kiểm tra', icon: ClipboardCheck },
+  { to: '/results', label: 'Kết quả', description: 'Xem lại tiến bộ', icon: ChartNoAxesColumnIncreasing },
+];
+
+export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobileClose }) => {
   const navigate = useNavigate();
-  const user = getStoredUser() || { name: 'Giảng viên AI', email: 'teacher@smartstudy.ai' };
+  const user = getStoredUser() || { name: 'Người học', email: 'student@smartstudy.ai' };
+  const displayName = user.name || user.fullName || 'Người học';
 
   const handleLogout = async () => {
     try {
@@ -27,102 +29,58 @@ export const Sidebar: React.FC = () => {
     }
   };
 
-  const navItems = [
-    { to: '/dashboard', label: 'Bảng điều khiển', icon: LayoutDashboard },
-    { to: '/learning', label: 'Không gian học tập AI', icon: BookOpen },
-    { to: '/exam-center', label: 'Trung tâm Khảo thí', icon: FileQuestion },
-    { to: '/results', label: 'Kết quả & Phân tích', icon: BarChart2 },
-  ];
-
   return (
-    <aside
-      className={clsx(
-        'fixed inset-x-0 bottom-0 z-30 flex h-16 w-full flex-row border-t border-white/10 bg-[#232F3E] text-white shadow-xl transition-all duration-300 select-none md:relative md:h-screen md:flex-col md:border-r md:border-t-0',
-        isCollapsed ? 'md:w-[72px]' : 'md:w-[232px]'
-      )}
-    >
-      {/* Brand Header */}
-      <div className="hidden h-20 items-center justify-between border-b border-white/10 px-5 md:flex">
-        <NavLink to="/dashboard" className="flex items-center gap-3 overflow-hidden">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0073BB] to-[#8A2BE2] flex items-center justify-center shrink-0 shadow-md">
-            <Sparkles className="w-5 h-5 text-white animate-pulse" />
-          </div>
-          {!isCollapsed && (
-            <div className="flex flex-col">
-              <span className="font-bold text-lg tracking-tight leading-tight text-white">SmartStudy</span>
-              <span className="text-[11px] text-[#9CCAFF] font-medium uppercase tracking-wider">AI Assistant</span>
+    <>
+      {isMobileOpen && <button className="fixed inset-0 z-40 bg-[#10231D]/45 backdrop-blur-sm lg:hidden" onClick={onMobileClose} aria-label="Đóng menu" />}
+      <aside className={clsx('fixed inset-y-0 left-0 z-50 flex w-[252px] flex-col border-r border-[#DCE2DE] bg-[#FBFCF8] p-4 transition-transform duration-300 lg:translate-x-0', isMobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full')}>
+        <div className="flex h-14 items-center justify-between px-2">
+          <NavLink to="/dashboard" onClick={onMobileClose} className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-[#18312A] text-white shadow-[0_8px_20px_rgba(24,49,42,0.2)]">
+              <Sparkles size={19} />
             </div>
-          )}
-        </NavLink>
-
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden shrink-0 rounded-lg p-1.5 text-[#C0C7D2] transition-colors hover:bg-white/10 hover:text-white md:block"
-          title={isCollapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
-        >
-          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
-      </div>
-
-      {/* Navigation Links */}
-      <nav className="flex flex-1 items-center justify-around gap-1 px-2 py-1 md:flex-col md:items-stretch md:justify-start md:space-y-1.5 md:px-3 md:py-6">
-        {!isCollapsed && (
-          <div className="mb-3 hidden px-3 text-[11px] font-semibold uppercase tracking-wider text-[#707882] md:block">
-            Học tập &amp; Khảo thí
-          </div>
-        )}
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                clsx(
-                  'group relative flex min-w-0 flex-col items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-medium transition-all md:flex-row md:gap-3.5 md:px-3.5 md:py-3 md:text-sm',
-                  isActive
-                    ? 'bg-[#0073BB] text-white shadow-md font-semibold'
-                    : 'text-[#C0C7D2] hover:bg-white/5 hover:text-white'
-                )
-              }
-              title={isCollapsed ? item.label : undefined}
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && !isCollapsed && (
-                    <span className="absolute bottom-0 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[#8A2BE2] animate-fadeIn md:bottom-2 md:left-0 md:top-2 md:h-auto md:w-1 md:translate-x-0 md:rounded-r-full" />
-                  )}
-                  <Icon className={clsx('w-5 h-5 shrink-0 transition-transform group-hover:scale-110', isActive ? 'text-white' : 'text-[#9CCAFF]')} />
-                  <span className={clsx('truncate', isCollapsed && 'md:hidden')}>{item.label}</span>
-                </>
-              )}
-            </NavLink>
-          );
-        })}
-      </nav>
-
-      {/* User Profile & Logout Bottom Section */}
-      <div className="hidden border-t border-white/10 bg-black/20 p-4 md:block">
-        <div className={clsx('flex items-center gap-3', isCollapsed && 'justify-center')}>
-          <div className="w-10 h-10 rounded-full bg-[#0073BB]/30 border border-[#0073BB] flex items-center justify-center shrink-0 text-white font-semibold">
-            {user.name ? user.name.charAt(0).toUpperCase() : <UserIcon size={18} />}
-          </div>
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{user.name || 'Người dùng AI'}</p>
-              <p className="text-xs text-[#C0C7D2] truncate">{user.email}</p>
+            <div>
+              <p className="text-[17px] font-extrabold leading-none tracking-[-0.03em] text-[#17201E]">SmartStudy</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ED7148]">Học theo cách của bạn</p>
             </div>
-          )}
-          <button
-            data-testid="logout-button"
-            onClick={handleLogout}
-            className="p-2 rounded-lg text-[#FFDAD6] hover:bg-[#BA1A1A]/20 transition-colors shrink-0"
-            title="Đăng xuất"
-          >
-            <LogOut size={18} />
-          </button>
+          </NavLink>
+          <button onClick={onMobileClose} className="rounded-lg p-2 text-[#69756F] hover:bg-[#E9EFEB] lg:hidden" aria-label="Đóng menu"><X size={18} /></button>
         </div>
-      </div>
-    </aside>
+
+        <nav className="mt-7 flex-1 space-y-1.5">
+          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#8A9691]">Học tập</p>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink key={item.to} to={item.to} onClick={onMobileClose} className={({ isActive }) => clsx('group flex items-center gap-3 rounded-2xl px-3 py-3 transition-all', isActive ? 'bg-[#E1EEE8] text-[#204D3F]' : 'text-[#5E6A66] hover:bg-[#EFF3EF] hover:text-[#18312A]')}>
+                {({ isActive }) => (
+                  <>
+                    <span className={clsx('grid h-9 w-9 shrink-0 place-items-center rounded-xl transition', isActive ? 'bg-[#2F6B58] text-white shadow-sm' : 'bg-white text-[#61716B] ring-1 ring-[#E0E6E2] group-hover:text-[#2F6B58]')}><Icon size={18} /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-bold">{item.label}</span>
+                      <span className="block truncate text-[11px] font-medium opacity-70">{item.description}</span>
+                    </span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        <div className="mb-3 rounded-2xl bg-[#18312A] p-4 text-white">
+          <p className="text-xs font-bold">Mẹo học nhanh</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-white/65">Đặt câu hỏi ngay khi gặp phần chưa hiểu, câu trả lời sẽ kèm nguồn để bạn kiểm tra.</p>
+          <NavLink to="/learning" onClick={onMobileClose} className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-[#B9E0D0] hover:text-white">Thử ngay <ArrowUpRight size={13} /></NavLink>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-2xl border border-[#E1E6E2] bg-white p-3">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#FFE5DA] text-sm font-extrabold text-[#A34225]">{displayName.charAt(0).toUpperCase()}</div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-bold text-[#26332F]">{displayName}</p>
+            <p className="truncate text-[10px] text-[#7A8681]">{user.email}</p>
+          </div>
+          <button data-testid="logout-button" onClick={handleLogout} className="rounded-lg p-2 text-[#8A9691] transition hover:bg-[#FEE4E2] hover:text-[#B42318]" title="Đăng xuất" aria-label="Đăng xuất"><LogOut size={16} /></button>
+        </div>
+      </aside>
+    </>
   );
 };
