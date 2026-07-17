@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { SmartStudyFoundationStack } from "../lib/smartstudy-foundation-stack.js";
 
 describe("SmartStudyFoundationStack", () => {
-  it("creates encrypted storage, KB ingestion, API Lambdas, Cognito, and DynamoDB tables", () => {
+  it("creates the active API, ingestion, auth, queue, and DynamoDB infrastructure", () => {
     const app = new cdk.App();
     const stack = new SmartStudyFoundationStack(app, "TestStack", {
       environment: "test",
@@ -17,7 +17,10 @@ describe("SmartStudyFoundationStack", () => {
     template.resourceCountIs("AWS::Cognito::UserPool", 1);
     template.resourceCountIs("AWS::Lambda::Function", 4);
     template.resourceCountIs("AWS::DynamoDB::Table", 10);
-    template.resourceCountIs("AWS::Bedrock::DataSource", 1);
+    template.resourceCountIs("AWS::Bedrock::KnowledgeBase", 0);
+    template.resourceCountIs("AWS::Bedrock::DataSource", 0);
+    template.resourceCountIs("AWS::S3Vectors::VectorBucket", 0);
+    template.resourceCountIs("AWS::S3Vectors::Index", 0);
     template.resourceCountIs("AWS::ApiGatewayV2::Api", 1);
     template.resourceCountIs("AWS::CloudWatch::Alarm", 3);
     template.hasResourceProperties("AWS::SQS::Queue", {
