@@ -23,7 +23,7 @@ export const GlassPanel: React.FC<GlassPanelProps> = ({
   return (
     <div
       className={twMerge(
-        clsx('glass-panel shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-white/60', roundedStyles[rounded], className)
+        clsx('glass-panel border border-white/70 shadow-[0_18px_48px_rgba(28,49,42,0.09)]', roundedStyles[rounded], className)
       )}
       {...props}
     >

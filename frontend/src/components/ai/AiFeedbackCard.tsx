@@ -23,23 +23,23 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
   return (
     <div className="space-y-6 animate-fadeIn" data-testid="results-page">
       {/* Overview Score Header Card */}
-      <Card variant="ai-glow" className="p-8 bg-gradient-to-br from-white via-[#F4F7F9] to-[#EFDBFF]/30">
+      <Card variant="ai-glow" className="bg-gradient-to-br from-white via-[#F6F8F5] to-[#E8F2ED] p-6 sm:p-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
             <Badge data-testid="result-status-badge" variant={isPassed ? 'success' : 'warning'} size="md">
-              {isPassed ? '🌟 Hoàn thành xuất sắc' : '💪 Cần cố gắng thêm'}
+              {isPassed ? 'Bạn đã nắm khá tốt' : 'Mình cùng ôn thêm nhé'}
             </Badge>
             <h2 className="text-2xl font-bold text-[#181C1E] flex items-center justify-center md:justify-start gap-2">
-              <span>Kết quả Phân tích Năng lực AI</span>
-              <Sparkles className="w-6 h-6 text-[#8A2BE2] animate-bounce" />
+              <span>Kết quả bài làm</span>
+              <Sparkles className="h-6 w-6 text-[#ED7148]" />
             </h2>
             <p data-testid="ai-feedback-text" className="text-sm text-[#404751] max-w-xl">
-              {result.aiFeedback || 'Hệ thống đã tự động chấm điểm và tổng hợp lỗi sai để giúp bạn cải thiện kiến thức nhanh chóng.'}
+              {result.aiFeedback || 'Xem lại từng câu bên dưới để biết phần nào bạn đã hiểu và phần nào nên ôn thêm.'}
             </p>
           </div>
 
           <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-white shadow-md border border-[#E0E3E5] min-w-[160px]">
-            <span className="text-xs font-semibold text-[#707882] uppercase tracking-wider">Điểm số của bạn</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#74807B]">Điểm của bạn</span>
             <span data-testid="score-display" className={clsx('text-4xl font-extrabold my-1', isPassed ? 'text-emerald-600' : 'text-[#8A2BE2]')}>
               {result.score} <span className="text-lg font-normal text-[#707882]">/ {result.totalPoints}</span>
             </span>
@@ -53,7 +53,7 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
       {/* Question breakdown & AI Explanations */}
       <div className="space-y-4">
         <h3 className="font-bold text-lg text-[#181C1E] flex items-center gap-2">
-          <span>Chi tiết Từng câu hỏi &amp; Giải thích từ AI</span>
+              <span>Xem lại từng câu</span>
           <Badge variant="neutral" size="sm">{result.details.length} câu</Badge>
         </h3>
 
@@ -114,7 +114,7 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
                   <div data-testid={`explanation-${idx}`} className="mt-4 ml-10 p-4 rounded-xl bg-white border border-[#8A2BE2]/30 shadow-sm flex items-start gap-3">
                     <Lightbulb className="w-5 h-5 text-[#8A2BE2] shrink-0 mt-0.5 animate-pulse" />
                     <div className="flex-1 text-xs space-y-1">
-                      <p className="font-bold text-[#8A2BE2] uppercase tracking-wider text-[11px]">Phân tích lỗi sai từ AI:</p>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#A94B2E]">Vì sao đáp án này chưa đúng?</p>
                       <p className="text-[#404751] leading-relaxed">{detail.explanationForWrong}</p>
                     </div>
                     {onReviewTutor && (
@@ -125,7 +125,7 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
                         className="text-[#8A2BE2] hover:bg-[#8A2BE2]/10 text-xs shrink-0"
                         rightIcon={<ArrowRight size={14} />}
                       >
-                        Hỏi Gia sư AI
+                        Hỏi thêm
                       </Button>
                     )}
                   </div>
@@ -140,7 +140,7 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
       {onRetake && (
         <div className="flex justify-center pt-4">
           <Button variant="ai" size="lg" onClick={onRetake} leftIcon={<Sparkles className="w-5 h-5" />}>
-            Làm lại đề thi thử năng lực
+            Làm một bài khác
           </Button>
         </div>
       )}

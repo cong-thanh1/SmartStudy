@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
 
 export const AppLayout: React.FC = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#F4F7F9]">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Navbar />
-        <main className="relative flex-1 overflow-y-auto p-4 pb-20 sm:p-6 md:p-8 md:pb-8">
+    <div className="min-h-screen bg-[#F6F7F2] text-[#17201E]">
+      <Sidebar isMobileOpen={isMobileMenuOpen} onMobileClose={() => setIsMobileMenuOpen(false)} />
+      <div className="min-h-screen lg:pl-[252px]">
+        <Navbar onMenuClick={() => setIsMobileMenuOpen(true)} />
+        <main className="scrollbar-subtle min-h-[calc(100vh-80px)] px-4 py-5 sm:px-6 sm:py-7 xl:px-10 xl:py-9">
           <Outlet />
         </main>
       </div>

@@ -37,13 +37,13 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSelectCitatio
   return (
     <div
       data-testid={isAi ? 'chat-assistant-message' : 'chat-user-message'}
-      className={clsx('flex gap-3.5 animate-fadeIn', isAi ? 'max-w-[85%] self-start' : 'max-w-[70%] self-end flex-row-reverse')}
+      className={clsx('flex max-w-[92%] gap-3 sm:max-w-[86%] animate-fadeIn', isAi ? 'self-start' : 'self-end flex-row-reverse')}
     >
       {/* Avatar */}
       <div
         className={clsx(
           'w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm font-semibold text-white',
-          isAi ? 'bg-indigo-600' : 'bg-slate-700'
+          isAi ? 'bg-[#2F6B58]' : 'bg-[#18312A]'
         )}
       >
         {isAi ? <Sparkles className="w-4 h-4 animate-pulse" /> : <UserIcon className="w-4 h-4" />}
@@ -52,15 +52,15 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSelectCitatio
       {/* Bubble Box */}
       <div
         className={clsx(
-          'relative flex flex-col gap-2.5 rounded-xl p-4 shadow-sm',
+          'relative flex flex-col gap-2.5 rounded-2xl p-4 shadow-sm',
           isAi
-            ? 'border border-slate-200 bg-white text-slate-900'
-            : 'bg-indigo-600 text-white'
+            ? 'rounded-tl-md border border-[#E0E6E2] bg-white text-[#17201E]'
+            : 'rounded-tr-md bg-[#18312A] text-white'
         )}
       >
         {/* Role Header */}
         <div className="flex items-center justify-between gap-4 text-xs font-semibold opacity-80">
-          <span>{isAi ? 'SmartStudy AI Engine' : 'Bạn'}</span>
+          <span>{isAi ? 'Trợ lý SmartStudy' : 'Bạn'}</span>
           <span className="text-[10px] font-normal opacity-70">
             {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
@@ -71,9 +71,9 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSelectCitatio
 
         {/* Citations List if available */}
         {isAi && message.citations && message.citations.length > 0 && (
-          <div className="mt-2 flex flex-col gap-1.5 border-t border-slate-200 pt-3">
-            <span className="flex items-center gap-1 text-xs font-semibold text-slate-600">
-              <span>📚 Nguồn trích dẫn từ tài liệu:</span>
+          <div className="mt-2 flex flex-col gap-1.5 border-t border-[#E0E3E5] pt-3">
+            <span className="flex items-center gap-1 text-xs font-semibold text-[#404751]">
+              <span>Nguồn trong tài liệu</span>
             </span>
             <div className="flex flex-wrap gap-1.5">
               {message.citations.map((cite, idx) => (
@@ -88,12 +88,12 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSelectCitatio
           </div>
         )}
         {isAi && (
-          <div className="mt-1 flex items-center gap-1 border-t border-slate-100 pt-2 text-slate-400">
-            <button type="button" onClick={copyMessage} className="rounded-md p-1.5 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Sao chép câu trả lời">
+          <div className="mt-1 flex items-center gap-1 border-t border-[#EEF1EF] pt-2 text-[#6F7975]">
+            <button type="button" onClick={copyMessage} className="rounded-md p-1.5 hover:bg-[#F0F5F2] hover:text-[#18312A] focus:outline-none focus:ring-2 focus:ring-[#2F6B58]" aria-label="Sao chép câu trả lời">
               {copied ? <Check size={15} className="text-emerald-600" /> : <Copy size={15} />}
             </button>
-            <button type="button" className="rounded-md p-1.5 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Câu trả lời hữu ích"><ThumbsUp size={15} /></button>
-            <button type="button" className="rounded-md p-1.5 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Câu trả lời chưa hữu ích"><ThumbsDown size={15} /></button>
+            <button type="button" className="rounded-md p-1.5 hover:bg-[#F0F5F2] hover:text-[#18312A] focus:outline-none focus:ring-2 focus:ring-[#2F6B58]" aria-label="Câu trả lời hữu ích"><ThumbsUp size={15} /></button>
+            <button type="button" className="rounded-md p-1.5 hover:bg-[#F0F5F2] hover:text-[#18312A] focus:outline-none focus:ring-2 focus:ring-[#2F6B58]" aria-label="Câu trả lời chưa hữu ích"><ThumbsDown size={15} /></button>
           </div>
         )}
       </div>

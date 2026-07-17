@@ -66,23 +66,23 @@ export const ResultsPage: React.FC = () => {
         <Award className="w-12 h-12 text-[#8A2BE2] mx-auto animate-bounce" />
         <h3 className="font-bold text-base text-[#181C1E]">Chưa có kết quả làm bài thi nào</h3>
         <p className="text-xs text-[#707882]">
-          Bạn chưa thực hiện bài kiểm tra trắc nghiệm hoặc đề thi thử năng lực AI nào.
+          Bạn chưa hoàn thành bài luyện nào. Hãy chọn một tài liệu và tạo bài đầu tiên nhé.
         </p>
         <Button variant="ai" size="md" onClick={() => navigate('/exam-center')} leftIcon={<Sparkles size={16} />}>
-          Vào Trung tâm Khảo thí ngay
+          Tạo bài luyện đầu tiên
         </Button>
       </Card>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-fadeIn pb-16">
-      <div className="flex items-center justify-between">
+    <div className="page-enter mx-auto max-w-4xl space-y-6 pb-16">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <Button variant="ghost" size="sm" onClick={() => navigate('/exam-center')} leftIcon={<ArrowLeft size={16} />}>
-          Quay lại Trung tâm Khảo thí
+          Quay lại luyện tập
         </Button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
