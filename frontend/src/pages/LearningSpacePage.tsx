@@ -41,7 +41,7 @@ export const LearningSpacePage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
 
   // Summary State
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -131,7 +131,9 @@ export const LearningSpacePage: React.FC = () => {
   }, [selectedDocId, setSearchParams]);
 
   const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = chatScrollRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -240,8 +242,8 @@ export const LearningSpacePage: React.FC = () => {
   }
 
   return (
-    <div className="page-enter mx-auto flex min-h-full w-full max-w-[1440px] flex-col gap-5">
-      <header className="flex flex-col gap-4 rounded-3xl border border-[#DCE2DE] bg-white px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div className="page-enter mx-auto flex min-h-full w-full max-w-[1440px] flex-col gap-5 lg:h-[calc(100vh-152px)] lg:min-h-[640px] lg:overflow-hidden">
+      <header className="flex shrink-0 flex-col gap-4 rounded-3xl border border-[#DCE2DE] bg-white px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
@@ -282,13 +284,16 @@ export const LearningSpacePage: React.FC = () => {
         </div>
       </header>
 
-      <div className={clsx(
-        'grid min-h-[calc(100vh-210px)] gap-5',
-        isReaderOpen ? 'lg:grid-cols-[minmax(0,1.38fr)_minmax(360px,1fr)]' : 'grid-cols-1',
-      )}>
-      {/* Left Panel: PDF Viewer / Textbook Reader (45% width) */}
-      {isReaderOpen && (
-      <Card className="order-2 flex min-h-[560px] flex-col overflow-hidden p-0 shadow-sm lg:order-2">
+      <div
+        data-testid="learning-workspace-grid"
+        className={clsx(
+          'grid gap-5 lg:min-h-0 lg:flex-1',
+          isReaderOpen ? 'lg:grid-cols-[minmax(0,1.38fr)_minmax(360px,1fr)]' : 'grid-cols-1',
+        )}
+      >
+        {/* Left Panel: PDF Viewer / Textbook Reader (45% width) */}
+        {isReaderOpen && (
+        <Card data-testid="document-reader-panel" className="order-2 flex h-[72dvh] min-h-[520px] max-h-[680px] flex-col overflow-hidden p-0 shadow-sm lg:order-2 lg:h-full lg:min-h-0 lg:max-h-none">
         {/* Document Selector Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#18312A] p-4 text-white">
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -309,7 +314,7 @@ export const LearningSpacePage: React.FC = () => {
         </div>
 
         {/* Extracted document preview */}
-        <div className="scrollbar-subtle relative flex-1 space-y-5 overflow-y-auto bg-[#EFF2ED] p-4 sm:p-5">
+        <div data-testid="document-reader-scroll" className="scrollbar-subtle relative min-h-0 flex-1 space-y-5 overflow-y-auto bg-[#EFF2ED] p-4 sm:p-5">
           {activeCitation && (
             <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-sm">
               <div className="flex items-center justify-between text-xs font-bold text-amber-800 mb-1">
@@ -354,11 +359,11 @@ export const LearningSpacePage: React.FC = () => {
             )}
           </div>
         </div>
-      </Card>
-      )}
+        </Card>
+        )}
 
-      {/* Right Panel: Interactive AI Workspace (55% width) */}
-      <Card className="order-1 flex min-h-[560px] flex-col overflow-hidden p-0 shadow-sm lg:order-1">
+        {/* Right Panel: Interactive AI Workspace (55% width) */}
+        <Card data-testid="learning-tools-panel" className="order-1 flex h-[72dvh] min-h-[520px] max-h-[680px] flex-col overflow-hidden p-0 shadow-sm lg:order-1 lg:h-full lg:min-h-0 lg:max-h-none">
         {/* Navigation Tabs Header */}
         <div className="scrollbar-subtle flex items-center gap-1 overflow-x-auto border-b border-[#E0E6E2] bg-white px-4 py-3 sm:px-5">
           <button
@@ -426,7 +431,7 @@ export const LearningSpacePage: React.FC = () => {
         {/* Tab 1: document chat */}
         {activeTab === 'rag' && (
           <div className="flex min-h-0 flex-1 flex-col bg-[#F6F7F2]">
-            <div className="flex-1 p-6 overflow-y-auto space-y-4">
+            <div ref={chatScrollRef} data-testid="chat-message-scroll" className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
               {messages.length === 0 && !isSending && (
                 <div className="mx-auto mt-12 max-w-md rounded-3xl border border-[#DCE2DE] bg-white p-6 text-center shadow-sm">
                   <MessageSquare className="mx-auto mb-3 h-7 w-7 text-[#2F6B58]" />
@@ -449,7 +454,6 @@ export const LearningSpacePage: React.FC = () => {
                   </span>
                 </div>
               )}
-              <div ref={chatEndRef} />
             </div>
 
             {/* Chat Input Box */}
@@ -489,7 +493,7 @@ export const LearningSpacePage: React.FC = () => {
 
         {/* Tab 2: summary */}
         {activeTab === 'summary' && (
-          <div className="flex-1 space-y-6 overflow-y-auto bg-[#F6F7F2] p-5 sm:p-6">
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto bg-[#F6F7F2] p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#DCE2DE] bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <Button
@@ -607,7 +611,7 @@ export const LearningSpacePage: React.FC = () => {
 
         {/* Tab 3: learning assistant */}
         {activeTab === 'tutor' && (
-          <div className="flex-1 space-y-6 overflow-y-auto bg-[#F6F7F2] p-6">
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto bg-[#F6F7F2] p-6">
             <Card className="space-y-3 bg-[#18312A] p-6 text-white">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-bold">
@@ -719,7 +723,7 @@ export const LearningSpacePage: React.FC = () => {
             )}
           </div>
         )}
-      </Card>
+        </Card>
       </div>
     </div>
   );
