@@ -52,14 +52,18 @@ export class LlamaCppLLMProvider implements ILLMProvider {
           max_tokens: input.maxTokens ?? this.config.maxTokens,
           messages: toMessages(input.messages, input.systemPrompt),
           model: this.config.model,
-          // llama.cpp only enables its JSON grammar when a schema is supplied.
-          // A plain `json_object` response format is only a prompt hint for some
-          // small local models, which caused malformed/truncated JSON in the
-          // summary, quiz, and exam flows.
+          // Ollama and current llama.cpp OpenAI-compatible endpoints enforce a
+          // schema through the standard `json_schema` response format. Sending
+          // a schema beside `json_object` only guarantees valid JSON and lets
+          // smaller models rename or omit required fields.
           response_format: structuredJson
             ? {
-                schema: resolveJsonSchema(schemaDescription),
-                type: "json_object",
+                json_schema: {
+                  name: "structured_response",
+                  schema: resolveJsonSchema(schemaDescription),
+                  strict: true,
+                },
+                type: "json_schema",
               }
             : undefined,
           stream: false,
