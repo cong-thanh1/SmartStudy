@@ -80,7 +80,7 @@ describe("LlamaCppLLMProvider", () => {
       expect.any(String),
       expect.objectContaining({
         body: expect.stringContaining(
-          '"response_format":{"schema":{"properties":{"answer":{"type":"string"}},"type":"object"},"type":"json_object"}',
+          '"response_format":{"json_schema":{"name":"structured_response","schema":{"properties":{"answer":{"type":"string"}},"type":"object"},"strict":true},"type":"json_schema"}',
         ),
       }),
     );
