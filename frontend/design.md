@@ -46,3 +46,13 @@ feedback; field labels always sit above controls.
 Desktop layouts can offset and overlap. Below 768px all primary grids collapse
 to one column, page padding becomes 16px, navigation becomes a drawer, and no
 clickable label may wrap or force horizontal overflow.
+
+## Learning workspace contract
+
+- Chat is the primary surface and remains bounded to the available viewport.
+- Messages, summaries, tutor output and document content scroll inside their own
+  panels; content never stretches the page shell vertically.
+- The source document is closed by default. It opens as a bounded rail on
+  desktop and a dismissible viewport drawer below 1024px.
+- Selecting a citation opens the source reader automatically at the relevant
+  context while keeping the composer anchored to the chat surface.
