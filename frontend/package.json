@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "typecheck": "tsc -b --pretty false",
+    "test": "npm run test:ui",
+    "test:ui": "playwright test --config=e2e/ui.playwright.config.ts",
     "preview": "vite preview",
     "pw:setup": "node e2e/setup.mjs",
     "pw:test": "playwright test --config=e2e/playwright.config.ts",
@@ -16,6 +19,9 @@
     "pw:ui": "playwright test --config=e2e/playwright.config.ts --ui"
   },
   "dependencies": {
+    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
     "axios": "^1.18.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.23.0",

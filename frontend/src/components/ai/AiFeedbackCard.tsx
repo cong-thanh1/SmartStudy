@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, CheckCircle2, XCircle, Lightbulb, ArrowRight } from 'lucide-react';
+import { CheckCircle2, XCircle, Lightbulb, ArrowRight, RotateCcw } from 'lucide-react';
 import { GradingResult, ExamQuestion } from '../../types';
 import { Card, Badge, Button } from '../common';
 import { clsx } from 'clsx';
@@ -23,27 +23,24 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
   return (
     <div className="space-y-6 animate-fadeIn" data-testid="results-page">
       {/* Overview Score Header Card */}
-      <Card variant="ai-glow" className="bg-gradient-to-br from-white via-[#F6F8F5] to-[#E8F2ED] p-6 sm:p-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2 text-center md:text-left">
+      <Card variant="ai-glow" className="rounded-lg p-6 sm:p-8">
+        <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+          <div className="space-y-3">
             <Badge data-testid="result-status-badge" variant={isPassed ? 'success' : 'warning'} size="md">
               {isPassed ? 'Bạn đã nắm khá tốt' : 'Mình cùng ôn thêm nhé'}
             </Badge>
-            <h2 className="text-2xl font-bold text-[#181C1E] flex items-center justify-center md:justify-start gap-2">
-              <span>Kết quả bài làm</span>
-              <Sparkles className="h-6 w-6 text-[#ED7148]" />
-            </h2>
-            <p data-testid="ai-feedback-text" className="text-sm text-[#404751] max-w-xl">
+            <h2 className="text-2xl text-ink">Kết quả bài làm</h2>
+            <p data-testid="ai-feedback-text" className="text-sm text-[var(--color-ink-2)] max-w-xl">
               {result.aiFeedback || 'Xem lại từng câu bên dưới để biết phần nào bạn đã hiểu và phần nào nên ôn thêm.'}
             </p>
           </div>
 
-          <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-white shadow-md border border-[#E0E3E5] min-w-[160px]">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#74807B]">Điểm của bạn</span>
-            <span data-testid="score-display" className={clsx('text-4xl font-extrabold my-1', isPassed ? 'text-emerald-600' : 'text-[#8A2BE2]')}>
-              {result.score} <span className="text-lg font-normal text-[#707882]">/ {result.totalPoints}</span>
+          <div className="min-w-[10rem] border-l border-rule pl-6">
+            <span className="text-sm font-semibold text-muted">Điểm của bạn</span>
+            <span data-testid="score-display" className={clsx('hm-data my-1 block text-4xl font-medium', isPassed ? 'text-success' : 'text-signal')}>
+              {result.score} <span className="text-lg font-normal text-[var(--color-muted)]">/ {result.totalPoints}</span>
             </span>
-            <span data-testid="score-percentage" className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#F4F7F9] text-[#181C1E]">
+            <span data-testid="score-percentage" className="text-sm font-semibold text-ink">
               Đạt {percentage}%
             </span>
           </div>
@@ -52,7 +49,7 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
 
       {/* Question breakdown & AI Explanations */}
       <div className="space-y-4">
-        <h3 className="font-bold text-lg text-[#181C1E] flex items-center gap-2">
+        <h3 className="font-bold text-lg text-[var(--color-ink)] flex items-center gap-2">
               <span>Xem lại từng câu</span>
           <Badge variant="neutral" size="sm">{result.details.length} câu</Badge>
         </h3>
@@ -71,28 +68,28 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
                 key={detail.questionId}
                 data-testid={`result-question-${idx}`}
                 className={clsx(
-                  'p-6 transition-all border-l-4',
-                  detail.isCorrect ? 'border-l-emerald-500 bg-white' : 'border-l-[#BA1A1A] bg-[#FFDAD6]/10'
+                  'rounded-lg p-6',
+                  detail.isCorrect ? 'border-success bg-surface' : 'border-error bg-error-soft/30'
                 )}
               >
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div className="flex items-start gap-3">
                     <span
                       className={clsx(
-                        'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 text-white shadow-sm',
-                        detail.isCorrect ? 'bg-emerald-500' : 'bg-[#BA1A1A]'
+                        'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 text-paper shadow-sm',
+                        detail.isCorrect ? 'bg-success' : 'bg-error'
                       )}
                     >
                       {idx + 1}
                     </span>
                     <div>
-                      <p className="font-semibold text-sm text-[#181C1E]">{qText}</p>
+                      <p className="font-semibold text-sm text-[var(--color-ink)]">{qText}</p>
                       <div className="flex flex-wrap items-center gap-4 mt-2 text-xs">
-                        <span className={clsx('font-medium', detail.isCorrect ? 'text-emerald-700' : 'text-[#BA1A1A]')}>
+                        <span className={clsx('font-medium', detail.isCorrect ? 'text-success' : 'text-error')}>
                           Lựa chọn của bạn: {question.options[detail.userOption] || `Đáp án ${detail.userOption + 1}`}
                         </span>
                         {!detail.isCorrect && (
-                          <span data-testid={`correct-answer-${idx}`} className="font-semibold text-emerald-700">
+                          <span data-testid={`correct-answer-${idx}`} className="font-semibold text-success">
                             Đáp án đúng: {question.options[detail.correctOption] || `Đáp án ${detail.correctOption + 1}`}
                           </span>
                         )}
@@ -102,27 +99,27 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
 
                   <div className="shrink-0">
                     {detail.isCorrect ? (
-                      <CheckCircle2 data-testid={`result-correct-icon-${idx}`} className="w-6 h-6 text-emerald-500" />
+                      <CheckCircle2 data-testid={`result-correct-icon-${idx}`} className="h-6 w-6 text-success" />
                     ) : (
-                      <XCircle data-testid={`result-wrong-icon-${idx}`} className="w-6 h-6 text-[#BA1A1A]" />
+                      <XCircle data-testid={`result-wrong-icon-${idx}`} className="w-6 h-6 text-[var(--color-error)]" />
                     )}
                   </div>
                 </div>
 
                 {/* AI Explanation for Wrong Answer */}
                 {!detail.isCorrect && detail.explanationForWrong && (
-                  <div data-testid={`explanation-${idx}`} className="mt-4 ml-10 p-4 rounded-xl bg-white border border-[#8A2BE2]/30 shadow-sm flex items-start gap-3">
-                    <Lightbulb className="w-5 h-5 text-[#8A2BE2] shrink-0 mt-0.5 animate-pulse" />
+                  <div data-testid={`explanation-${idx}`} className="mt-4 ml-10 flex items-start gap-3 rounded-lg border border-rule bg-surface p-4">
+                    <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-signal" />
                     <div className="flex-1 text-xs space-y-1">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#A94B2E]">Vì sao đáp án này chưa đúng?</p>
-                      <p className="text-[#404751] leading-relaxed">{detail.explanationForWrong}</p>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-signal)]">Vì sao đáp án này chưa đúng?</p>
+                      <p className="text-[var(--color-ink-2)] leading-relaxed">{detail.explanationForWrong}</p>
                     </div>
                     {onReviewTutor && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => onReviewTutor(qText, detail.explanationForWrong)}
-                        className="text-[#8A2BE2] hover:bg-[#8A2BE2]/10 text-xs shrink-0"
+                        className="text-[var(--color-signal)] hover:bg-[var(--color-signal)]/10 text-xs shrink-0"
                         rightIcon={<ArrowRight size={14} />}
                       >
                         Hỏi thêm
@@ -139,7 +136,7 @@ export const AiFeedbackCard: React.FC<AiFeedbackCardProps> = ({
       {/* Footer Action */}
       {onRetake && (
         <div className="flex justify-center pt-4">
-          <Button variant="ai" size="lg" onClick={onRetake} leftIcon={<Sparkles className="w-5 h-5" />}>
+          <Button variant="ai" size="lg" onClick={onRetake} leftIcon={<RotateCcw className="h-5 w-5" />}>
             Làm một bài khác
           </Button>
         </div>

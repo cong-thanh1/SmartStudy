@@ -19,7 +19,7 @@ jobs:
   lint-build:
     name: Frontend lint, build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: frontend
@@ -39,6 +39,15 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Responsive UI smoke tests
+        run: npm run test:ui
 
       - name: Build
         run: npm run build
