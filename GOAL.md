@@ -102,6 +102,7 @@ tạo branch → code + test → commit (Conventional Commits) → push
 - [ ] `feat(tutor): endpoint POST /tutor/ask`
 - [ ] `feat(core): rate limiting middleware theo user`
 - [ ] `chore(observability): structured logging + script query log cơ bản`
+- [ ] `feat(frontend): redesign toàn bộ giao diện bằng Hallmark và kiểm thử responsive`
 - [ ] **DoD Phase 4:** demo end-to-end 8 module, mỗi task có lịch sử PR riêng biệt trên `develop`
 
 ### Phase 5 — Migrate AWS (chỉ làm khi được yêu cầu rõ ràng)

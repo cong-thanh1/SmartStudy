@@ -23,9 +23,9 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   };
 
   const variantStyles = {
-    primary: 'text-[#2F6B58]',
-    secondary: 'text-[#ED7148]',
-    white: 'text-white',
+    primary: 'text-accent',
+    secondary: 'text-signal',
+    white: 'text-paper',
   };
 
   return (
@@ -50,7 +50,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
           fill="currentColor"
         />
       </svg>
-      {text && <span className="animate-pulse text-sm font-medium text-[#5E6A66]">{text}</span>}
+      {text && <span className="text-sm font-medium text-muted">{text}</span>}
     </div>
   );
 };

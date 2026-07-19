@@ -7,12 +7,14 @@ export const AppLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F6F7F2] text-[#17201E]">
+    <div className="min-h-dvh bg-paper text-ink">
       <Sidebar isMobileOpen={isMobileMenuOpen} onMobileClose={() => setIsMobileMenuOpen(false)} />
-      <div className="min-h-screen lg:pl-[252px]">
+      <div className="min-h-dvh lg:pl-60">
         <Navbar onMenuClick={() => setIsMobileMenuOpen(true)} />
-        <main className="scrollbar-subtle min-h-[calc(100vh-80px)] px-4 py-5 sm:px-6 sm:py-7 xl:px-10 xl:py-9">
-          <Outlet />
+        <main className="scrollbar-subtle min-h-[calc(100dvh-4.5rem)] px-4 py-6 sm:px-7 sm:py-8 xl:px-12 xl:py-10">
+          <div className="mx-auto w-full max-w-[90rem]">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
