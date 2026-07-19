@@ -99,7 +99,7 @@ tạo branch → code + test → commit (Conventional Commits) → push
 - [ ] **DoD Phase 3:** làm đề thi thật, điểm đúng 100%, feedback hợp lý, từng task đã merge riêng
 
 ### Phase 4 — Mở rộng (vẫn local)
-- [ ] `fix(frontend): giới hạn chiều cao Phòng học và chuyển tài liệu thành source drawer hiện đại`
+- [x] `fix(frontend): giới hạn chiều cao Phòng học và chuyển tài liệu thành source drawer hiện đại`
 - [x] `feat(frontend): redesign Smart Learn bằng design-taste-frontend-v1 và kiểm thử responsive`
 - [ ] `feat(tutor): endpoint POST /tutor/ask`
 - [ ] `feat(core): rate limiting middleware theo user`
