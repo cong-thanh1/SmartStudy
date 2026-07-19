@@ -1,9 +1,12 @@
-import { getDocument } from "pdfjs-dist-legacy/legacy/build/pdf.mjs";
-
 import type {
   ExtractedPdfDocument,
   IPdfTextExtractor,
 } from "../../modules/documents/pdf-processing.js";
+import type * as PdfJs from "pdfjs-dist-legacy/legacy/build/pdf.mjs";
+
+type PdfJsModule = typeof PdfJs;
+
+let pdfJsModule: Promise<PdfJsModule> | undefined;
 
 interface PdfTextPageLike {
   readonly num: number;
@@ -63,6 +66,7 @@ export class PdfParseTextExtractor implements IPdfTextExtractor {
 }
 
 async function extractWithPdfJs(pdf: Uint8Array): Promise<ExtractedPdfDocument> {
+  const { getDocument } = await loadPdfJs();
   // pdf.js rejects Buffer (a Uint8Array subclass); copy into a plain Uint8Array.
   const data = new Uint8Array(pdf);
   const document = await getDocument({ data, verbosity: 0 }).promise;
@@ -83,5 +87,55 @@ async function extractWithPdfJs(pdf: Uint8Array): Promise<ExtractedPdfDocument> 
     return { pageCount: document.numPages, pages };
   } finally {
     await document.destroy();
+  }
+}
+
+function loadPdfJs(): Promise<PdfJsModule> {
+  installPdfJsNodePolyfills();
+  pdfJsModule ??= import("pdfjs-dist-legacy/legacy/build/pdf.mjs");
+  return pdfJsModule;
+}
+
+/**
+ * pdf.js 5 accesses browser geometry globals while its module is initialized,
+ * even when callers only extract text. Node.js and AWS Lambda do not provide
+ * them. Lazy-loading after these lightweight shims keeps the text-only path
+ * independent from native canvas packages.
+ */
+export function installPdfJsNodePolyfills(): void {
+  if (!("DOMMatrix" in globalThis)) {
+    Object.defineProperty(globalThis, "DOMMatrix", {
+      configurable: true,
+      value: class DOMMatrix {
+        a = 1;
+        b = 0;
+        c = 0;
+        d = 1;
+        e = 0;
+        f = 0;
+
+        constructor(values?: readonly number[]) {
+          if (values && values.length >= 6) {
+            this.a = values[0]!;
+            this.b = values[1]!;
+            this.c = values[2]!;
+            this.d = values[3]!;
+            this.e = values[4]!;
+            this.f = values[5]!;
+          }
+        }
+      },
+      writable: true,
+    });
+  }
+
+  for (const name of ["ImageData", "Path2D"] as const) {
+    if (!(name in globalThis)) {
+      Object.defineProperty(globalThis, name, {
+        configurable: true,
+        value: class {},
+        writable: true,
+      });
+    }
   }
 }
