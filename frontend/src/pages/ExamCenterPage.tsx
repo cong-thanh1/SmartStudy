@@ -13,7 +13,7 @@ import {
   Send,
   UploadCloud,
 } from 'lucide-react';
-import { Button, Card, Badge, LoadingSpinner } from '../components';
+import { Button, Card, LoadingSpinner } from '../components';
 import { documentService, quizService, examService, jobService } from '../services';
 import { Document, Exam, Quiz } from '../types';
 import { clsx } from 'clsx';
@@ -203,25 +203,17 @@ export const ExamCenterPage: React.FC = () => {
   // ==========================================
   if (!activeExam && !activeQuiz) {
     return (
-      <div className="page-enter mx-auto max-w-5xl space-y-6">
-        <Card className="relative overflow-hidden bg-[#18312A] p-7 text-white sm:p-9">
-          <div className="pointer-events-none absolute -right-12 -top-14 h-52 w-52 rounded-full border-[34px] border-white/5" />
-          <div className="space-y-3">
-            <Badge variant="success" size="sm" className="bg-white/10 text-[#B9E0D0]">
-              <Sparkles className="mr-1 h-3 w-3" /> Ôn đúng nội dung bạn đang học
-            </Badge>
-            <h2 className="text-3xl font-black tracking-[-0.035em] sm:text-4xl">Tạo một bài luyện phù hợp với bạn</h2>
-            <p className="max-w-2xl text-sm leading-6 text-white/65">
-              Chọn tài liệu, số câu và độ khó. Câu hỏi sẽ được tạo từ chính nội dung bạn đã tải lên.
-            </p>
-          </div>
-        </Card>
+      <div className="page-enter mx-auto max-w-5xl space-y-8">
+        <section className="grid gap-6 border-b border-rule pb-8 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.58fr)] lg:items-end">
+          <h2 className="max-w-[16ch] text-3xl sm:text-5xl">Tạo bài luyện từ phần bạn vừa học.</h2>
+          <p className="max-w-[52ch] text-base leading-7 text-muted">Chọn tài liệu, số câu và độ khó. Câu hỏi được tạo từ chính nội dung bạn đã tải lên.</p>
+        </section>
 
         {generationError && (
           <div
             role="alert"
             data-testid="generation-error"
-            className="flex items-start justify-between gap-4 rounded-2xl border border-[#BA1A1A]/30 bg-[#FFDAD6] p-4 text-[#93000A]"
+            className="flex items-start justify-between gap-4 rounded-2xl border border-[var(--color-error)]/30 bg-[var(--color-error-soft)] p-4 text-[var(--color-error)]"
           >
             <div className="flex items-start gap-3">
               <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
@@ -232,7 +224,7 @@ export const ExamCenterPage: React.FC = () => {
             </div>
             <button
               type="button"
-              className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold hover:bg-[#BA1A1A]/10"
+              className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold hover:bg-[var(--color-error)]/10"
               onClick={() => setGenerationError(null)}
             >
               Đóng
@@ -243,39 +235,38 @@ export const ExamCenterPage: React.FC = () => {
         {isLoadingDocuments ? (
           <Card className="flex min-h-[320px] items-center justify-center"><LoadingSpinner text="Đang mở tài liệu của bạn..." /></Card>
         ) : documents.length === 0 ? (
-          <Card className="soft-grid flex min-h-[360px] flex-col items-center justify-center border-2 border-dashed border-[#CAD5D0] bg-white/75 p-8 text-center">
-            <div className="grid h-16 w-16 place-items-center rounded-3xl bg-[#E1EEE8] text-[#2F6B58]"><UploadCloud size={28} /></div>
+          <Card className="soft-grid flex min-h-[360px] flex-col items-center justify-center border-2 border-dashed border-[var(--color-rule-strong)] bg-surface/75 p-8 text-center">
+            <div className="grid h-16 w-16 place-items-center rounded-3xl bg-[var(--color-accent-soft)] text-[var(--color-accent)]"><UploadCloud size={28} /></div>
             <h3 className="mt-6 text-xl font-black">Bạn chưa có tài liệu để luyện tập</h3>
-            <p className="mt-2 max-w-md text-sm leading-6 text-[#6B7772]">Hãy tải lên giáo trình hoặc bài đọc. Sau đó SmartStudy có thể tạo câu hỏi từ chính nội dung đó.</p>
+            <p className="mt-2 max-w-md text-sm leading-6 text-[var(--color-muted)]">Hãy tải lên giáo trình hoặc bài đọc. Sau đó SmartStudy có thể tạo câu hỏi từ chính nội dung đó.</p>
             <Button className="mt-6" onClick={() => navigate('/dashboard')} leftIcon={<UploadCloud size={16} />}>Thêm tài liệu</Button>
           </Card>
         ) : isGenerating ? (
           <Card className="flex min-h-[360px] flex-col items-center justify-center space-y-4 p-10">
             <LoadingSpinner size="xl" variant="secondary" />
             <div className="text-center space-y-1">
-              <h4 className="font-bold text-base text-[#17201E]">Đang chuẩn bị câu hỏi cho bạn...</h4>
-              <p className="text-xs text-[#74807B]">SmartStudy đang chọn những nội dung quan trọng trong tài liệu.</p>
+              <h4 className="font-bold text-base text-[var(--color-ink)]">Đang chuẩn bị câu hỏi cho bạn...</h4>
+              <p className="text-xs text-[var(--color-muted)]">SmartStudy đang chọn những nội dung quan trọng trong tài liệu.</p>
             </div>
           </Card>
         ) : (
-          <Card className="space-y-7 p-6 sm:p-8">
-            <div className="border-b border-[#E3E8E4] pb-5">
-              <p className="text-[11px] font-black uppercase tracking-[0.17em] text-[#2F6B58]">Thiết lập nhanh</p>
-              <h3 className="mt-1 text-xl font-black tracking-[-0.025em] text-[#17201E]">Bạn muốn luyện như thế nào?</h3>
-              <p className="mt-1 text-sm text-[#74807B]">Chỉ mất vài giây để tạo một bài luyện mới.</p>
+          <Card className="space-y-8 rounded-lg p-6 sm:p-8">
+            <div className="border-b border-[var(--color-rule)] pb-5">
+              <h3 className="text-xl text-ink">Thiết lập bài luyện</h3>
+              <p className="mt-2 text-sm text-muted">Các lựa chọn này chỉ áp dụng cho lần luyện hiện tại.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Document Selector */}
               <div className="space-y-2 md:col-span-2">
-                <label className="font-semibold text-sm text-[#181C1E] flex items-center gap-2">
-                  <BookOpen size={16} className="text-[#2F6B58]" /> Tài liệu dùng để tạo câu hỏi
+                <label className="font-semibold text-sm text-[var(--color-ink)] flex items-center gap-2">
+                  <BookOpen size={16} className="text-[var(--color-accent)]" /> Tài liệu dùng để tạo câu hỏi
                 </label>
                 <select
                   data-testid="document-selector"
                   value={selectedDocId}
                   onChange={(e) => setSelectedDocId(e.target.value)}
-                  className="w-full rounded-2xl border border-[#DCE2DE] bg-[#F8FAF7] px-4 py-3 text-sm font-semibold text-[#26332F] focus:outline-none focus:ring-4 focus:ring-[#2F6B58]/10"
+                  className="min-h-12 w-full rounded-lg border border-rule-strong bg-paper-2 px-4 py-3 text-sm font-semibold text-ink-2 outline-2 outline-transparent outline-offset-1 focus-visible:border-ink focus-visible:outline-focus"
                 >
                   {documents.map((doc) => (
                     <option key={doc.id} value={doc.id}>
@@ -287,8 +278,8 @@ export const ExamCenterPage: React.FC = () => {
 
               {/* Num Questions Selector */}
               <div className="space-y-2">
-                <label className="font-semibold text-sm text-[#181C1E] flex items-center gap-2">
-                  <FileQuestion size={16} className="text-[#ED7148]" /> Số câu hỏi
+                <label className="font-semibold text-sm text-[var(--color-ink)] flex items-center gap-2">
+                  <FileQuestion size={16} className="text-[var(--color-signal)]" /> Số câu hỏi
                 </label>
                 <div className="grid grid-cols-5 gap-2">
                   {[3, 5, 10, 15, 20].map((num) => (
@@ -298,10 +289,10 @@ export const ExamCenterPage: React.FC = () => {
                       data-testid={`num-questions-${num}`}
                       onClick={() => setNumQuestions(num)}
                       className={clsx(
-                        'py-2.5 rounded-xl font-bold text-xs border transition-all',
+                        'hm-affordance rounded-lg border px-2 py-2.5 text-xs font-bold transition-colors duration-150',
                         numQuestions === num
-                          ? 'border-[#ED7148] bg-[#ED7148] text-white shadow-sm'
-                          : 'border-[#DCE2DE] bg-[#F8FAF7] text-[#56635E] hover:border-[#ED7148]'
+                          ? 'border-ink bg-ink text-paper'
+                          : 'border-rule bg-paper-2 text-muted hover:border-rule-strong hover:text-ink'
                       )}
                     >
                       {num} câu
@@ -312,8 +303,8 @@ export const ExamCenterPage: React.FC = () => {
 
               {/* Duration Selector */}
               <div className="space-y-2">
-                <label className="font-semibold text-sm text-[#181C1E] flex items-center gap-2">
-                  <Clock size={16} className="text-[#2F6B58]" /> Thời gian dự kiến
+                <label className="font-semibold text-sm text-[var(--color-ink)] flex items-center gap-2">
+                  <Clock size={16} className="text-[var(--color-accent)]" /> Thời gian dự kiến
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[10, 15, 30].map((mins) => (
@@ -323,10 +314,10 @@ export const ExamCenterPage: React.FC = () => {
                       data-testid={`duration-${mins}`}
                       onClick={() => setDurationMinutes(mins)}
                       className={clsx(
-                        'py-2.5 rounded-xl font-bold text-xs border transition-all',
+                        'hm-affordance rounded-lg border px-2 py-2.5 text-xs font-bold transition-colors duration-150',
                         durationMinutes === mins
-                          ? 'border-[#2F6B58] bg-[#2F6B58] text-white shadow-sm'
-                          : 'border-[#DCE2DE] bg-[#F8FAF7] text-[#56635E] hover:border-[#2F6B58]'
+                          ? 'border-ink bg-ink text-paper'
+                          : 'border-rule bg-paper-2 text-muted hover:border-rule-strong hover:text-ink'
                       )}
                     >
                       {mins} phút
@@ -336,8 +327,8 @@ export const ExamCenterPage: React.FC = () => {
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <label className="font-semibold text-sm text-[#181C1E] flex items-center gap-2">
-                  <Sparkles size={16} className="text-[#ED7148]" /> Mức độ câu hỏi
+                <label className="font-semibold text-sm text-[var(--color-ink)] flex items-center gap-2">
+                  <Sparkles size={16} className="text-[var(--color-signal)]" /> Mức độ câu hỏi
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {([
@@ -352,10 +343,10 @@ export const ExamCenterPage: React.FC = () => {
                       data-testid={`difficulty-${value}`}
                       onClick={() => setDifficulty(value)}
                       className={clsx(
-                        'py-2.5 rounded-xl font-bold text-xs border transition-all',
+                        'hm-affordance rounded-lg border px-2 py-2.5 text-xs font-bold transition-colors duration-150',
                         difficulty === value
-                          ? 'border-[#ED7148] bg-[#ED7148] text-white shadow-sm'
-                          : 'border-[#DCE2DE] bg-[#F8FAF7] text-[#56635E] hover:border-[#ED7148]'
+                          ? 'border-ink bg-ink text-paper'
+                          : 'border-rule bg-paper-2 text-muted hover:border-rule-strong hover:text-ink'
                       )}
                     >
                       {label}
@@ -366,7 +357,7 @@ export const ExamCenterPage: React.FC = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-1 gap-3 border-t border-[#E3E8E4] pt-6 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 border-t border-[var(--color-rule)] pt-6 sm:grid-cols-2">
               <Button
                 data-testid="generate-quiz-button"
                 variant="outline"
@@ -401,7 +392,7 @@ export const ExamCenterPage: React.FC = () => {
   return (
     <div className="page-enter mx-auto max-w-4xl space-y-6 pb-16">
       {/* Top Sticky Progress & Timer Header */}
-      <div className="sticky top-20 z-20 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[#DFE5E1] bg-white/95 p-4 shadow-[0_12px_35px_rgba(28,49,42,0.1)] backdrop-blur-md sm:p-5">
+      <div className="sticky top-[5.25rem] z-[var(--z-sticky)] flex flex-wrap items-center justify-between gap-4 rounded-lg border border-rule bg-surface p-4 sm:p-5">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -417,19 +408,19 @@ export const ExamCenterPage: React.FC = () => {
             <ArrowLeft size={16} />
           </Button>
           <div>
-            <h3 className="font-bold text-base text-[#181C1E]">
+            <h3 className="font-bold text-base text-[var(--color-ink)]">
               {activeExam ? `Bài kiểm tra #${activeExam.id.slice(0, 8)}` : activeQuiz ? `Bài luyện #${activeQuiz.id.slice(0, 8)}` : 'Bài kiểm tra'}
             </h3>
-            <p className="text-xs text-[#74807B]">Đã trả lời {answeredCount}/{currentQuestions.length} câu</p>
+            <p className="text-xs text-[var(--color-muted)]">Đã trả lời {answeredCount}/{currentQuestions.length} câu</p>
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="flex-1 max-w-xs hidden sm:block">
-          <div className="h-2 w-full overflow-hidden rounded-full border border-[#DCE2DE] bg-[#EFF3EF]">
+          <div className="h-2 w-full overflow-hidden rounded-full border border-[var(--color-rule)] bg-[var(--color-paper-3)]">
             <div
-              className="h-full bg-gradient-to-r from-[#2F6B58] to-[#ED7148] transition-all duration-300"
-              style={{ width: `${progressPercentage}%` }}
+              className="h-full origin-left bg-accent transition-transform duration-300 ease-[var(--ease-out)]"
+              style={{ transform: `scaleX(${progressPercentage / 100})` }}
             />
           </div>
         </div>
@@ -440,8 +431,8 @@ export const ExamCenterPage: React.FC = () => {
             className={clsx(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono font-bold text-sm border',
               timeLeftSeconds < 60
-                ? 'bg-[#FFDAD6] text-[#93000A] border-[#BA1A1A] animate-pulse'
-                : 'border-[#DCE2DE] bg-[#F7F9F6] text-[#26332F]'
+                ? 'border-error bg-error-soft text-error'
+                : 'border-[var(--color-rule)] bg-[var(--color-paper-2)] text-[var(--color-ink-2)]'
             )}
           >
             <Clock size={16} />
@@ -468,12 +459,12 @@ export const ExamCenterPage: React.FC = () => {
           const qText = q.question_text || q.questionText || '';
           const selectedOpt = userAnswers[qId];
           return (
-            <Card key={qId} data-testid={`question-card-${qIdx}`} className="p-6 space-y-4">
+            <Card key={qId} data-testid={`question-card-${qIdx}`} className="space-y-4 rounded-lg p-6">
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E1EEE8] text-xs font-bold text-[#285D4C]">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent-soft)] text-xs font-bold text-[var(--color-accent)]">
                   {qIdx + 1}
                 </span>
-                <h4 data-testid={`question-text-${qIdx}`} className="font-bold text-sm text-[#181C1E] leading-relaxed flex-1">
+                <h4 data-testid={`question-text-${qIdx}`} className="font-bold text-sm text-[var(--color-ink)] leading-relaxed flex-1">
                   {qText}
                 </h4>
               </div>
@@ -489,18 +480,18 @@ export const ExamCenterPage: React.FC = () => {
                       data-testid={`option-${qIdx}-${optIdx}`}
                       onClick={() => handleOptionSelect(qId, optionText)}
                       className={clsx(
-                        'w-full text-left p-3.5 rounded-xl font-medium text-xs border transition-all flex items-center gap-3 cursor-pointer',
+                        'flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-lg border p-3.5 text-left text-sm font-medium transition-colors duration-150',
                         isSelected
-                          ? 'border-[#2F6B58] bg-[#EDF6F1] font-bold text-[#285D4C] shadow-sm'
-                          : 'border-[#E0E6E2] bg-white text-[#56635E] hover:border-[#91B3A5] hover:bg-[#F7FAF8]'
+                          ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] font-bold text-[var(--color-accent)] shadow-sm'
+                          : 'border-[var(--color-rule)] bg-surface text-[var(--color-muted)] hover:border-[var(--color-muted)] hover:bg-[var(--color-paper-2)]'
                       )}
                     >
                       <span
                         className={clsx(
                           'w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors',
                           isSelected
-                            ? 'border-[#2F6B58] bg-[#2F6B58] text-white'
-                            : 'border-[#DCE2DE] bg-[#F7F9F6] text-[#74807B]'
+                            ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-paper'
+                            : 'border-[var(--color-rule)] bg-[var(--color-paper-2)] text-[var(--color-muted)]'
                         )}
                       >
                         {String.fromCharCode(65 + optIdx)}
@@ -523,7 +514,7 @@ export const ExamCenterPage: React.FC = () => {
           size="lg"
           onClick={handleSubmitExam}
           isLoading={isSubmitting}
-          className="px-12 shadow-xl text-base"
+          className="px-12 text-base"
           leftIcon={<Send size={18} />}
         >
           Hoàn tất và xem kết quả
