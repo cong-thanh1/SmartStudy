@@ -8,6 +8,7 @@ ARG VITE_API_URL=/api/v1
 ENV VITE_API_URL=${VITE_API_URL}
 
 COPY index.html tsconfig.json tsconfig.app.json tsconfig.node.json vite.config.ts ./
+COPY tokens.css ./tokens.css
 COPY public ./public
 COPY src ./src
 RUN npm run build

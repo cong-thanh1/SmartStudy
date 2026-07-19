@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { BookOpen, ExternalLink } from 'lucide-react';
 import { Citation } from '../../types';
 
@@ -14,31 +14,42 @@ export const CitationBadge: React.FC<CitationBadgeProps> = ({
   onSelect,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const hoverTimer = useRef<number | null>(null);
+
+  const showAfterDelay = () => {
+    hoverTimer.current = window.setTimeout(() => setShowTooltip(true), 800);
+  };
+
+  const hideTooltip = () => {
+    if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
+    setShowTooltip(false);
+  };
 
   return (
-    <div className="inline-block relative">
+    <div className="relative inline-block" onMouseEnter={showAfterDelay} onMouseLeave={hideTooltip}>
       <button
         data-testid="chat-citation"
         onClick={() => onSelect?.(citation)}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#CDE0D7] bg-[#E9F3EE] px-2.5 py-1 text-xs font-semibold text-[#285D4C] transition-all duration-150 hover:bg-[#DCECE4] active:scale-95"
+        onFocus={() => setShowTooltip(true)}
+        onBlur={hideTooltip}
+        onKeyDown={(event) => { if (event.key === 'Escape') hideTooltip(); }}
+        className="hm-affordance inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-rule bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent transition-colors duration-150 hover:bg-paper-3 active:translate-y-px"
         title="Xem đoạn liên quan trong tài liệu"
       >
-        <BookOpen className="h-3.5 w-3.5 text-[#2F6B58]" />
+        <BookOpen className="h-3.5 w-3.5 text-[var(--color-accent)]" />
         <span>Nguồn {index + 1}</span>
-        {citation.pageNumber && <span className="rounded bg-white/80 px-1.5 text-[10px] font-bold text-[#2F6B58]">Trang {citation.pageNumber}</span>}
+        {citation.pageNumber && <span className="rounded bg-surface/80 px-1.5 text-[10px] font-bold text-[var(--color-accent)]">Trang {citation.pageNumber}</span>}
         <ExternalLink className="w-3 h-3 opacity-60 ml-0.5" />
       </button>
 
       {/* Hover Preview Tooltip */}
       {showTooltip && (
-        <div className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 w-72 rounded-xl border border-white/20 bg-[#18312A] p-3 text-xs text-white shadow-xl">
-          <div className="mb-1.5 flex items-center justify-between border-b border-white/10 pb-1.5 font-semibold text-[#B9E0D0]">
+        <div role="tooltip" className="absolute bottom-full left-0 z-[var(--z-tooltip)] mb-2 w-72 rounded-lg border border-ink-2 bg-ink p-3 text-xs text-paper">
+          <div className="mb-1.5 flex items-center justify-between border-b border-paper/10 pb-1.5 font-semibold text-[var(--color-accent-soft)]">
             <span>Đoạn liên quan</span>
             {citation.pageNumber && <span>Trang {citation.pageNumber}</span>}
           </div>
-          <p className="italic line-clamp-4 leading-relaxed text-[#E0E3E5]">
+          <p className="italic line-clamp-4 leading-relaxed text-[var(--color-rule)]">
             &ldquo;{citation.snippet}&rdquo;
           </p>
         </div>

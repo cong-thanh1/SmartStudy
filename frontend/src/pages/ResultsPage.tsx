@@ -63,9 +63,9 @@ export const ResultsPage: React.FC = () => {
   if (!result) {
     return (
       <Card className="p-16 text-center max-w-lg mx-auto space-y-4">
-        <Award className="w-12 h-12 text-[#8A2BE2] mx-auto animate-bounce" />
-        <h3 className="font-bold text-base text-[#181C1E]">Chưa có kết quả làm bài thi nào</h3>
-        <p className="text-xs text-[#707882]">
+        <Award className="mx-auto h-12 w-12 text-signal" />
+        <h3 className="font-bold text-base text-[var(--color-ink)]">Chưa có kết quả làm bài thi nào</h3>
+        <p className="text-xs text-[var(--color-muted)]">
           Bạn chưa hoàn thành bài luyện nào. Hãy chọn một tài liệu và tạo bài đầu tiên nhé.
         </p>
         <Button variant="ai" size="md" onClick={() => navigate('/exam-center')} leftIcon={<Sparkles size={16} />}>

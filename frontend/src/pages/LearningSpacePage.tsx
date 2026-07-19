@@ -230,33 +230,33 @@ export const LearningSpacePage: React.FC = () => {
 
   if (documents.length === 0) {
     return (
-      <Card className="soft-grid page-enter mx-auto flex min-h-[480px] max-w-3xl flex-col items-center justify-center border-2 border-dashed border-[#CAD5D0] bg-white/75 p-8 text-center">
-        <div className="grid h-16 w-16 place-items-center rounded-3xl bg-[#E1EEE8] text-[#2F6B58]"><BookOpen size={29} /></div>
+      <Card className="soft-grid page-enter mx-auto flex min-h-[480px] max-w-3xl flex-col items-center justify-center border-2 border-dashed border-[var(--color-rule-strong)] bg-surface/75 p-8 text-center">
+        <div className="grid h-16 w-16 place-items-center rounded-3xl bg-[var(--color-accent-soft)] text-[var(--color-accent)]"><BookOpen size={29} /></div>
         <h2 className="mt-6 text-2xl font-black tracking-[-0.03em]">Thêm tài liệu để bắt đầu học</h2>
-        <p className="mt-2 max-w-md text-sm leading-6 text-[#6B7772]">Phòng học sẽ giúp bạn đọc, đặt câu hỏi và tóm tắt nội dung từ tài liệu của mình.</p>
+        <p className="mt-2 max-w-md text-sm leading-6 text-[var(--color-muted)]">Phòng học sẽ giúp bạn đọc, đặt câu hỏi và tóm tắt nội dung từ tài liệu của mình.</p>
         <Button className="mt-6" onClick={() => navigate('/dashboard')} leftIcon={<UploadCloud size={17} />}>Đến thư viện tài liệu</Button>
       </Card>
     );
   }
 
   return (
-    <div className="page-enter mx-auto flex min-h-full w-full max-w-[1440px] flex-col gap-5">
-      <header className="flex flex-col gap-4 rounded-3xl border border-[#DCE2DE] bg-white px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div className="page-enter flex min-h-full w-full flex-col gap-5">
+      <header className="flex flex-col gap-4 border-b border-rule pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
             onClick={() => window.history.back()}
             aria-label="Quay lại danh sách tài liệu"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[#69756F] transition-colors hover:bg-[#EEF3EF] hover:text-[#18312A] focus:outline-none focus:ring-2 focus:ring-[#2F6B58]"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-paper-3 hover:text-ink"
           >
             <ArrowLeft size={19} />
           </button>
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#E1EEE8] text-[#2F6B58]">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent">
             <FileText size={20} />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-base font-bold text-[#17201E]">{currentDoc?.title || 'Tài liệu học tập'}</p>
-            <p className="mt-0.5 text-xs text-[#74807B]">{previewPageCount ? `${previewPageCount} trang` : 'Đang tải thông tin tài liệu'}</p>
+            <p className="truncate text-base font-bold text-[var(--color-ink)]">{currentDoc?.title || 'Tài liệu học tập'}</p>
+            <p className="mt-0.5 text-xs text-[var(--color-muted)]">{previewPageCount ? `${previewPageCount} trang` : 'Đang tải thông tin tài liệu'}</p>
           </div>
           <Badge variant={currentDoc?.status === 'ready' ? 'success' : 'warning'} size="sm" className="ml-1 shrink-0">
             {currentDoc?.status === 'ready' ? 'Đã sẵn sàng' : 'Đang xử lý'}
@@ -275,7 +275,7 @@ export const LearningSpacePage: React.FC = () => {
           <button
             type="button"
             aria-label="Thao tác tài liệu"
-            className="grid h-8 w-8 place-items-center rounded-lg text-[#74807B] hover:bg-[#EEF3EF] hover:text-[#18312A] focus:outline-none focus:ring-2 focus:ring-[#2F6B58]"
+            className="grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-paper-3 hover:text-ink"
           >
             <MoreHorizontal size={20} />
           </button>
@@ -283,20 +283,20 @@ export const LearningSpacePage: React.FC = () => {
       </header>
 
       <div className={clsx(
-        'grid min-h-[calc(100vh-210px)] gap-5',
+        'grid min-h-[calc(100dvh-12rem)] min-w-0 gap-5',
         isReaderOpen ? 'lg:grid-cols-[minmax(0,1.38fr)_minmax(360px,1fr)]' : 'grid-cols-1',
       )}>
       {/* Left Panel: PDF Viewer / Textbook Reader (45% width) */}
       {isReaderOpen && (
-      <Card className="order-2 flex min-h-[560px] flex-col overflow-hidden p-0 shadow-sm lg:order-2">
+      <Card className="order-2 flex min-h-[560px] min-w-0 flex-col overflow-hidden rounded-lg p-0 lg:order-2">
         {/* Document Selector Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#18312A] p-4 text-white">
+        <div className="flex shrink-0 items-center justify-between border-b border-paper/10 bg-[var(--color-ink)] p-4 text-paper">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <BookOpen className="h-5 w-5 shrink-0 text-[#B9E0D0]" />
+            <BookOpen className="h-5 w-5 shrink-0 text-[var(--color-accent-soft)]" />
             <select
               value={selectedDocId}
               onChange={(e) => setSelectedDocId(e.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:ring-4 focus:ring-white/10"
+              className="min-h-11 w-full rounded-lg border border-paper/20 bg-ink-2 px-3 py-2 text-sm font-semibold text-paper outline-2 outline-transparent outline-offset-1 focus-visible:outline-focus"
             >
               {documents.map((doc) => (
                 <option key={doc.id} value={doc.id}>
@@ -309,66 +309,66 @@ export const LearningSpacePage: React.FC = () => {
         </div>
 
         {/* Extracted document preview */}
-        <div className="scrollbar-subtle relative flex-1 space-y-5 overflow-y-auto bg-[#EFF2ED] p-4 sm:p-5">
+        <div className="scrollbar-subtle relative flex-1 space-y-5 overflow-y-auto bg-[var(--color-paper-3)] p-4 sm:p-5">
           {activeCitation && (
-            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-sm">
-              <div className="flex items-center justify-between text-xs font-bold text-amber-800 mb-1">
+            <div className="rounded-lg border border-rule-strong bg-warning-soft p-4 text-warning">
+              <div className="mb-1 flex items-center justify-between text-xs font-bold">
                 <span>Đoạn được nhắc đến · Trang {activeCitation.pageNumber || 1}</span>
                 <button
                   onClick={() => setActiveCitation(null)}
-                  className="text-amber-900 hover:underline font-normal"
+                  className="hm-affordance font-normal underline underline-offset-4"
                 >
                   Đóng
                 </button>
               </div>
-              <p className="text-xs italic text-amber-950 font-medium">&ldquo;{activeCitation.snippet}&rdquo;</p>
+              <p className="text-sm font-medium">&ldquo;{activeCitation.snippet}&rdquo;</p>
             </div>
           )}
 
-          <div className="space-y-4 rounded-3xl border border-[#E0E6E2] bg-white p-6 shadow-sm sm:p-7">
-            <div className="border-b border-[#E0E3E5] pb-4 flex items-center justify-between">
-              <h3 className="font-bold text-base text-[#17201E]">{currentDoc?.title || 'Tài liệu học tập'}</h3>
-              <span className="text-xs font-semibold text-[#74807B]">
+          <article className="mx-auto w-full max-w-[65ch] space-y-5 bg-surface p-6 sm:p-8">
+            <div className="border-b border-[var(--color-rule)] pb-4 flex items-center justify-between">
+              <h3 className="font-bold text-base text-[var(--color-ink)]">{currentDoc?.title || 'Tài liệu học tập'}</h3>
+              <span className="text-xs font-semibold text-[var(--color-muted)]">
                 {previewPageCount ? `${previewPageCount} trang` : 'Đang tải nội dung'}
               </span>
             </div>
 
             {previewChunks.length > 0 ? (
-              <div className="space-y-5 text-xs leading-relaxed text-[#404751]">
+              <div className="space-y-7 text-base leading-[1.7] text-ink-2">
                 {previewChunks.map((chunk, index) => (
                   <section key={`${chunk.pageStart ?? 'unknown'}-${index}`} className="space-y-2">
                     {(chunk.chapterTitle || chunk.pageStart) && (
-                      <p className="font-bold text-sm text-[#26332F]">
+                      <h4 className="text-lg text-ink-2">
                         {chunk.chapterTitle || 'Nội dung tài liệu'}
                         {chunk.pageStart ? ` — Trang ${chunk.pageStart}${chunk.pageEnd && chunk.pageEnd !== chunk.pageStart ? `–${chunk.pageEnd}` : ''}` : ''}
-                      </p>
+                      </h4>
                     )}
                     <p className="whitespace-pre-wrap">{chunk.text}</p>
                   </section>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-[#74807B]">
+              <p className="text-xs text-[var(--color-muted)]">
                 Chưa có nội dung trích xuất. Hãy chờ tài liệu xử lý xong hoặc tải lại trang.
               </p>
             )}
-          </div>
+          </article>
         </div>
       </Card>
       )}
 
       {/* Right Panel: Interactive AI Workspace (55% width) */}
-      <Card className="order-1 flex min-h-[560px] flex-col overflow-hidden p-0 shadow-sm lg:order-1">
+      <Card className="order-1 flex min-h-[560px] min-w-0 flex-col overflow-hidden rounded-lg p-0 lg:order-1">
         {/* Navigation Tabs Header */}
-        <div className="scrollbar-subtle flex items-center gap-1 overflow-x-auto border-b border-[#E0E6E2] bg-white px-4 py-3 sm:px-5">
+        <div className="scrollbar-subtle flex items-center gap-5 overflow-x-auto border-b border-rule bg-surface px-4 pt-2 sm:px-5" role="tablist" aria-label="Công cụ học tập">
           <button
             data-testid="chat-tab"
             onClick={() => setActiveTab('rag')}
             className={clsx(
-              'flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all',
+              'hm-affordance flex shrink-0 items-center gap-2 border-b-2 px-1 py-3 text-sm font-medium transition-colors duration-150',
               activeTab === 'rag'
-                ? 'bg-[#2F6B58] text-white shadow-sm'
-                : 'text-[#707882] hover:bg-[#F4F7F3] hover:text-[#18312A]'
+                ? 'border-accent text-ink'
+                : 'border-transparent text-muted hover:text-ink'
             )}
           >
             <MessageSquare size={16} />
@@ -381,10 +381,10 @@ export const LearningSpacePage: React.FC = () => {
               setActiveTab('summary');
             }}
             className={clsx(
-              'flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all',
+              'hm-affordance flex shrink-0 items-center gap-2 border-b-2 px-1 py-3 text-sm font-medium transition-colors duration-150',
               activeTab === 'summary'
-                ? 'bg-[#ED7148] text-white shadow-sm'
-                : 'text-[#707882] hover:bg-[#F4F7F3] hover:text-[#18312A]'
+                ? 'border-accent text-ink'
+                : 'border-transparent text-muted hover:text-ink'
             )}
           >
             <Layers size={16} />
@@ -395,10 +395,10 @@ export const LearningSpacePage: React.FC = () => {
             data-testid="tutor-tab"
             onClick={() => setActiveTab('tutor')}
             className={clsx(
-              'flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all',
+              'hm-affordance flex shrink-0 items-center gap-2 border-b-2 px-1 py-3 text-sm font-medium transition-colors duration-150',
               activeTab === 'tutor'
-                ? 'bg-[#18312A] text-white shadow-sm'
-                : 'text-[#707882] hover:bg-[#F4F7F3] hover:text-[#18312A]'
+                ? 'border-accent text-ink'
+                : 'border-transparent text-muted hover:text-ink'
             )}
           >
             <GraduationCap size={16} />
@@ -408,7 +408,7 @@ export const LearningSpacePage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate(`/exam-center${selectedDocId ? `?docId=${selectedDocId}` : ''}`)}
-            className="flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium text-[#707882] transition-all hover:bg-[#F4F7F3] hover:text-[#18312A]"
+            className="hm-affordance flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 py-3 text-sm font-medium text-muted transition-colors duration-150 hover:text-ink"
           >
             <FileQuestion size={16} />
             <span>Bài kiểm tra</span>
@@ -416,7 +416,7 @@ export const LearningSpacePage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate('/results')}
-            className="flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium text-[#707882] transition-all hover:bg-[#F4F7F3] hover:text-[#18312A]"
+            className="hm-affordance flex shrink-0 items-center gap-2 border-b-2 border-transparent px-1 py-3 text-sm font-medium text-muted transition-colors duration-150 hover:text-ink"
           >
             <BarChart3 size={16} />
             <span>Kết quả</span>
@@ -425,13 +425,13 @@ export const LearningSpacePage: React.FC = () => {
 
         {/* Tab 1: document chat */}
         {activeTab === 'rag' && (
-          <div className="flex min-h-0 flex-1 flex-col bg-[#F6F7F2]">
+          <div className="flex min-h-0 flex-1 flex-col bg-[var(--color-paper)]">
             <div className="flex-1 p-6 overflow-y-auto space-y-4">
               {messages.length === 0 && !isSending && (
-                <div className="mx-auto mt-12 max-w-md rounded-3xl border border-[#DCE2DE] bg-white p-6 text-center shadow-sm">
-                  <MessageSquare className="mx-auto mb-3 h-7 w-7 text-[#2F6B58]" />
-                  <h2 className="text-base font-bold text-[#17201E]">Bạn muốn tìm hiểu gì từ tài liệu này?</h2>
-                  <p className="mt-2 text-sm leading-6 text-[#69756F]">Trợ lý sẽ trả lời từ nội dung đang mở và kèm nguồn để bạn kiểm tra lại.</p>
+                <div className="mx-auto mt-12 max-w-md border-y border-rule py-8 text-left">
+                  <MessageSquare className="mx-auto mb-3 h-7 w-7 text-[var(--color-accent)]" />
+                  <h2 className="text-base font-bold text-[var(--color-ink)]">Bạn muốn tìm hiểu gì từ tài liệu này?</h2>
+                  <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">Trợ lý sẽ trả lời từ nội dung đang mở và kèm nguồn để bạn kiểm tra lại.</p>
                 </div>
               )}
               {messages.map((msg) => (
@@ -442,10 +442,10 @@ export const LearningSpacePage: React.FC = () => {
                 />
               ))}
               {isSending && (
-                <div className="flex items-center gap-3 p-4 bg-white rounded-2xl w-fit shadow-sm border border-[#E0E3E5]">
-                  <Sparkles className="w-4 h-4 text-[#ED7148] animate-spin" />
-                  <span className="text-xs font-semibold text-[#404751] animate-pulse">
-                    Đang tìm trong tài liệu để trả lời bạn...
+                <div className="flex w-fit items-center gap-3 rounded-lg border border-rule bg-surface p-4">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-rule border-t-accent" aria-hidden="true" />
+                  <span className="text-sm font-semibold text-ink-2">
+                    Đang tìm trong tài liệu để trả lời bạn…
                   </span>
                 </div>
               )}
@@ -453,8 +453,8 @@ export const LearningSpacePage: React.FC = () => {
             </div>
 
             {/* Chat Input Box */}
-            <form onSubmit={handleSendMessage} className="border-t border-[#E0E6E2] bg-white p-4">
-              <div className="flex items-end gap-2 rounded-2xl border border-[#DCE2DE] bg-[#F7F9F6] p-2 focus-within:border-[#2F6B58] focus-within:ring-4 focus-within:ring-[#2F6B58]/10">
+            <form onSubmit={handleSendMessage} className="border-t border-[var(--color-rule)] bg-surface p-4">
+              <div className="flex items-end gap-2 rounded-lg border border-rule-strong bg-paper-2 p-2 outline-2 outline-transparent outline-offset-1 focus-within:border-ink focus-within:outline-focus">
               <textarea
                 data-testid="chat-input"
                 value={inputMessage}
@@ -468,7 +468,7 @@ export const LearningSpacePage: React.FC = () => {
                 rows={1}
                 placeholder="Hỏi một điều bạn chưa hiểu trong tài liệu..."
                 disabled={isSending}
-                className="max-h-36 min-h-10 min-w-0 flex-1 resize-y bg-transparent px-2 py-2 text-sm text-[#17201E] placeholder:text-[#89958F] focus:outline-none"
+                className="max-h-36 min-h-11 min-w-0 flex-1 resize-y bg-transparent px-2 py-2 text-sm text-ink placeholder:text-muted focus:outline-none"
               />
               <Button
                 data-testid="chat-send-button"
@@ -477,20 +477,20 @@ export const LearningSpacePage: React.FC = () => {
                 size="md"
                 disabled={!inputMessage.trim() || isSending}
                 aria-label="Gửi câu hỏi"
-                className="shrink-0 bg-[#2F6B58] px-4 hover:bg-[#285D4C] focus:ring-[#2F6B58]"
+                className="shrink-0 px-4"
               >
                 <Send size={16} />
               </Button>
               </div>
-              <p className="mt-2 text-xs text-[#89958F]">Enter để gửi · Shift + Enter để xuống dòng · Nên mở nguồn đi kèm để kiểm tra thông tin.</p>
+              <p className="mt-2 text-xs text-[var(--color-muted)]">Enter để gửi · Shift + Enter để xuống dòng · Nên mở nguồn đi kèm để kiểm tra thông tin.</p>
             </form>
           </div>
         )}
 
         {/* Tab 2: summary */}
         {activeTab === 'summary' && (
-          <div className="flex-1 space-y-6 overflow-y-auto bg-[#F6F7F2] p-5 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#DCE2DE] bg-white p-4 shadow-sm">
+          <div className="flex-1 space-y-6 overflow-y-auto bg-[var(--color-paper)] p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[var(--color-rule)] bg-surface p-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <Button
                   data-testid="summary-full-btn"
@@ -518,14 +518,14 @@ export const LearningSpacePage: React.FC = () => {
 
               {summaryType === 'CHAPTER' && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-[#707882]">Chọn chương:</span>
+                  <span className="text-xs font-semibold text-[var(--color-muted)]">Chọn chương:</span>
                   <select
                     data-testid="summary-chapter-select"
                     value={selectedChapterRef}
                     onChange={(e) => {
                       setSelectedChapterRef(e.target.value);
                     }}
-                    className="rounded-lg border border-[#DCE2DE] bg-[#F7F9F6] px-3 py-1 text-xs font-semibold text-[#17201E]"
+                    className="rounded-lg border border-[var(--color-rule)] bg-[var(--color-paper-2)] px-3 py-1 text-xs font-semibold text-[var(--color-ink)]"
                   >
                     {chapters.map((chapter) => (
                       <option key={chapter.chapterTitle} value={chapter.chapterTitle}>
@@ -553,15 +553,15 @@ export const LearningSpacePage: React.FC = () => {
                 <LoadingSpinner text="Đang chắt lọc những ý quan trọng..." variant="secondary" />
               </Card>
             ) : summaryError ? (
-              <Card className="p-8 text-center space-y-3 bg-white border-l-4 border-l-amber-500">
-                <p className="text-sm font-bold text-[#26332F]">Không thể tạo tóm tắt</p>
-                <p className="text-xs text-[#707882]">{summaryError}</p>
+              <Card className="space-y-3 border-warning bg-warning-soft p-8 text-center">
+                <p className="text-sm font-bold text-[var(--color-ink-2)]">Không thể tạo tóm tắt</p>
+                <p className="text-xs text-[var(--color-muted)]">{summaryError}</p>
               </Card>
             ) : summary ? (
-              <Card data-testid="summary-result-card" variant="ai-glow" className="p-8 space-y-4 bg-white">
-                <div className="flex items-center justify-between border-b border-[#E0E3E5] pb-4">
-                  <h4 className="font-bold text-base text-[#181C1E] flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-[#ED7148]" />
+              <Card data-testid="summary-result-card" variant="ai-glow" className="p-8 space-y-4 bg-surface">
+                <div className="flex items-center justify-between border-b border-[var(--color-rule)] pb-4">
+                  <h4 className="font-bold text-base text-[var(--color-ink)] flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-[var(--color-signal)]" />
                     <span>{summary.chapterRef || summary.chapterTitle || 'Tóm tắt toàn bộ tài liệu'}</span>
                   </h4>
                   <Badge variant="success" size="sm">Đã tóm tắt</Badge>
@@ -569,12 +569,12 @@ export const LearningSpacePage: React.FC = () => {
 
                 {/* Key Points */}
                 {summary.keyPoints && summary.keyPoints.length > 0 && (
-                  <div data-testid="summary-key-points" className="rounded-2xl border border-[#CFE0D7] bg-[#EFF7F2] p-4">
-                    <p className="mb-2 text-xs font-bold text-[#2F6B58]">Điểm chính</p>
+                  <div data-testid="summary-key-points" className="rounded-2xl border border-[var(--color-rule)] bg-[var(--color-accent-soft)] p-4">
+                    <p className="mb-2 text-xs font-bold text-[var(--color-accent)]">Điểm chính</p>
                     <ul className="space-y-1">
                       {summary.keyPoints.map((kp, i) => (
-                        <li key={i} className="flex items-start gap-2 text-xs text-[#26332F]">
-                          <span className="shrink-0 font-bold text-[#2F6B58]">{i + 1}.</span>
+                        <li key={i} className="flex items-start gap-2 text-xs text-[var(--color-ink-2)]">
+                          <span className="shrink-0 font-bold text-[var(--color-accent)]">{i + 1}.</span>
                           <span>{kp}</span>
                         </li>
                       ))}
@@ -584,19 +584,19 @@ export const LearningSpacePage: React.FC = () => {
 
                 <div
                   data-testid="summary-content"
-                  className="space-y-3 text-xs leading-relaxed text-[#404751] whitespace-pre-wrap"
+                  className="space-y-3 text-xs leading-relaxed text-[var(--color-ink-2)] whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{
                     __html: (summary.summaryText || summary.content || summary.summary || '')
-                      .replace(/### (.*?)\n/g, '<h5 class="font-bold text-sm text-[#26332F] mt-4 mb-2">$1</h5>')
-                      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-[#181C1E]">$1</strong>'),
+                      .replace(/### (.*?)\n/g, '<h5 class="font-bold text-sm text-[var(--color-ink-2)] mt-4 mb-2">$1</h5>')
+                      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-[var(--color-ink)]">$1</strong>'),
                   }}
                 />
               </Card>
             ) : (
               <Card className="mx-auto mt-10 max-w-lg p-8 text-center">
-                <Layers className="mx-auto mb-3 h-8 w-8 text-[#ED7148]" />
-                <h2 className="text-lg font-bold text-[#17201E]">Nắm nhanh nội dung chính</h2>
-                <p className="mt-2 text-sm leading-6 text-[#69756F]">Tạo bản tóm tắt để xem các ý chính và ôn lại tài liệu hiệu quả hơn.</p>
+                <Layers className="mx-auto mb-3 h-8 w-8 text-[var(--color-signal)]" />
+                <h2 className="text-lg font-bold text-[var(--color-ink)]">Nắm nhanh nội dung chính</h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">Tạo bản tóm tắt để xem các ý chính và ôn lại tài liệu hiệu quả hơn.</p>
                 <Button type="button" variant="primary" size="md" className="mt-5" onClick={() => handleGenerateSummary('FULL')}>
                   Tạo bản tóm tắt
                 </Button>
@@ -607,15 +607,15 @@ export const LearningSpacePage: React.FC = () => {
 
         {/* Tab 3: learning assistant */}
         {activeTab === 'tutor' && (
-          <div className="flex-1 space-y-6 overflow-y-auto bg-[#F6F7F2] p-6">
-            <Card className="space-y-3 bg-[#18312A] p-6 text-white">
+          <div className="flex-1 space-y-6 overflow-y-auto bg-[var(--color-paper)] p-6">
+            <Card className="space-y-3 bg-ink p-6 text-paper">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-bold">
-                  🧑‍🏫
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-ink-2 text-paper">
+                  <GraduationCap size={19} />
                 </div>
                 <div>
                   <h4 className="font-bold text-base">Trợ lý học tập của bạn</h4>
-                  <p className="text-xs text-white/65">Hỏi lại phần khó, xin ví dụ hoặc nhờ hướng dẫn từng bước.</p>
+                  <p className="text-xs text-paper/65">Hỏi lại phần khó, xin ví dụ hoặc nhờ hướng dẫn từng bước.</p>
                 </div>
               </div>
             </Card>
@@ -634,14 +634,14 @@ export const LearningSpacePage: React.FC = () => {
                 onChange={(e) => setTutorQuestion(e.target.value)}
                 placeholder="Ví dụ: Hãy giải thích phần này bằng một ví dụ đơn giản..."
                 disabled={isAskingTutor}
-                className="flex-1 rounded-xl border border-[#DCE2DE] bg-white px-4 py-3 text-xs text-[#17201E] shadow-sm placeholder:text-[#89958F] focus:outline-none focus:ring-2 focus:ring-[#2F6B58]"
+                className="min-h-11 flex-1 rounded-lg border border-rule-strong bg-surface px-4 py-3 text-sm text-ink outline-2 outline-transparent outline-offset-1 placeholder:text-muted hover:bg-paper-2 focus-visible:border-ink focus-visible:outline-focus"
               />
               <Button data-testid="tutor-ask-button" type="submit" variant="primary" size="md" disabled={!tutorQuestion.trim() || isAskingTutor}>
                 Gửi câu hỏi
               </Button>
             </form>
 
-            <label className="flex items-center gap-2 text-xs text-[#404751] cursor-pointer w-fit">
+            <label className="flex items-center gap-2 text-xs text-[var(--color-ink-2)] cursor-pointer w-fit">
               <input
                 data-testid="tutor-use-document-context"
                 type="checkbox"
@@ -656,22 +656,22 @@ export const LearningSpacePage: React.FC = () => {
                 <LoadingSpinner text="Đang chuẩn bị lời giải thích dễ hiểu..." variant="secondary" />
               </Card>
             ) : tutorError ? (
-              <Card data-testid="tutor-error" className="p-5 border border-red-200 bg-red-50 text-sm text-red-700">
+              <Card data-testid="tutor-error" className="border-error bg-error-soft p-5 text-sm text-error">
                 {tutorError}
               </Card>
             ) : tutorAnswer ? (
-              <Card data-testid="tutor-answer" className="space-y-4 border-l-4 border-l-[#2F6B58] bg-white p-6">
+              <Card data-testid="tutor-answer" className="space-y-4 border-accent bg-surface p-6">
                 <div
-                  className="space-y-2 text-xs leading-relaxed text-[#181C1E] whitespace-pre-wrap"
+                  className="space-y-2 text-xs leading-relaxed text-[var(--color-ink)] whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{
-                    __html: tutorAnswer.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-[#2F6B58]">$1</strong>'),
+                    __html: tutorAnswer.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-[var(--color-accent)]">$1</strong>'),
                   }}
                 />
 
                 {suggestedQuestions.length > 0 && (
-                  <div className="pt-4 border-t border-[#E0E3E5] space-y-2">
-                    <p className="text-xs font-bold text-[#707882] flex items-center gap-1.5">
-                      <Lightbulb size={14} className="text-amber-500" /> Câu hỏi gợi ý tiếp theo:
+                  <div className="pt-4 border-t border-[var(--color-rule)] space-y-2">
+                    <p className="text-xs font-bold text-[var(--color-muted)] flex items-center gap-1.5">
+                      <Lightbulb size={14} className="text-signal" /> Câu hỏi gợi ý tiếp theo:
                     </p>
                     <div className="flex flex-col gap-1.5">
                       {suggestedQuestions.map((q, i) => (
@@ -681,9 +681,9 @@ export const LearningSpacePage: React.FC = () => {
                             setTutorQuestion(q);
                             handleAskTutor(q);
                           }}
-                          className="group flex items-center justify-between rounded-xl bg-[#F1F5F2] p-2.5 text-left text-xs font-medium text-[#404751] transition-colors hover:bg-[#E1EEE8] hover:text-[#2F6B58]"
+                          className="group flex items-center justify-between rounded-xl bg-[var(--color-accent-soft)] p-2.5 text-left text-xs font-medium text-[var(--color-ink-2)] transition-colors hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]"
                         >
-                          <span>👉 {q}</span>
+                          <span>{q}</span>
                           <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                         </button>
                       ))}
@@ -702,14 +702,14 @@ export const LearningSpacePage: React.FC = () => {
                   <Card
                     key={idx}
                     variant="interactive"
-                    className="flex items-center justify-between p-4 text-xs font-medium text-[#404751] hover:text-[#2F6B58]"
+                    className="flex items-center justify-between p-4 text-xs font-medium text-[var(--color-ink-2)] hover:text-[var(--color-accent)]"
                     onClick={() => {
                       setTutorQuestion(item);
                       handleAskTutor(item);
                     }}
                   >
                     <span className="flex items-center gap-2">
-                      <HelpCircle size={16} className="shrink-0 text-[#2F6B58]" />
+                      <HelpCircle size={16} className="shrink-0 text-[var(--color-accent)]" />
                       {item}
                     </span>
                     <ChevronRight size={16} className="shrink-0" />

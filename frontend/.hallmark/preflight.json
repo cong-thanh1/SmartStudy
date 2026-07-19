@@ -1,0 +1,9 @@
+{
+  "date": "2026-07-19",
+  "framework": "React 19 + Vite 8 + Tailwind CSS 4",
+  "fontStack": "Segoe UI / Noto Sans system stack",
+  "palette": "forest green + coral with hard-coded hex utilities",
+  "motion": "motion-cut; CSS page-enter only",
+  "spacing": "Tailwind 4-point utilities with arbitrary values",
+  "preserve": ["routes", "service calls", "authentication", "data-testid", "copy intent"]
+}
