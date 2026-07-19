@@ -13,6 +13,7 @@ import {
   ExamAttempt,
   TutorRequest,
   TutorResponse,
+  User,
 } from '../types';
 
 // ==========================================
@@ -43,6 +44,19 @@ export const authService = {
     } finally {
       clearAuth();
     }
+  },
+};
+
+export const profileService = {
+  async getProfile(): Promise<User> {
+    const response = await api.get<{ user: User }>('/profile/me');
+    setStoredUser(response.data.user);
+    return response.data.user;
+  },
+  async updateProfile(fullName: string): Promise<User> {
+    const response = await api.patch<{ user: User }>('/profile/me', { fullName });
+    setStoredUser(response.data.user);
+    return response.data.user;
   },
 };
 

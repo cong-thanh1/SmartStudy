@@ -1,10 +1,15 @@
 import {
+  AdminGetUserCommand,
+  AdminUpdateUserAttributesCommand,
   CognitoIdentityProviderClient,
   InitiateAuthCommand,
   RevokeTokenCommand,
   SignUpCommand,
   type InitiateAuthCommandInput,
   type InitiateAuthCommandOutput,
+  type AdminGetUserCommandInput,
+  type AdminGetUserCommandOutput,
+  type AdminUpdateUserAttributesCommandInput,
   type RevokeTokenCommandInput,
   type SignUpCommandInput,
   type SignUpCommandOutput,
@@ -17,8 +22,10 @@ import type {
   AuthTokens,
   AuthUser,
   IAuthProvider,
+  IUserProfileProvider,
   LoginInput,
   RegisterInput,
+  UpdateUserProfileInput,
   UserRole,
 } from "../../ports/index.js";
 import {
@@ -47,11 +54,19 @@ export type CognitoSignUp = (
 export type CognitoRevokeToken = (
   input: RevokeTokenCommandInput,
 ) => Promise<void>;
+export type CognitoAdminGetUser = (
+  input: AdminGetUserCommandInput,
+) => Promise<AdminGetUserCommandOutput>;
+export type CognitoAdminUpdateUser = (
+  input: AdminUpdateUserAttributesCommandInput,
+) => Promise<void>;
 export type VerifyCognitoIdToken = (
   token: string,
 ) => Promise<CognitoIdTokenClaims>;
 
 export interface CognitoAuthProviderDependencies {
+  readonly adminGetUser?: CognitoAdminGetUser;
+  readonly adminUpdateUser?: CognitoAdminUpdateUser;
   readonly initiateAuth?: CognitoInitiateAuth;
   readonly now?: () => Date;
   readonly revokeToken?: CognitoRevokeToken;
@@ -59,7 +74,9 @@ export interface CognitoAuthProviderDependencies {
   readonly verifyIdToken?: VerifyCognitoIdToken;
 }
 
-export class CognitoAuthProvider implements IAuthProvider {
+export class CognitoAuthProvider implements IAuthProvider, IUserProfileProvider {
+  private readonly adminGetUser: CognitoAdminGetUser;
+  private readonly adminUpdateUser: CognitoAdminUpdateUser;
   private readonly initiateAuth: CognitoInitiateAuth;
   private readonly now: () => Date;
   private readonly revokeToken: CognitoRevokeToken;
@@ -71,6 +88,14 @@ export class CognitoAuthProvider implements IAuthProvider {
     dependencies: CognitoAuthProviderDependencies = {},
   ) {
     const client = new CognitoIdentityProviderClient({ region: config.region });
+    this.adminGetUser =
+      dependencies.adminGetUser ??
+      ((input) => client.send(new AdminGetUserCommand(input)));
+    this.adminUpdateUser =
+      dependencies.adminUpdateUser ??
+      (async (input) => {
+        await client.send(new AdminUpdateUserAttributesCommand(input));
+      });
     this.initiateAuth =
       dependencies.initiateAuth ??
       ((input) => client.send(new InitiateAuthCommand(input)));
@@ -183,6 +208,34 @@ export class CognitoAuthProvider implements IAuthProvider {
     };
   }
 
+  async getProfile(claims: AuthClaims): Promise<AuthUser> {
+    try {
+      const response = await this.adminGetUser({
+        UserPoolId: this.config.userPoolId,
+        Username: claims.email,
+      });
+      return toProfileUser(response, claims);
+    } catch (error) {
+      throw mapCognitoError(error);
+    }
+  }
+
+  async updateProfile(
+    claims: AuthClaims,
+    input: UpdateUserProfileInput,
+  ): Promise<AuthUser> {
+    try {
+      await this.adminUpdateUser({
+        UserAttributes: [{ Name: "name", Value: input.fullName.trim() }],
+        UserPoolId: this.config.userPoolId,
+        Username: claims.email,
+      });
+      return this.getProfile(claims);
+    } catch (error) {
+      throw mapCognitoError(error);
+    }
+  }
+
   private async toSession(
     authenticationResult: InitiateAuthCommandOutput["AuthenticationResult"],
   ): Promise<AuthSession> {
@@ -270,6 +323,28 @@ function toAuthUser(claims: CognitoIdTokenClaims): AuthUser {
     ...(claims.name ? { fullName: claims.name } : {}),
     id: claims.sub,
     role: toRole(claims["cognito:groups"]),
+  };
+}
+
+function toProfileUser(
+  response: AdminGetUserCommandOutput,
+  claims: AuthClaims,
+): AuthUser {
+  const attributes = new Map(
+    (response.UserAttributes ?? []).flatMap((attribute) =>
+      attribute.Name && attribute.Value
+        ? [[attribute.Name, attribute.Value] as const]
+        : [],
+    ),
+  );
+  const email = attributes.get("email") ?? claims.email;
+  const fullName = attributes.get("name")?.trim();
+  return {
+    email,
+    emailVerified: attributes.get("email_verified") === "true",
+    ...(fullName ? { fullName } : {}),
+    id: attributes.get("sub") ?? claims.sub,
+    role: claims.role,
   };
 }
 

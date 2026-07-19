@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Check, Copy, Robot as Bot, ThumbsDown, ThumbsUp, User as UserIcon } from '@phosphor-icons/react';
 import { Message, Citation } from '../../types';
 import { CitationBadge } from './CitationBadge';
+import { FormattedText } from '../common/FormattedText';
 import { clsx } from 'clsx';
 
 export interface ChatBubbleProps {
@@ -17,21 +18,6 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSelectCitatio
     await navigator.clipboard?.writeText(message.content);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1_800);
-  };
-
-  // Simple formatter to convert markdown bold (**text**) and bullet lists to HTML
-  const renderFormattedContent = (content: string) => {
-    const formatted = content
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-current">$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
-      .replace(/`(.*?)`/g, '<code class="rounded bg-[var(--color-paper-3)] px-1.5 py-0.5 font-mono text-xs">$1</code>');
-
-    return (
-      <div
-        className="space-y-2 leading-relaxed text-sm whitespace-pre-wrap"
-        dangerouslySetInnerHTML={{ __html: formatted }}
-      />
-    );
   };
 
   return (
@@ -67,7 +53,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onSelectCitatio
         </div>
 
         {/* Content Body */}
-        {renderFormattedContent(message.content)}
+        <FormattedText content={message.content} className="space-y-2 text-sm leading-relaxed whitespace-pre-wrap" />
 
         {/* Citations List if available */}
         {isAi && message.citations && message.citations.length > 0 && (

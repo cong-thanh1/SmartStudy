@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   BookOpenText,
   ChartLineUp,
   ClipboardText,
+  UserCircle,
   SignOut,
   SquaresFour,
   X,
@@ -21,12 +22,19 @@ const navItems = [
   { to: '/learning', label: 'Phòng học', icon: BookOpenText, code: '02' },
   { to: '/exam-center', label: 'Luyện tập', icon: ClipboardText, code: '03' },
   { to: '/results', label: 'Kết quả', icon: ChartLineUp, code: '04' },
+  { to: '/profile', label: 'Hồ sơ', icon: UserCircle, code: '05' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobileClose }) => {
   const navigate = useNavigate();
-  const user = getStoredUser() || { name: 'Người học', email: 'student@smartstudy.ai' };
+  const [user, setUser] = useState(() => getStoredUser() || { name: 'Người học', email: 'student@smartstudy.ai' });
   const displayName = user.name || user.fullName || 'Người học';
+
+  useEffect(() => {
+    const refreshUser = () => setUser(getStoredUser() || { name: 'Người học', email: 'student@smartstudy.ai' });
+    window.addEventListener('smartstudy:user-updated', refreshUser);
+    return () => window.removeEventListener('smartstudy:user-updated', refreshUser);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -105,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobile
               {displayName.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-paper">{displayName}</p>
+              <p data-testid="sidebar-user-name" className="truncate text-sm font-semibold text-paper">{displayName}</p>
               <p className="truncate text-[11px] text-paper/45">{user.email}</p>
             </div>
             <button data-testid="logout-button" onClick={handleLogout} className="grid h-11 w-11 place-items-center rounded-lg text-paper/45 transition-colors duration-200 hover:bg-white/8 hover:text-paper" title="Đăng xuất" aria-label="Đăng xuất">

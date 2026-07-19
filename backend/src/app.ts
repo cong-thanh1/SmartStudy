@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 
 import { errorHandler } from "./middleware/error-handler.js";
 import { createAuthRouter } from "./modules/auth/auth-routes.js";
+import { createProfileRouter } from "./modules/auth/profile-routes.js";
 import { createChatRouter } from "./modules/chat/chat-routes.js";
 import type { IChatService } from "./modules/chat/chat-service.js";
 import type { DocumentConfig } from "./modules/documents/document-config.js";
@@ -17,10 +18,11 @@ import { createTutorRouter } from "./modules/tutor/tutor-routes.js";
 import type { ITutorService } from "./modules/tutor/tutor-service.js";
 import type { AiJobService } from "./modules/jobs/ai-job-service.js";
 import { createJobRouter } from "./modules/jobs/job-routes.js";
-import type { IAuthProvider } from "./ports/index.js";
+import type { IAuthProvider, IUserProfileProvider } from "./ports/index.js";
 
 export interface AppDependencies {
   readonly authProvider: IAuthProvider;
+  readonly profileProvider?: IUserProfileProvider;
   readonly chatService: IChatService;
   readonly documentConfig: DocumentConfig;
   readonly documentService: IDocumentService;
@@ -55,6 +57,12 @@ export function createApp(dependencies: AppDependencies): Express {
   });
 
   app.use("/api/v1/auth", createAuthRouter(dependencies.authProvider));
+  if (dependencies.profileProvider) {
+    app.use(
+      "/api/v1/profile",
+      createProfileRouter(dependencies.authProvider, dependencies.profileProvider),
+    );
+  }
   app.use(
     "/api/v1/chat",
     createChatRouter(dependencies.authProvider, dependencies.chatService),

@@ -21,7 +21,7 @@ import {
   UploadSimple as UploadCloud,
   X,
 } from '@phosphor-icons/react';
-import { Button, Card, Badge, ChatBubble, LoadingSpinner } from '../components';
+import { Button, Card, Badge, ChatBubble, FormattedText, LoadingSpinner } from '../components';
 import { documentService, chatService, summaryService, tutorService } from '../services';
 import { Document, DocumentChapter, DocumentPreviewChunk, Message, Summary, Citation } from '../types';
 import { clsx } from 'clsx';
@@ -287,7 +287,7 @@ export const LearningSpacePage: React.FC = () => {
       <div
         data-testid="learning-workspace"
         className={clsx(
-          'grid h-[clamp(32rem,calc(100dvh-13.5rem),52rem)] min-h-0 min-w-0 gap-4 lg:h-[clamp(38rem,calc(100dvh-15rem),52rem)]',
+          'grid h-[clamp(28rem,calc(100dvh-13.5rem),52rem)] min-h-0 min-w-0 gap-4 lg:h-[clamp(28rem,calc(100dvh-15rem),52rem)]',
           isReaderOpen ? 'lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.85fr)]' : 'grid-cols-1',
         )}
       >
@@ -632,14 +632,10 @@ export const LearningSpacePage: React.FC = () => {
                   </div>
                 )}
 
-                <div
+                <FormattedText
                   data-testid="summary-content"
+                  content={summary.summaryText || summary.content || summary.summary || ''}
                   className="space-y-3 text-xs leading-relaxed text-[var(--color-ink-2)] whitespace-pre-wrap"
-                  dangerouslySetInnerHTML={{
-                    __html: (summary.summaryText || summary.content || summary.summary || '')
-                      .replace(/### (.*?)\n/g, '<h5 class="font-bold text-sm text-[var(--color-ink-2)] mt-4 mb-2">$1</h5>')
-                      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-[var(--color-ink)]">$1</strong>'),
-                  }}
                 />
               </Card>
             ) : (
@@ -711,11 +707,9 @@ export const LearningSpacePage: React.FC = () => {
               </Card>
             ) : tutorAnswer ? (
               <Card data-testid="tutor-answer" className="space-y-4 border-accent bg-surface p-6">
-                <div
+                <FormattedText
+                  content={tutorAnswer}
                   className="space-y-2 text-xs leading-relaxed text-[var(--color-ink)] whitespace-pre-wrap"
-                  dangerouslySetInnerHTML={{
-                    __html: tutorAnswer.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-[var(--color-accent)]">$1</strong>'),
-                  }}
                 />
 
                 {suggestedQuestions.length > 0 && (

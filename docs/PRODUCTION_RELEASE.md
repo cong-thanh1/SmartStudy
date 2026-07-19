@@ -2,6 +2,9 @@
 
 This process implements the branch model in `DEV_GUIDELINES.md`.
 
+The current Qwen 2.5 7B runtime configuration, benchmark, and release-gate results
+are recorded in [`QWEN_7B_RELEASE_REPORT.md`](./QWEN_7B_RELEASE_REPORT.md).
+
 ## Branches and environments
 
 | Branch | Purpose | Deployment |

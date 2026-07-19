@@ -23,3 +23,7 @@ export const refreshTokenSchema = z
     refreshToken: z.string().min(1).max(512),
   })
   .strict();
+
+export const updateProfileSchema = z
+  .object({ fullName: z.string().trim().min(1).max(80) })
+  .strict();

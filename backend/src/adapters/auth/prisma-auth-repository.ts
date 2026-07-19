@@ -67,6 +67,11 @@ export class PrismaAuthRepository implements IAuthRepository {
     return user ? mapUser(user) : null;
   }
 
+  async findUserById(userId: string): Promise<AuthUserRecord | null> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    return user ? mapUser(user) : null;
+  }
+
   async revokeRefreshToken(
     tokenHash: string,
     revokedAt: Date,
@@ -122,6 +127,18 @@ export class PrismaAuthRepository implements IAuthRepository {
         userId: input.userId,
       },
     });
+  }
+
+  async updateUserFullName(
+    userId: string,
+    fullName: string,
+  ): Promise<AuthUserRecord | null> {
+    const updated = await this.prisma.user.updateMany({
+      data: { fullName },
+      where: { id: userId },
+    });
+    if (updated.count !== 1) return null;
+    return this.findUserById(userId);
   }
 }
 

@@ -49,6 +49,7 @@ import type {
   ILLMProvider,
   IQueueProvider,
   IStorageProvider,
+  IUserProfileProvider,
   IVectorStore,
 } from "./ports/index.js";
 
@@ -190,7 +191,7 @@ export class ProviderFactory {
 export function createAuthProviderFromEnv(
   repository: IAuthRepository | undefined,
   environment: NodeJS.ProcessEnv = process.env,
-): IAuthProvider {
+): IAuthProvider & IUserProfileProvider {
   const config = loadProviderConfig(environment);
   const registry: ProviderRegistry = {
     auth: {
@@ -218,7 +219,25 @@ export function createAuthProviderFromEnv(
     vectorStore: {},
   };
 
-  return new ProviderFactory(config, registry).createAuthProvider();
+  const provider = new ProviderFactory(config, registry).createAuthProvider();
+  if (!isUserProfileProvider(provider)) {
+    throw new ProviderConfigurationError(
+      "auth",
+      { cause: new Error("The auth provider does not support user profiles") },
+    );
+  }
+  return provider;
+}
+
+function isUserProfileProvider(
+  provider: IAuthProvider,
+): provider is IAuthProvider & IUserProfileProvider {
+  return (
+    "getProfile" in provider &&
+    typeof provider.getProfile === "function" &&
+    "updateProfile" in provider &&
+    typeof provider.updateProfile === "function"
+  );
 }
 
 export function createStorageProviderFromEnv(

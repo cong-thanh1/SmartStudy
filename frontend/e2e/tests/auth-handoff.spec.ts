@@ -38,6 +38,12 @@ async function register(page: Page, email: string): Promise<void> {
 }
 
 test.describe('Module A — Đăng ký, đăng nhập và phiên làm việc', () => {
+  test('A0 — route riêng tư chuyển người chưa đăng nhập về welcome trước khi render app', async ({ page }) => {
+    await page.goto('/dashboard');
+    await page.waitForURL(/welcome/);
+    await expect(page.getByTestId('auth-login-open')).toBeVisible();
+    await expect(page.getByTestId('document-library')).toHaveCount(0);
+  });
   test('A1 — đăng ký thành công, lưu phiên an toàn và chuyển vào dashboard', async ({ page }) => {
     const email = uniqueEmail('register');
     const registerResponse = page.waitForResponse(
