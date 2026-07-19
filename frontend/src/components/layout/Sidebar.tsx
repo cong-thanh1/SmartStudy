@@ -1,8 +1,15 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutGrid, BookOpenText, ClipboardCheck, ChartNoAxesColumnIncreasing, LogOut, X } from 'lucide-react';
-import { authService, getStoredUser } from '../../services';
+import {
+  BookOpenText,
+  ChartLineUp,
+  ClipboardText,
+  SignOut,
+  SquaresFour,
+  X,
+} from '@phosphor-icons/react';
 import { clsx } from 'clsx';
+import { authService, getStoredUser } from '../../services';
 
 interface SidebarProps {
   isMobileOpen?: boolean;
@@ -10,10 +17,10 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { to: '/dashboard', label: 'Tổng quan', icon: LayoutGrid },
-  { to: '/learning', label: 'Phòng học', icon: BookOpenText },
-  { to: '/exam-center', label: 'Luyện tập', icon: ClipboardCheck },
-  { to: '/results', label: 'Kết quả', icon: ChartNoAxesColumnIncreasing },
+  { to: '/dashboard', label: 'Tổng quan', icon: SquaresFour, code: '01' },
+  { to: '/learning', label: 'Phòng học', icon: BookOpenText, code: '02' },
+  { to: '/exam-center', label: 'Luyện tập', icon: ClipboardText, code: '03' },
+  { to: '/results', label: 'Kết quả', icon: ChartLineUp, code: '04' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobileClose }) => {
@@ -31,30 +38,60 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobile
 
   return (
     <>
-      {isMobileOpen && <button className="fixed inset-0 z-[var(--z-dropdown)] bg-ink/55 lg:hidden" onClick={onMobileClose} aria-label="Đóng menu" />}
-      <aside className={clsx('fixed inset-y-0 left-0 z-[var(--z-sticky)] flex w-60 flex-col border-r border-rule bg-paper-2 p-4 transition-transform duration-300 ease-[var(--ease-out)] lg:translate-x-0', isMobileOpen ? 'translate-x-0' : '-translate-x-full')}>
-        <div className="flex h-14 items-center justify-between px-1">
-          <NavLink to="/dashboard" onClick={onMobileClose} className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-lg border border-ink bg-ink text-paper">
-              <BookOpenText size={18} />
-            </div>
-            <div>
-              <p className="font-display text-[17px] font-bold leading-none tracking-[-0.03em] text-ink">SmartStudy</p>
-              <p className="mt-1 font-mono text-[10px] text-muted">study/workspace</p>
-            </div>
+      {isMobileOpen && (
+        <button
+          className="fixed inset-0 z-[var(--z-dropdown)] bg-ink/60 backdrop-blur-sm lg:hidden"
+          onClick={onMobileClose}
+          aria-label="Đóng menu"
+        />
+      )}
+      <aside
+        className={clsx(
+          'fixed inset-y-0 left-0 z-[var(--z-sticky)] flex w-[17rem] flex-col border-r border-white/10 bg-ink px-4 py-5 text-paper transition-transform duration-300 ease-[var(--ease-out)] lg:translate-x-0',
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full',
+        )}
+      >
+        <div className="flex h-14 items-center justify-between px-2">
+          <NavLink to="/dashboard" onClick={onMobileClose} className="group flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-[0.7rem] border border-white/15 bg-white/8 text-paper shadow-[inset_0_1px_0_rgb(255_255_255/0.12)] transition-transform duration-300 group-hover:-rotate-3">
+              <BookOpenText size={20} weight="duotone" />
+            </span>
+            <span>
+              <span className="block font-display text-[17px] font-semibold leading-none tracking-[-0.04em]">SmartStudy</span>
+              <span className="mt-1.5 block font-mono text-[9px] uppercase tracking-[0.15em] text-paper/45">learning signal</span>
+            </span>
           </NavLink>
-          <button onClick={onMobileClose} className="grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-paper-3 lg:hidden" aria-label="Đóng menu"><X size={18} /></button>
+          <button onClick={onMobileClose} className="grid h-11 w-11 place-items-center rounded-lg text-paper/65 hover:bg-white/8 hover:text-paper lg:hidden" aria-label="Đóng menu">
+            <X size={19} weight="bold" />
+          </button>
         </div>
 
-        <nav className="mt-8 flex-1 space-y-1" aria-label="Điều hướng chính">
+        <div className="mt-9 flex items-center gap-3 border-y border-white/10 px-3 py-4">
+          <span className="dt-status-pulse shrink-0" />
+          <div className="min-w-0">
+            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-paper/45">Workspace</p>
+            <p className="mt-0.5 truncate text-sm font-medium text-paper/90">Sẵn sàng để học</p>
+          </div>
+        </div>
+
+        <nav className="mt-7 flex-1 space-y-1" aria-label="Điều hướng chính">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
-              <NavLink key={item.to} to={item.to} onClick={onMobileClose} className={({ isActive }) => clsx('group flex min-h-12 items-center gap-3 rounded-lg border-l-2 px-3 py-2.5 transition-[background-color,color,border-color] duration-150', isActive ? 'border-accent bg-accent-soft text-ink' : 'border-transparent text-muted hover:bg-paper-3 hover:text-ink')}>
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={onMobileClose}
+                className={({ isActive }) => clsx(
+                  'group grid min-h-12 grid-cols-[2rem_1fr_auto] items-center gap-3 rounded-xl px-3 py-2.5 transition-[background-color,color,transform] duration-200',
+                  isActive ? 'bg-paper text-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.6)]' : 'text-paper/58 hover:translate-x-1 hover:bg-white/7 hover:text-paper',
+                )}
+              >
                 {({ isActive }) => (
                   <>
-                    <span className={clsx('grid h-9 w-9 shrink-0 place-items-center rounded-md transition-colors duration-150', isActive ? 'text-accent' : 'text-muted group-hover:text-ink')}><Icon size={18} /></span>
-                    <span className="min-w-0 flex-1 text-sm font-semibold">{item.label}</span>
+                    <Icon size={19} weight={isActive ? 'fill' : 'regular'} />
+                    <span className="min-w-0 text-sm font-semibold">{item.label}</span>
+                    <span className={clsx('font-mono text-[9px]', isActive ? 'text-accent' : 'text-paper/28')}>{item.code}</span>
                   </>
                 )}
               </NavLink>
@@ -62,13 +99,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobile
           })}
         </nav>
 
-        <div className="flex items-center gap-3 border-t border-rule px-1 pt-4">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-signal-soft text-sm font-bold text-signal-ink">{displayName.charAt(0).toUpperCase()}</div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-ink-2">{displayName}</p>
-            <p className="truncate text-xs text-muted">{user.email}</p>
+        <div className="border-t border-white/10 pt-4">
+          <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-xl px-2 py-2">
+            <div className="grid h-10 w-10 place-items-center rounded-full border border-white/12 bg-white/8 text-sm font-semibold text-paper">
+              {displayName.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-paper">{displayName}</p>
+              <p className="truncate text-[11px] text-paper/45">{user.email}</p>
+            </div>
+            <button data-testid="logout-button" onClick={handleLogout} className="grid h-11 w-11 place-items-center rounded-lg text-paper/45 transition-colors duration-200 hover:bg-white/8 hover:text-paper" title="Đăng xuất" aria-label="Đăng xuất">
+              <SignOut size={17} />
+            </button>
           </div>
-          <button data-testid="logout-button" onClick={handleLogout} className="grid h-11 w-11 place-items-center rounded-lg text-muted transition-colors duration-150 hover:bg-error-soft hover:text-error" title="Đăng xuất" aria-label="Đăng xuất"><LogOut size={16} /></button>
         </div>
       </aside>
     </>

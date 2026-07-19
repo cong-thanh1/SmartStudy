@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, Check, Copy, ThumbsDown, ThumbsUp, User as UserIcon } from 'lucide-react';
+import { Check, Copy, Robot as Bot, ThumbsDown, ThumbsUp, User as UserIcon } from '@phosphor-icons/react';
 import { Message, Citation } from '../../types';
 import { CitationBadge } from './CitationBadge';
 import { clsx } from 'clsx';

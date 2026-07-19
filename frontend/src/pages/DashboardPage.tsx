@@ -1,6 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, ArrowRight, BookOpenText, CheckCircle2, ClipboardCheck, Clock3, FileText, Plus, Search, Trash2, UploadCloud } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpenText,
+  CheckCircle as CheckCircle2,
+  ClipboardText as ClipboardCheck,
+  Clock as Clock3,
+  FileText,
+  MagnifyingGlass as Search,
+  Plus,
+  Trash as Trash2,
+  UploadSimple as UploadCloud,
+  WarningCircle as AlertCircle,
+} from '@phosphor-icons/react';
 import { Button, Card, Modal, Input, Badge, LoadingSpinner } from '../components';
 import { documentService } from '../services';
 import { Document } from '../types';
@@ -103,26 +115,27 @@ export const DashboardPage: React.FC = () => {
     : documents;
 
   return (
-    <div className="page-enter space-y-10">
-      <section className="grid gap-8 border-b border-rule pb-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-        <div className="max-w-3xl">
-          <h2 className="text-3xl sm:text-5xl">Tiếp tục từ tài liệu gần nhất.</h2>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-muted">Mở một tài liệu đang học hoặc thêm nội dung mới. Mọi câu hỏi, bản tóm tắt và bài luyện sẽ đi theo tài liệu bạn chọn.</p>
+    <div className="page-enter space-y-12">
+      <section className="grid gap-10 border-b border-rule pb-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)] lg:items-end">
+        <div className="max-w-4xl">
+          <p className="dt-rule-label">Thư viện cá nhân</p>
+          <h2 className="mt-6 max-w-[13ch] text-4xl sm:text-6xl">Tiếp tục từ nơi mạch học còn đang mở.</h2>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-muted">Mở tài liệu gần nhất hoặc thêm nội dung mới. Câu hỏi, bản tóm tắt và bài luyện luôn đi cùng nguồn bạn chọn.</p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3 lg:items-stretch">
           <Button data-testid="upload-button-banner" size="lg" onClick={() => setIsUploadModalOpen(true)} leftIcon={<Plus size={18} />}>Thêm tài liệu</Button>
           <Button variant="outline" size="lg" onClick={() => navigate('/learning')} rightIcon={<ArrowRight size={17} />}>Mở phòng học</Button>
         </div>
       </section>
 
-      <section className="grid divide-y divide-rule border-y border-rule sm:grid-cols-3 sm:divide-x sm:divide-y-0" aria-label="Tóm tắt thư viện">
+      <section className="grid divide-y divide-rule border-y border-rule sm:grid-cols-[1.25fr_0.75fr_1fr] sm:divide-x sm:divide-y-0" aria-label="Tóm tắt thư viện">
         {[
           { label: 'Tài liệu', value: documents.length, note: documents.length ? 'trong thư viện' : 'chưa có tài liệu' },
           { label: 'Sẵn sàng', value: readyDocuments, note: 'để đọc và hỏi' },
           { label: 'Phần nội dung', value: totalSections, note: 'đã nhận diện' },
         ].map(({ label, value, note }) => (
-          <div key={label} className="grid grid-cols-[auto_1fr] items-baseline gap-x-4 px-1 py-5 sm:block sm:px-6">
-            <strong className="hm-data text-3xl font-medium text-ink">{value}</strong>
+          <div key={label} className="reveal-cascade grid grid-cols-[auto_1fr] items-baseline gap-x-4 px-1 py-6 sm:block sm:px-7" style={{ '--reveal-index': value } as React.CSSProperties}>
+            <strong className="dt-data text-4xl font-medium tracking-[-0.06em] text-ink">{value}</strong>
             <p className="text-sm font-semibold text-ink-2 sm:mt-2">{label}</p>
             <p className="col-start-2 text-sm text-muted sm:mt-1">{note}</p>
           </div>
@@ -131,7 +144,7 @@ export const DashboardPage: React.FC = () => {
 
       <section data-testid="document-library" className="space-y-5">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div><h3 className="text-2xl text-ink">Thư viện tài liệu</h3><p className="mt-2 text-sm text-muted">Mở tài liệu để đọc, hỏi hoặc tạo bài luyện.</p></div>
+          <div><p className="dt-kicker">Nguồn đang học</p><h3 className="mt-2 text-3xl text-ink">Thư viện tài liệu</h3><p className="mt-2 text-sm text-muted">Mở tài liệu để đọc, hỏi hoặc tạo bài luyện.</p></div>
           <Button data-testid="upload-button" size="md" leftIcon={<UploadCloud size={16} />} onClick={() => setIsUploadModalOpen(true)}>Tải tài liệu lên</Button>
         </div>
 
@@ -158,9 +171,9 @@ export const DashboardPage: React.FC = () => {
         ) : filteredDocuments.length === 0 ? (
           <Card data-testid="documents-search-empty" className="p-12 text-center"><Search className="mx-auto text-[var(--color-muted)]" /><h4 className="mt-4 font-extrabold">Không tìm thấy tài liệu</h4><p className="mt-1 text-sm text-[var(--color-muted)]">Thử một tên khác hoặc xóa nội dung tìm kiếm.</p></Card>
         ) : (
-          <div data-testid="document-list" className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-            {filteredDocuments.map((doc) => (
-              <Card key={doc.id} data-testid={`document-card-${doc.id}`} variant="interactive" className="flex min-h-[220px] flex-col rounded-lg p-5" onClick={() => navigate(`/learning?docId=${doc.id}`)}>
+          <div data-testid="document-list" className="grid gap-5 md:grid-cols-2 xl:grid-cols-[minmax(0,1.22fr)_minmax(0,0.78fr)]">
+            {filteredDocuments.map((doc, index) => (
+              <Card key={doc.id} data-testid={`document-card-${doc.id}`} variant="interactive" className="reveal-cascade flex min-h-[230px] flex-col p-6" style={{ '--reveal-index': index } as React.CSSProperties} onClick={() => navigate(`/learning?docId=${doc.id}`)}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2 text-xs font-semibold text-accent"><FileText size={18} /> PDF</div>
                   <div className="flex items-center gap-2">

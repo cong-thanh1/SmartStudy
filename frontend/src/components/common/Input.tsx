@@ -36,7 +36,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             className={twMerge(
               clsx(
-                'min-h-11 w-full rounded-lg border bg-surface px-4 py-2.5 text-sm text-ink placeholder:text-muted outline-2 outline-transparent outline-offset-1 transition-[background-color,border-color] duration-150 ease-[var(--ease-out)] hover:bg-paper-2 focus-visible:border-ink-2 focus-visible:bg-surface focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-55',
+                'min-h-12 w-full rounded-[var(--radius-control)] border bg-surface px-4 py-2.5 text-sm text-ink placeholder:text-subtle outline-2 outline-transparent outline-offset-1 transition-[background-color,border-color,box-shadow] duration-200 ease-[var(--ease-out)] hover:border-ink/40 focus-visible:border-accent focus-visible:bg-surface focus-visible:shadow-[0_0_0_4px_rgb(49_89_216/0.08)] focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-55',
                 leftIcon ? 'pl-10' : 'pl-4',
                 rightIcon || isLoading ? 'pr-10' : 'pr-4',
                 error
