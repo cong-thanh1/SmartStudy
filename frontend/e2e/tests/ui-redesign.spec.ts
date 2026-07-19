@@ -28,12 +28,12 @@ async function prepareApp(page: Page): Promise<void> {
         preview: {
           ...documentFixture,
           pageCount: 24,
-          chunks: [{
-            chapterTitle: 'Độ co giãn của cầu',
-            pageStart: 12,
-            pageEnd: 13,
-            text: 'Độ co giãn cho biết lượng cầu phản ứng như thế nào khi giá thay đổi.',
-          }],
+          chunks: Array.from({ length: 18 }, (_, index) => ({
+            chapterTitle: `Độ co giãn của cầu · Phần ${index + 1}`,
+            pageStart: 12 + index,
+            pageEnd: 12 + index,
+            text: 'Độ co giãn cho biết lượng cầu phản ứng như thế nào khi giá thay đổi. Nội dung đủ dài để xác nhận tài liệu cuộn bên trong source reader.',
+          })),
         },
       }),
     });
@@ -95,3 +95,36 @@ for (const route of ['/dashboard', '/learning?docId=doc-1', '/exam-center', '/re
     await expectResponsivePage(page);
   });
 }
+
+test('learning source reader stays viewport-bound and never lengthens the page', async ({ page }) => {
+  await prepareApp(page);
+  await page.goto('/learning?docId=doc-1');
+
+  const workspace = page.getByTestId('learning-workspace');
+  const chat = page.getByTestId('chat-workspace');
+  await expect(workspace).toBeVisible();
+  await expect(chat).toBeVisible();
+  await expect(page.getByTestId('document-reader')).toHaveCount(0);
+
+  const pageHeightBefore = await page.evaluate(() => document.documentElement.scrollHeight);
+  await page.getByTestId('document-reader-toggle').click();
+
+  const reader = page.getByTestId('document-reader');
+  const readerScroll = page.getByTestId('document-reader-scroll');
+  await expect(reader).toBeVisible();
+
+  const geometry = await reader.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return { top: bounds.top, bottom: bounds.bottom, height: bounds.height, viewportHeight: window.innerHeight };
+  });
+  const scrollGeometry = await readerScroll.evaluate((element) => ({
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+  }));
+  const pageHeightAfter = await page.evaluate(() => document.documentElement.scrollHeight);
+
+  expect(geometry.top).toBeGreaterThanOrEqual(0);
+  expect(geometry.bottom).toBeLessThanOrEqual(geometry.viewportHeight + 1);
+  expect(scrollGeometry.scrollHeight).toBeGreaterThan(scrollGeometry.clientHeight);
+  expect(pageHeightAfter).toBeLessThanOrEqual(pageHeightBefore + 4);
+});

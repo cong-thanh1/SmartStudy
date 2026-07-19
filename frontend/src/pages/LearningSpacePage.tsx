@@ -19,6 +19,7 @@ import {
   SidebarSimple as PanelRightClose,
   SidebarSimple as PanelRightOpen,
   UploadSimple as UploadCloud,
+  X,
 } from '@phosphor-icons/react';
 import { Button, Card, Badge, ChatBubble, LoadingSpinner } from '../components';
 import { documentService, chatService, summaryService, tutorService } from '../services';
@@ -34,7 +35,7 @@ export const LearningSpacePage: React.FC = () => {
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
   const [selectedDocId, setSelectedDocId] = useState<string>(docIdParam || '');
   const [activeTab, setActiveTab] = useState<'rag' | 'summary' | 'tutor'>('rag');
-  const [isReaderOpen, setIsReaderOpen] = useState(true);
+  const [isReaderOpen, setIsReaderOpen] = useState(false);
 
   // Document chat state
   const [activeConversationId, setActiveConversationId] = useState<string>('');
@@ -240,7 +241,7 @@ export const LearningSpacePage: React.FC = () => {
   }
 
   return (
-    <div className="page-enter flex min-h-full w-full flex-col gap-5">
+    <div className="flex min-h-0 w-full flex-col gap-4">
       <header className="flex flex-col gap-4 border-b border-rule pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <button
@@ -267,10 +268,11 @@ export const LearningSpacePage: React.FC = () => {
             type="button"
             variant="outline"
             size="sm"
-            leftIcon={isReaderOpen ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
+            leftIcon={isReaderOpen ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
             onClick={() => setIsReaderOpen((open) => !open)}
+            data-testid="document-reader-toggle"
           >
-            {isReaderOpen ? 'Ẩn tài liệu' : 'Mở tài liệu'}
+            {isReaderOpen ? 'Đóng tài liệu' : 'Mở tài liệu'}
           </Button>
           <button
             type="button"
@@ -282,15 +284,28 @@ export const LearningSpacePage: React.FC = () => {
         </div>
       </header>
 
-      <div className={clsx(
-        'grid min-h-[calc(100dvh-12rem)] min-w-0 gap-5',
-        isReaderOpen ? 'lg:grid-cols-[minmax(0,1.38fr)_minmax(360px,1fr)]' : 'grid-cols-1',
-      )}>
-      {/* Left Panel: PDF Viewer / Textbook Reader (45% width) */}
+      <div
+        data-testid="learning-workspace"
+        className={clsx(
+          'grid h-[clamp(32rem,calc(100dvh-13.5rem),52rem)] min-h-0 min-w-0 gap-4 lg:h-[clamp(38rem,calc(100dvh-15rem),52rem)]',
+          isReaderOpen ? 'lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.85fr)]' : 'grid-cols-1',
+        )}
+      >
+      {/* Source reader: fixed drawer on mobile, bounded rail on desktop. */}
       {isReaderOpen && (
-      <Card className="order-2 flex min-h-[560px] min-w-0 flex-col overflow-hidden rounded-lg p-0 lg:order-2">
+      <>
+      <button
+        type="button"
+        className="fixed inset-0 z-[var(--z-dropdown)] bg-ink/45 backdrop-blur-sm lg:hidden"
+        onClick={() => setIsReaderOpen(false)}
+        aria-label="Đóng tài liệu"
+      />
+      <Card
+        data-testid="document-reader"
+        className="fixed inset-x-3 bottom-3 top-[5.25rem] z-[var(--z-sticky)] flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[var(--radius-panel)] p-0 shadow-[var(--shadow-float)] lg:relative lg:inset-auto lg:z-auto lg:order-2 lg:h-full lg:rounded-[var(--radius-card)] lg:shadow-[var(--shadow-whisper)]"
+      >
         {/* Document Selector Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-paper/10 bg-[var(--color-ink)] p-4 text-paper">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-paper/10 bg-[var(--color-ink)] p-3.5 text-paper">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <BookOpen className="h-5 w-5 shrink-0 text-[var(--color-accent-soft)]" />
             <select
@@ -305,11 +320,20 @@ export const LearningSpacePage: React.FC = () => {
               ))}
             </select>
           </div>
-          <Badge variant="success" size="sm" className="ml-2 shrink-0">Sẵn sàng học</Badge>
+          <Badge variant="success" size="sm" className="hidden shrink-0 sm:inline-flex">Sẵn sàng học</Badge>
+          <button
+            type="button"
+            onClick={() => setIsReaderOpen(false)}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-paper/60 transition-colors hover:bg-white/10 hover:text-paper lg:hidden"
+            aria-label="Đóng tài liệu"
+            data-testid="document-reader-close"
+          >
+            <X size={18} weight="bold" />
+          </button>
         </div>
 
         {/* Extracted document preview */}
-        <div className="scrollbar-subtle relative flex-1 space-y-5 overflow-y-auto bg-[var(--color-paper-3)] p-4 sm:p-5">
+        <div data-testid="document-reader-scroll" className="scrollbar-subtle relative min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain bg-[var(--color-paper-3)] p-4 sm:p-5">
           {activeCitation && (
             <div className="rounded-lg border border-rule-strong bg-warning-soft p-4 text-warning">
               <div className="mb-1 flex items-center justify-between text-xs font-bold">
@@ -355,10 +379,17 @@ export const LearningSpacePage: React.FC = () => {
           </article>
         </div>
       </Card>
+      </>
       )}
 
-      {/* Right Panel: Interactive AI Workspace (55% width) */}
-      <Card className="order-1 flex min-h-[560px] min-w-0 flex-col overflow-hidden rounded-lg p-0 lg:order-1">
+      {/* Chat is the primary surface and never grows beyond the workspace. */}
+      <Card
+        data-testid="chat-workspace"
+        className={clsx(
+          'order-1 flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[var(--radius-card)] p-0',
+          !isReaderOpen && 'mx-auto w-full max-w-[64rem]',
+        )}
+      >
         {/* Navigation Tabs Header */}
         <div className="scrollbar-subtle flex items-center gap-5 overflow-x-auto border-b border-rule bg-surface px-4 pt-2 sm:px-5" role="tablist" aria-label="Công cụ học tập">
           <button
@@ -425,20 +456,36 @@ export const LearningSpacePage: React.FC = () => {
 
         {/* Tab 1: document chat */}
         {activeTab === 'rag' && (
-          <div className="flex min-h-0 flex-1 flex-col bg-[var(--color-paper)]">
-            <div className="flex-1 p-6 overflow-y-auto space-y-4">
+          <div className="flex min-h-0 flex-1 flex-col bg-paper">
+            <div data-testid="chat-message-scroll" className="scrollbar-subtle min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
               {messages.length === 0 && !isSending && (
-                <div className="mx-auto mt-12 max-w-md border-y border-rule py-8 text-left">
-                  <MessageSquare className="mx-auto mb-3 h-7 w-7 text-[var(--color-accent)]" />
-                  <h2 className="text-base font-bold text-[var(--color-ink)]">Bạn muốn tìm hiểu gì từ tài liệu này?</h2>
-                  <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">Trợ lý sẽ trả lời từ nội dung đang mở và kèm nguồn để bạn kiểm tra lại.</p>
+                <div className="mx-auto flex min-h-full max-w-xl flex-col justify-center py-8 text-left">
+                  <div className="grid h-11 w-11 place-items-center rounded-xl border border-accent/20 bg-accent-soft text-accent"><MessageSquare size={21} weight="duotone" /></div>
+                  <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-accent">Hỏi theo tài liệu</p>
+                  <h2 className="mt-2 text-2xl text-ink sm:text-3xl">Bắt đầu từ điều bạn chưa rõ.</h2>
+                  <p className="mt-3 max-w-[54ch] text-sm leading-6 text-muted">Trợ lý chỉ dùng nội dung đang mở và luôn kèm nguồn để bạn kiểm tra lại.</p>
+                  <div className="mt-6 flex flex-wrap gap-2" aria-label="Câu hỏi gợi ý">
+                    {['Tóm tắt ý chính', 'Giải thích đoạn khó', 'Tạo 5 câu ôn tập'].map((prompt) => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        onClick={() => setInputMessage(prompt)}
+                        className="hm-affordance rounded-full border border-rule-strong bg-surface px-3.5 py-2 text-xs font-semibold text-ink transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:text-accent"
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
               {messages.map((msg) => (
                 <ChatBubble
                   key={msg.id}
                   message={msg}
-                  onSelectCitation={(cite) => setActiveCitation(cite)}
+                  onSelectCitation={(cite) => {
+                    setActiveCitation(cite);
+                    setIsReaderOpen(true);
+                  }}
                 />
               ))}
               {isSending && (
@@ -453,8 +500,8 @@ export const LearningSpacePage: React.FC = () => {
             </div>
 
             {/* Chat Input Box */}
-            <form onSubmit={handleSendMessage} className="border-t border-[var(--color-rule)] bg-surface p-4">
-              <div className="flex items-end gap-2 rounded-lg border border-rule-strong bg-paper-2 p-2 outline-2 outline-transparent outline-offset-1 focus-within:border-ink focus-within:outline-focus">
+            <form onSubmit={handleSendMessage} className="shrink-0 border-t border-rule bg-surface/92 px-3 pb-3 pt-2 backdrop-blur-xl sm:px-5 sm:pb-4">
+              <div className="flex items-end gap-2 rounded-2xl border border-rule-strong bg-paper p-2.5 shadow-[inset_0_1px_0_rgb(255_255_255/0.8),0_18px_40px_-30px_rgb(24_26_24/0.5)] outline-2 outline-transparent outline-offset-1 transition-[border-color,box-shadow] duration-200 focus-within:border-accent focus-within:shadow-[0_0_0_4px_rgb(49_89_216/0.07)] focus-within:outline-focus">
               <textarea
                 data-testid="chat-input"
                 value={inputMessage}
@@ -468,7 +515,7 @@ export const LearningSpacePage: React.FC = () => {
                 rows={1}
                 placeholder="Hỏi một điều bạn chưa hiểu trong tài liệu..."
                 disabled={isSending}
-                className="max-h-36 min-h-11 min-w-0 flex-1 resize-y bg-transparent px-2 py-2 text-sm text-ink placeholder:text-muted focus:outline-none"
+                className="max-h-32 min-h-11 min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-ink placeholder:text-muted focus:outline-none"
               />
               <Button
                 data-testid="chat-send-button"
@@ -477,12 +524,15 @@ export const LearningSpacePage: React.FC = () => {
                 size="md"
                 disabled={!inputMessage.trim() || isSending}
                 aria-label="Gửi câu hỏi"
-                className="shrink-0 px-4"
+                className="h-11 w-11 shrink-0 rounded-xl px-0"
               >
                 <Send size={16} />
               </Button>
               </div>
-              <p className="mt-2 text-xs text-[var(--color-muted)]">Enter để gửi · Shift + Enter để xuống dòng · Nên mở nguồn đi kèm để kiểm tra thông tin.</p>
+              <div className="mt-2 flex items-center justify-between gap-3 px-1 text-[10px] text-muted sm:text-xs">
+                <span>Enter để gửi · Shift + Enter để xuống dòng</span>
+                <button type="button" onClick={() => setIsReaderOpen(true)} className="hidden font-semibold text-accent hover:underline sm:inline">Mở nguồn</button>
+              </div>
             </form>
           </div>
         )}
