@@ -17,6 +17,7 @@ import { Construct } from "constructs";
 export interface SmartStudyFoundationStackProps extends cdk.StackProps {
   readonly environment: string;
   readonly frontendOrigin?: string;
+  readonly frontendOrigins?: readonly string[];
   readonly localAiBaseUrl?: string;
 }
 
@@ -28,7 +29,9 @@ export class SmartStudyFoundationStack extends cdk.Stack {
   ) {
     super(scope, id, props);
 
-    const frontendOrigin = props.frontendOrigin ?? "https://example.invalid";
+    const frontendOrigins = props.frontendOrigins?.length
+      ? [...new Set(props.frontendOrigins)]
+      : [props.frontendOrigin ?? "https://example.invalid"];
     const suffix = props.environment.toLowerCase();
 
     const documentsBucket = new s3.Bucket(this, "DocumentsBucket", {
@@ -37,7 +40,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
         {
           allowedHeaders: ["content-type"],
           allowedMethods: [s3.HttpMethods.PUT],
-          allowedOrigins: [frontendOrigin],
+          allowedOrigins: frontendOrigins,
           maxAge: 900,
         },
       ],
@@ -208,7 +211,10 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       entry: path.join(__dirname, "../../backend/src/lambda.ts"),
       environment: sharedEnvironment,
       handler: "handler",
-      logRetention: logs.RetentionDays.ONE_MONTH,
+      logGroup: new logs.LogGroup(this, "ApiFunctionLogGroup", {
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+        retention: logs.RetentionDays.ONE_MONTH,
+      }),
       memorySize: 1024,
       runtime: lambda.Runtime.NODEJS_22_X,
       timeout: cdk.Duration.seconds(29),
@@ -240,7 +246,10 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       entry: path.join(__dirname, "../../backend/src/document-ingestion-lambda.ts"),
       environment: sharedEnvironment,
       handler: "handler",
-      logRetention: logs.RetentionDays.ONE_MONTH,
+      logGroup: new logs.LogGroup(this, "DocumentIngestionFunctionLogGroup", {
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+        retention: logs.RetentionDays.ONE_MONTH,
+      }),
       memorySize: 2048,
       runtime: lambda.Runtime.NODEJS_22_X,
       timeout: cdk.Duration.minutes(15),
@@ -301,7 +310,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       corsPreflight: {
         allowHeaders: ["authorization", "content-type"],
         allowMethods: [apigatewayv2.CorsHttpMethod.ANY],
-        allowOrigins: [frontendOrigin],
+        allowOrigins: frontendOrigins,
         maxAge: cdk.Duration.minutes(10),
       },
     });
