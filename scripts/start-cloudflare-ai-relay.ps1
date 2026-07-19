@@ -12,8 +12,17 @@ if ($existingAgent) {
   exit 0
 }
 
-if (-not (Get-NetTCPConnection -State Listen -LocalPort 11434 -ErrorAction SilentlyContinue)) {
-  throw "Ollama is not running on port 11434. Start Ollama before this script."
+$upstreamUrl = if ([string]::IsNullOrWhiteSpace($env:LOCAL_AI_UPSTREAM_URL)) {
+  "http://127.0.0.1:8081"
+} else {
+  $env:LOCAL_AI_UPSTREAM_URL.TrimEnd("/")
+}
+
+try {
+  $health = Invoke-RestMethod -Uri "$upstreamUrl/health" -TimeoutSec 10
+  if ($health.status -ne "ok") { throw "Unexpected health response." }
+} catch {
+  throw "Local AI upstream is not healthy at $upstreamUrl. Start the CUDA llama.cpp service first."
 }
 
 $agentKey = & $aws ssm get-parameter `
@@ -30,6 +39,6 @@ if ([string]::IsNullOrWhiteSpace($agentKey)) {
 
 $env:CLOUDFLARE_RELAY_URL = $relayUrl
 $env:CLOUDFLARE_RELAY_AGENT_KEY = $agentKey
-$env:OLLAMA_URL = "http://127.0.0.1:11434"
+$env:LOCAL_AI_UPSTREAM_URL = $upstreamUrl
 
 node $agentScript

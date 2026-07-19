@@ -29,29 +29,25 @@ setup('authenticate — login once and save session', async ({ page }) => {
   await expect(page).toHaveTitle(/SmartStudy/i, { timeout: 15_000 });
 
   // Open login modal — click "Đăng nhập" in the header
-  await page.getByRole('button', { name: /đăng nhập/i }).first().click();
+  await page.getByTestId('auth-login-open').click();
 
   // Wait for modal to appear
-  await expect(page.getByRole('heading', { name: /đăng nhập/i })).toBeVisible();
+  await expect(page.getByTestId('auth-submit')).toBeVisible();
 
   // The default account is isolated per run, so an old account with a changed
   // password cannot make the whole E2E suite fail before it starts. Explicit
   // QA_EMAIL/QA_PASSWORD values keep the normal login path.
   if (!hasConfiguredCredentials) {
-    await page.getByRole('button', { name: /đăng ký ngay/i }).click();
-    await page.locator('input').first().fill('Playwright E2E');
+    await page.getByTestId('auth-mode-switch').click();
+    await page.getByTestId('auth-full-name-input').fill('Playwright E2E');
   }
 
   // Fill credentials
-  await page.getByLabel(/địa chỉ email/i).fill(QA_EMAIL);
-  await page.getByLabel(/mật khẩu/i).fill(QA_PASSWORD);
+  await page.getByTestId('auth-email-input').fill(QA_EMAIL);
+  await page.getByTestId('auth-password-input').fill(QA_PASSWORD);
 
   // Submit
-  await page
-    .getByRole('button', {
-      name: hasConfiguredCredentials ? /đăng nhập ngay/i : /hoàn tất đăng ký/i,
-    })
-    .click();
+  await page.getByTestId('auth-submit').click();
 
   // Wait for redirect to dashboard
   await page.waitForURL(/dashboard/, { timeout: 20_000 });

@@ -1,4 +1,4 @@
-import { getDocument } from "pdfjs-dist-legacy/legacy/build/pdf.js";
+import { getDocument } from "pdfjs-dist-legacy/legacy/build/pdf.mjs";
 
 import type {
   ExtractedPdfDocument,
@@ -65,7 +65,7 @@ export class PdfParseTextExtractor implements IPdfTextExtractor {
 async function extractWithPdfJs(pdf: Uint8Array): Promise<ExtractedPdfDocument> {
   // pdf.js rejects Buffer (a Uint8Array subclass); copy into a plain Uint8Array.
   const data = new Uint8Array(pdf);
-  const document = await getDocument({ data }).promise;
+  const document = await getDocument({ data, verbosity: 0 }).promise;
 
   try {
     const pages = await Promise.all(

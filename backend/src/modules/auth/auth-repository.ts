@@ -44,7 +44,9 @@ export interface IAuthRepository {
   createUser(input: CreateAuthUserInput): Promise<AuthUserRecord>;
   findRefreshToken(tokenHash: string): Promise<RefreshTokenRecord | null>;
   findUserByEmail(email: string): Promise<AuthUserRecord | null>;
+  findUserById(userId: string): Promise<AuthUserRecord | null>;
   revokeRefreshToken(tokenHash: string, revokedAt: Date): Promise<void>;
   rotateRefreshToken(input: RotateRefreshTokenInput): Promise<boolean>;
   saveRefreshToken(input: SaveRefreshTokenInput): Promise<void>;
+  updateUserFullName(userId: string, fullName: string): Promise<AuthUserRecord | null>;
 }

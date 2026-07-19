@@ -41,3 +41,7 @@ export type {
   VectorSearchQuery,
   VectorSearchResult,
 } from "./vector-store.js";
+export type {
+  IUserProfileProvider,
+  UpdateUserProfileInput,
+} from "./user-profile-provider.js";

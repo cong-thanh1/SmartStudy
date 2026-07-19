@@ -170,7 +170,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
       EMBEDDING_PROVIDER: "none",
       LLAMA_CPP_API_KEY_PARAMETER: `/smartstudy/${suffix}/local-ai-gateway-key`,
       LLAMA_CPP_BASE_URL: props.localAiBaseUrl ?? "https://example.invalid",
-      LLAMA_CPP_MODEL: "qwen2.5:3b",
+      LLAMA_CPP_MODEL: "qwen2.5:7b",
       LLAMA_CPP_TIMEOUT_MILLISECONDS: "120000",
       LLM_PROVIDER: "llama-cpp",
       AUTH_PROVIDER: "cognito",
@@ -189,7 +189,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
         commandHooks: {
           afterBundling(inputDir: string, outputDir: string) {
             return [
-              `node -e "require('node:fs').copyFileSync(process.argv[1],process.argv[2])" "${path.join(inputDir, "node_modules/pdfjs-dist-legacy/legacy/build/pdf.worker.js")}" "${path.join(outputDir, "pdf.worker.js")}"`,
+              `node -e "require('node:fs').copyFileSync(process.argv[1],process.argv[2])" "${path.join(inputDir, "node_modules/pdfjs-dist-legacy/legacy/build/pdf.worker.mjs")}" "${path.join(outputDir, "pdf.worker.mjs")}"`,
             ];
           },
           beforeBundling() {
@@ -224,7 +224,7 @@ export class SmartStudyFoundationStack extends cdk.Stack {
         commandHooks: {
           afterBundling(inputDir: string, outputDir: string) {
             return [
-              `node -e "require('node:fs').copyFileSync(process.argv[1],process.argv[2])" "${path.join(inputDir, "node_modules/pdfjs-dist-legacy/legacy/build/pdf.worker.js")}" "${path.join(outputDir, "pdf.worker.js")}"`,
+              `node -e "require('node:fs').copyFileSync(process.argv[1],process.argv[2])" "${path.join(inputDir, "node_modules/pdfjs-dist-legacy/legacy/build/pdf.worker.mjs")}" "${path.join(outputDir, "pdf.worker.mjs")}"`,
             ];
           },
           beforeBundling() {
@@ -297,7 +297,13 @@ export class SmartStudyFoundationStack extends cdk.Stack {
     documentQueue.grantSendMessages(apiFunction);
     ingestionFunction.addToRolePolicy(new iam.PolicyStatement({ actions: ["ssm:GetParameter"], resources: [`arn:${cdk.Aws.PARTITION}:ssm:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:parameter/smartstudy/${suffix}/local-ai-gateway-key`] }));
     apiFunction.addToRolePolicy(new iam.PolicyStatement({
-      actions: ["cognito-idp:InitiateAuth", "cognito-idp:RevokeToken", "cognito-idp:SignUp"],
+      actions: [
+        "cognito-idp:AdminGetUser",
+        "cognito-idp:AdminUpdateUserAttributes",
+        "cognito-idp:InitiateAuth",
+        "cognito-idp:RevokeToken",
+        "cognito-idp:SignUp",
+      ],
       resources: [userPool.userPoolArn],
     }));
     apiFunction.addToRolePolicy(new iam.PolicyStatement({

@@ -89,7 +89,7 @@ test.describe('AI local — Chat RAG và Tutor', () => {
     expect(body.assistantMessage.citations.every((citation) => citation.documentId === docId)).toBe(true);
     expect(body.assistantMessage.citations.some((citation) => /RAG|retriev|embedding/i.test(citation.snippet))).toBe(true);
 
-    await expect(page.getByTestId('chat-assistant-message')).toBeVisible();
+    await expect(page.getByTestId('chat-assistant-message').last()).toBeVisible();
     await expect(page.getByTestId('chat-citation').first()).toBeVisible();
   });
 
@@ -109,7 +109,7 @@ test.describe('AI local — Chat RAG và Tutor', () => {
     expect(body.assistantMessage.content.trim()).not.toBe('');
     expect(body.assistantMessage.citations.length).toBeGreaterThan(0);
     expect(body.assistantMessage.citations.every((citation) => citation.documentId === docId)).toBe(true);
-    await expect(page.getByTestId('chat-assistant-message')).toBeVisible();
+    await expect(page.getByTestId('chat-assistant-message').last()).toBeVisible();
   });
 
   test('TC3.3 — không gửi API khi câu hỏi rỗng hoặc chỉ có khoảng trắng', async ({ page }) => {
@@ -126,7 +126,16 @@ test.describe('AI local — Chat RAG và Tutor', () => {
 
   test('TC3.4 — giữ được hội thoại nhiều lượt trong cùng conversation', async ({ page }) => {
     const docId = await ensureReadyDocument(page);
+    const historyResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/messages') &&
+        response.request().method() === 'GET',
+    );
     await page.goto(`/learning-space?docId=${docId}`);
+    await historyResponse;
+    await expect(page.getByTestId('chat-input')).toBeVisible();
+    const userMessagesBefore = await page.getByTestId('chat-user-message').count();
+    const assistantMessagesBefore = await page.getByTestId('chat-assistant-message').count();
     for (const question of [
       'What does RAG retrieve before generating an answer?',
       'Why are citations useful for that process?',
@@ -139,8 +148,8 @@ test.describe('AI local — Chat RAG và Tutor', () => {
       await page.getByTestId('chat-send-button').click();
       expect((await response).status()).toBe(201);
     }
-    await expect(page.getByTestId('chat-user-message')).toHaveCount(2);
-    await expect(page.getByTestId('chat-assistant-message')).toHaveCount(2);
+    await expect(page.getByTestId('chat-user-message')).toHaveCount(userMessagesBefore + 2);
+    await expect(page.getByTestId('chat-assistant-message')).toHaveCount(assistantMessagesBefore + 2);
   });
 
   test('TC8.1 — Tutor giải thích khái niệm trong tài liệu đã chọn', async ({ page }) => {
