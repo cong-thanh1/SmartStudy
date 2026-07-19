@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Award, Sparkles, RefreshCw, BookOpen } from 'lucide-react';
+import { ArrowClockwise as RefreshCw, ArrowLeft, BookOpen, Medal as Award, Sparkle as Sparkles } from '@phosphor-icons/react';
 import { Button, Card, AiFeedbackCard } from '../components';
 import { GradingResult, ExamQuestion, ExamAttempt } from '../types';
 

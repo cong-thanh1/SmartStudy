@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { BookOpen, ExternalLink } from 'lucide-react';
+import { ArrowSquareOut as ExternalLink, BookOpen } from '@phosphor-icons/react';
 import { Citation } from '../../types';
 
 export interface CitationBadgeProps {

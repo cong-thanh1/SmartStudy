@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  AlertTriangle,
-  FileQuestion,
+  WarningCircle as AlertTriangle,
+  FileText as FileQuestion,
   Clock,
   CheckSquare,
-  Sparkles,
+  Sparkle as Sparkles,
   BookOpen,
-  Award,
+  Medal as Award,
   ArrowLeft,
-  Send,
-  UploadCloud,
-} from 'lucide-react';
+  PaperPlaneTilt as Send,
+  UploadSimple as UploadCloud,
+} from '@phosphor-icons/react';
 import { Button, Card, LoadingSpinner } from '../components';
 import { documentService, quizService, examService, jobService } from '../services';
 import { Document, Exam, Quiz } from '../types';

@@ -11,14 +11,14 @@ export const Card: React.FC<CardProps> = ({ children, className, variant = 'defa
   const variantStyles = {
     default: 'border border-rule bg-surface text-ink shadow-[var(--shadow-whisper)]',
     glass: 'glass-panel',
-    interactive: 'group cursor-pointer border border-rule bg-surface text-ink hover:border-rule-strong hover:bg-paper-2 focus-within:border-accent',
+    interactive: 'group cursor-pointer border border-rule bg-surface text-ink shadow-[var(--shadow-whisper)] hover:-translate-y-1 hover:border-accent/35 hover:shadow-[var(--shadow-float)] focus-within:border-accent',
     outline: 'border border-rule-strong bg-transparent text-ink hover:bg-paper-2',
     'ai-glow': 'border border-accent bg-surface text-ink',
   };
   const paddingStyles = { none: 'p-0', sm: 'p-4', md: 'p-6', lg: 'p-8' };
 
   return (
-    <div className={twMerge(clsx('relative overflow-hidden rounded-xl transition-[background-color,border-color,transform] duration-150 ease-[var(--ease-out)]', variantStyles[variant], paddingStyles[padding], className))} {...props}>
+    <div className={twMerge(clsx('relative overflow-hidden rounded-[var(--radius-card)] transition-[background-color,border-color,transform,box-shadow] duration-300 ease-[var(--ease-out)]', variantStyles[variant], paddingStyles[padding], className))} {...props}>
       {children}
     </div>
   );

@@ -23,15 +23,15 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseStyles = 'hm-affordance inline-flex items-center justify-center rounded-lg font-semibold leading-none transition-[background-color,color,transform,border-color] duration-150 ease-[var(--ease-out)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-focus focus-visible:outline-offset-3 disabled:cursor-not-allowed disabled:opacity-50 active:translate-y-px';
+  const baseStyles = 'hm-affordance inline-flex items-center justify-center rounded-[var(--radius-control)] font-semibold leading-none tracking-[-0.01em] transition-[background-color,color,transform,border-color,box-shadow] duration-200 ease-[var(--ease-out)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-focus focus-visible:outline-offset-3 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]';
 
   const variantStyles = {
-    primary: 'border border-ink bg-ink text-paper hover:bg-ink-2',
-    secondary: 'border border-signal bg-signal-soft text-signal-ink hover:bg-paper-2',
-    ai: 'border border-accent bg-accent text-accent-ink hover:bg-ink',
-    outline: 'border border-rule-strong bg-surface text-ink hover:bg-paper-2',
+    primary: 'border border-ink bg-ink text-paper shadow-[0_10px_30px_-18px_rgb(24_26_24/0.8)] hover:-translate-y-0.5 hover:bg-ink-2',
+    secondary: 'border border-accent/25 bg-accent-soft text-signal-ink hover:border-accent/45 hover:bg-surface',
+    ai: 'border border-accent bg-accent text-accent-ink shadow-[0_12px_32px_-20px_rgb(49_89_216/0.9)] hover:-translate-y-0.5 hover:bg-ink',
+    outline: 'border border-rule-strong bg-surface/80 text-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.8)] hover:border-ink hover:bg-surface',
     ghost: 'border border-transparent bg-transparent text-muted hover:bg-paper-2 hover:text-ink',
-    danger: 'border border-error bg-error text-paper hover:bg-ink',
+    danger: 'border border-error bg-error text-paper hover:-translate-y-0.5 hover:bg-ink',
   };
 
   const stateStyles = {
