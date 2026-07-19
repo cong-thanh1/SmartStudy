@@ -1,8 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, BookOpenText, BrainCircuit, Check, ClipboardCheck, FileText, Lock, Mail, MessageCircleMore, ShieldCheck } from 'lucide-react';
-import { Button, Modal, Input } from '../components';
+import {
+  ArrowRight,
+  BookOpenText,
+  Brain,
+  Check,
+  ClipboardText,
+  FileText,
+  Lock,
+  EnvelopeSimple,
+  Quotes,
+  ShieldCheck,
+} from '@phosphor-icons/react';
+import { Button, Input, Modal } from '../components';
 import { authService } from '../services';
+
+const workflow = [
+  { index: '01', title: 'Đưa tài liệu vào', body: 'Tải giáo trình hoặc bài đọc. SmartStudy giữ nguyên ngữ cảnh của từng phiên học.', icon: FileText },
+  { index: '02', title: 'Hỏi đến khi hiểu', body: 'Mỗi câu trả lời đi cùng trích dẫn để bạn kiểm tra lại đúng đoạn nguồn.', icon: Quotes },
+  { index: '03', title: 'Luyện để nhớ', body: 'Tạo câu hỏi từ chính nội dung vừa đọc và quay lại phần kiến thức còn yếu.', icon: ClipboardText },
+];
 
 export const WelcomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,101 +37,132 @@ export const WelcomePage: React.FC = () => {
     setIsAuthModalOpen(true);
   };
 
-  const handleAuthSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAuthSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setIsLoading(true);
     setError('');
     try {
       if (authMode === 'login') await authService.login(email, password);
       else await authService.register(email, password, name);
       navigate('/dashboard');
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
-      const serverMsg = axiosErr?.response?.data?.error?.message;
-      if (authMode === 'register' && serverMsg?.includes('12')) setError('Mật khẩu cần có ít nhất 12 ký tự.');
-      else if (serverMsg?.includes('already')) setError('Email này đã được đăng ký. Hãy đăng nhập hoặc dùng email khác.');
-      else setError(serverMsg || (authMode === 'login' ? 'Email hoặc mật khẩu chưa đúng.' : 'Chưa thể tạo tài khoản. Vui lòng thử lại.'));
+    } catch (caught: unknown) {
+      const axiosError = caught as { response?: { data?: { error?: { message?: string } } } };
+      const serverMessage = axiosError?.response?.data?.error?.message;
+      if (authMode === 'register' && serverMessage?.includes('12')) setError('Mật khẩu cần có ít nhất 12 ký tự.');
+      else if (serverMessage?.includes('already')) setError('Email này đã được đăng ký. Hãy đăng nhập hoặc dùng email khác.');
+      else setError(serverMessage || (authMode === 'login' ? 'Email hoặc mật khẩu chưa đúng.' : 'Chưa thể tạo tài khoản. Vui lòng thử lại.'));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-dvh bg-paper text-ink">
-      <header className="hm-shell flex h-20 items-center justify-between border-b border-rule">
-        <button type="button" onClick={() => navigate('/welcome')} className="flex items-center gap-3" aria-label="Trang chủ SmartStudy">
-          <span className="grid h-10 w-10 place-items-center rounded-lg border border-ink bg-ink text-paper"><BookOpenText size={18} /></span>
-          <span className="font-display text-lg font-bold tracking-[-0.03em]">SmartStudy</span>
+    <div className="min-h-[100dvh] bg-paper text-ink">
+      <header className="dt-shell flex h-20 items-center justify-between border-b border-rule">
+        <button type="button" onClick={() => navigate('/welcome')} className="group flex items-center gap-3" aria-label="Trang chủ SmartStudy">
+          <span className="grid h-10 w-10 place-items-center rounded-[0.7rem] border border-ink bg-ink text-paper transition-transform duration-300 group-hover:-rotate-3">
+            <BookOpenText size={19} weight="duotone" />
+          </span>
+          <span>
+            <span className="block text-left font-display text-lg font-semibold tracking-[-0.04em]">SmartStudy</span>
+            <span className="block text-left font-mono text-[8px] uppercase tracking-[0.16em] text-muted">learning signal</span>
+          </span>
         </button>
-        <button data-testid="auth-login-open" onClick={() => openAuth('login')} className="hm-affordance border-b border-ink px-1 text-sm font-semibold text-ink transition-colors duration-150 hover:border-accent hover:text-accent">Đăng nhập</button>
+        <div className="flex items-center gap-3">
+          <span className="hidden items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted sm:flex"><span className="dt-status-pulse" /> System ready</span>
+          <button data-testid="auth-login-open" onClick={() => openAuth('login')} className="hm-affordance rounded-[var(--radius-control)] border border-rule-strong bg-surface px-4 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-ink">Đăng nhập</button>
+        </div>
       </header>
 
       <main>
-        <section className="hm-shell grid min-h-[calc(82dvh-5rem)] content-end border-b border-rule pb-12 pt-20 sm:pb-16 lg:pb-20">
-          <h1 className="max-w-[12ch] [font-size:var(--text-display)] leading-[0.96] tracking-[-0.055em]">
-            Tài liệu vào.<br />Kiến thức ở lại.
-          </h1>
-          <div className="mt-8 flex flex-col gap-3 border-t border-rule pt-5 font-mono text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-            <span>01 · đọc &nbsp; 02 · hiểu &nbsp; 03 · luyện</span>
-            <span>SmartStudy / study workflow</span>
+        <section className="dt-shell grid min-h-[calc(100dvh-5rem)] grid-cols-1 content-center gap-12 py-16 md:grid-cols-[minmax(0,1.25fr)_minmax(18rem,0.75fr)] md:gap-8 lg:py-24">
+          <div className="page-enter md:pr-[7vw]">
+            <p className="dt-rule-label">PDF → hiểu → nhớ</p>
+            <h1 className="mt-8 max-w-[10ch] text-[clamp(3.1rem,7vw,6.7rem)] leading-[0.88] tracking-[-0.075em]">
+              Học sâu hơn từ tài liệu đang có.
+            </h1>
+            <p className="mt-8 max-w-[58ch] text-base leading-7 text-muted sm:text-lg sm:leading-8">
+              Một không gian đọc, hỏi và luyện tập được nối với chính giáo trình của bạn. Không đoán nguồn. Không mất mạch học.
+            </p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Button data-testid="auth-register-open" size="lg" onClick={() => openAuth('register')} rightIcon={<ArrowRight size={18} weight="bold" />}>Bắt đầu với một PDF</Button>
+              <Button variant="ghost" size="lg" onClick={() => document.getElementById('workflow')?.scrollIntoView({ behavior: 'smooth' })}>Xem cách hoạt động</Button>
+            </div>
+          </div>
+
+          <div className="reveal-cascade relative self-center md:translate-y-12" style={{ '--reveal-index': 2 } as React.CSSProperties}>
+            <div className="dt-panel overflow-hidden p-4 sm:p-5">
+              <div className="flex items-center justify-between border-b border-rule pb-4">
+                <div className="flex items-center gap-2"><span className="dt-status-pulse" /><span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Live study trace</span></div>
+                <span className="font-mono text-[10px] text-muted">12:42</span>
+              </div>
+              <div className="py-6">
+                <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">Kinh tế vi mô / chương 03</p>
+                <p className="mt-3 text-lg font-semibold leading-6 tracking-[-0.03em]">Độ co giãn của cầu phản ứng thế nào khi giá thay đổi?</p>
+                <div className="mt-6 border-l-2 border-accent pl-4">
+                  <p className="text-sm leading-6 text-muted">Lượng cầu thay đổi mạnh hơn tỷ lệ thay đổi của giá khi cầu co giãn.</p>
+                  <p className="mt-3 font-mono text-[10px] text-accent">Nguồn · trang 42–43</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-xl bg-ink px-4 py-3 text-paper">
+                <div><p className="font-mono text-[9px] uppercase tracking-[0.12em] text-paper/45">Recall prompt</p><p className="mt-1 text-sm">Giải thích bằng ví dụ của bạn</p></div>
+                <Brain size={24} weight="duotone" className="text-paper/70" />
+              </div>
+            </div>
+            <div className="absolute -bottom-5 -left-4 hidden rounded-xl border border-rule bg-accent-soft px-4 py-3 shadow-[var(--shadow-float)] sm:block md:-left-8">
+              <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-accent">Session</p>
+              <p className="mt-1 text-sm font-semibold">8 ý đã nắm · 2 cần ôn</p>
+            </div>
           </div>
         </section>
 
-        <section className="hm-shell py-16 sm:py-24" aria-labelledby="workflow-title">
-          <div className="grid gap-8 border-b border-rule pb-12 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] lg:items-end">
-            <h2 id="workflow-title" className="max-w-[15ch] text-3xl sm:text-5xl">Một phiên học, ba bước rõ ràng.</h2>
-            <p className="max-w-[62ch] text-base leading-7 text-muted lg:justify-self-end">Tải giáo trình hoặc bài đọc lên. SmartStudy giữ mọi câu hỏi, bản tóm tắt và bài luyện gắn với chính tài liệu đó để bạn luôn biết thông tin đến từ đâu.</p>
+        <div className="dt-ticker border-y border-ink bg-ink py-3 text-paper">
+          <div className="dt-ticker-track font-mono text-[10px] uppercase tracking-[0.14em] text-paper/60">
+            {[0, 1].map((copy) => <div key={copy} className="flex shrink-0 gap-12 pr-12"><span>Trích dẫn có nguồn</span><span>Tóm tắt theo chương</span><span>Luyện tập theo tài liệu</span><span>Phản hồi ngay sau câu sai</span></div>)}
           </div>
+        </div>
 
+        <section id="workflow" className="dt-shell py-20 sm:py-28" aria-labelledby="workflow-title">
+          <div className="grid gap-8 border-b border-rule pb-12 md:grid-cols-[0.65fr_1.35fr] md:items-end">
+            <p className="dt-rule-label">Một phiên học rõ ràng</p>
+            <h2 id="workflow-title" className="max-w-[16ch] text-4xl sm:text-6xl">Không thêm công cụ. Chỉ bớt ma sát.</h2>
+          </div>
           <ol className="divide-y divide-rule">
-            <li className="grid gap-8 py-14 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-start">
-              <div><span className="hm-data block text-sm text-accent">1.0 / ĐỌC</span><h3 className="mt-5 text-2xl sm:text-3xl">Đặt tài liệu vào đúng chỗ.</h3><p className="mt-4 max-w-[48ch] leading-7 text-muted">Thư viện giữ giáo trình, bài giảng và tài liệu ôn tập theo trạng thái xử lý. Mở lại đúng nội dung mà không phải thiết lập lại phiên học.</p></div>
-              <div className="grid min-w-0 gap-4 rounded-xl border border-rule bg-surface p-5">
-                <div className="flex items-center gap-4"><FileText className="text-accent" /><div><p className="font-semibold">Kinh tế vi mô · Chương 3</p><p className="mt-1 text-sm text-muted">PDF · đã sẵn sàng để học</p></div></div>
-                <div className="flex flex-wrap gap-2 border-t border-rule pt-4 text-sm"><span className="rounded-full bg-accent-soft px-3 py-1 text-accent">Đọc</span><span className="rounded-full bg-paper-2 px-3 py-1 text-muted">Tóm tắt</span><span className="rounded-full bg-paper-2 px-3 py-1 text-muted">Luyện tập</span></div>
-              </div>
-            </li>
-
-            <li className="grid gap-8 py-14 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-start">
-              <div><span className="hm-data block text-sm text-accent">2.0 / HIỂU</span><h3 className="mt-5 text-2xl sm:text-3xl">Hỏi ngay tại phần còn vướng.</h3><p className="mt-4 max-w-[48ch] leading-7 text-muted">Câu trả lời đi kèm trích dẫn để bạn kiểm tra lại đoạn liên quan. Bản tóm tắt giữ ý chính trong một mạch đọc ngắn.</p></div>
-              <div className="space-y-4 rounded-xl border border-rule bg-surface p-5">
-                <div className="flex gap-3"><MessageCircleMore className="mt-1 shrink-0 text-accent" size={18} /><p className="text-sm leading-6 text-ink-2">“Giải thích độ co giãn của cầu bằng một ví dụ dễ kiểm tra.”</p></div>
-                <div className="border-l border-accent pl-4"><p className="text-sm leading-6 text-muted">Khi giá thay đổi ít nhưng lượng cầu thay đổi mạnh, cầu được xem là co giãn.</p><p className="mt-2 font-mono text-xs text-accent">Nguồn · Chương 3, mục 3.2</p></div>
-              </div>
-            </li>
-
-            <li className="grid gap-8 py-14 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-start">
-              <div><span className="hm-data block text-sm text-accent">3.0 / LUYỆN</span><h3 className="mt-5 text-2xl sm:text-3xl">Kiểm tra phần vừa học.</h3><p className="mt-4 max-w-[48ch] leading-7 text-muted">Tạo câu hỏi từ tài liệu, xem giải thích cho đáp án sai và quay lại đúng phần kiến thức cần ôn.</p></div>
-              <div className="grid gap-4 border-y border-rule py-5 sm:grid-cols-2">
-                <div className="flex items-start gap-3"><ClipboardCheck className="mt-1 shrink-0 text-signal" size={18} /><div><p className="font-semibold">Bài luyện theo tài liệu</p><p className="mt-1 text-sm leading-6 text-muted">Chọn số câu và mức độ trước khi bắt đầu.</p></div></div>
-                <div className="flex items-start gap-3"><BrainCircuit className="mt-1 shrink-0 text-accent" size={18} /><div><p className="font-semibold">Giải thích sau mỗi lượt</p><p className="mt-1 text-sm leading-6 text-muted">Biết vì sao sai và nên đọc lại ở đâu.</p></div></div>
-              </div>
-            </li>
+            {workflow.map(({ index, title, body, icon: Icon }, itemIndex) => (
+              <li key={index} className="reveal-cascade grid gap-6 py-10 md:grid-cols-[5rem_0.8fr_1.2fr_auto] md:items-center" style={{ '--reveal-index': itemIndex } as React.CSSProperties}>
+                <span className="font-mono text-xs text-accent">{index}</span>
+                <Icon size={28} weight="duotone" className="text-ink" />
+                <div><h3 className="text-2xl sm:text-3xl">{title}</h3><p className="mt-3 max-w-[54ch] text-sm leading-6 text-muted">{body}</p></div>
+                <ArrowRight size={19} className="hidden text-rule-strong md:block" />
+              </li>
+            ))}
           </ol>
+        </section>
 
-          <div className="grid gap-8 pt-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-            <div><p className="text-lg font-semibold">Bắt đầu với tài liệu bạn đang cần học.</p><div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted"><span className="flex items-center gap-2"><Check size={15} className="text-accent" /> Không cần thiết lập phức tạp</span><span className="flex items-center gap-2"><ShieldCheck size={15} className="text-accent" /> Dữ liệu của từng người học được tách biệt</span></div></div>
-            <Button data-testid="auth-register-open" size="lg" onClick={() => openAuth('register')} rightIcon={<ArrowRight size={18} />}>Tạo tài khoản</Button>
+        <section className="bg-accent-soft">
+          <div className="dt-shell grid gap-10 py-16 md:grid-cols-[1.2fr_0.8fr] md:items-center sm:py-20">
+            <div><p className="dt-kicker">Bắt đầu từ nội dung thật</p><h2 className="mt-4 max-w-[15ch] text-4xl sm:text-5xl">Mang tài liệu khó nhất của bạn vào.</h2></div>
+            <div className="md:justify-self-end"><Button size="lg" onClick={() => openAuth('register')} rightIcon={<ArrowRight size={18} weight="bold" />}>Tạo không gian học</Button><div className="mt-4 flex flex-col gap-2 text-xs text-muted sm:flex-row sm:gap-5"><span className="flex items-center gap-2"><Check size={14} weight="bold" className="text-accent" />Thiết lập trong vài phút</span><span className="flex items-center gap-2"><ShieldCheck size={15} weight="duotone" className="text-accent" />Dữ liệu được tách biệt</span></div></div>
           </div>
         </section>
       </main>
 
       <footer className="bg-ink text-paper">
-        <div className="hm-shell py-14 sm:py-20">
-          <p className="max-w-[28ch] font-display text-3xl font-bold leading-tight tracking-[-0.035em] sm:text-5xl">Một tài liệu tốt xứng đáng với một phiên học tập trung.</p>
-          <div className="mt-12 flex flex-col gap-3 border-t border-ink-2 pt-5 text-sm text-paper/70 sm:flex-row sm:items-center sm:justify-between"><span className="font-semibold text-paper">SmartStudy</span><span>© 2026 · Học từ chính tài liệu của bạn.</span></div>
+        <div className="dt-shell grid gap-10 py-12 sm:grid-cols-[1fr_auto] sm:items-end">
+          <div><p className="font-display text-2xl font-semibold tracking-[-0.04em]">SmartStudy</p><p className="mt-2 max-w-md text-sm text-paper/45">Đọc từ nguồn. Hiểu bằng câu hỏi. Nhớ qua luyện tập.</p></div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-paper/35">© 2026 · Learning signal desk</p>
         </div>
       </footer>
 
-      <Modal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} title={authMode === 'login' ? 'Chào mừng bạn trở lại' : 'Tạo tài khoản SmartStudy'} size="sm">
+      <Modal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} title={authMode === 'login' ? 'Tiếp tục phiên học' : 'Tạo không gian SmartStudy'} size="sm">
         <form onSubmit={handleAuthSubmit} className="space-y-4">
-          <p className="-mt-1 mb-5 text-sm leading-relaxed text-[var(--color-muted)]">{authMode === 'login' ? 'Tiếp tục buổi học còn dang dở của bạn.' : 'Bắt đầu xây dựng thư viện học tập của riêng bạn.'}</p>
-          {authMode === 'register' && <Input data-testid="auth-full-name-input" label="Tên của bạn" placeholder="Ví dụ: Minh Anh" value={name} onChange={(e) => setName(e.target.value)} required />}
-          <Input data-testid="auth-email-input" label="Email" type="email" placeholder="ban@example.com" leftIcon={<Mail size={16} />} value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Input data-testid="auth-password-input" label={authMode === 'register' ? 'Mật khẩu (ít nhất 12 ký tự)' : 'Mật khẩu'} type="password" placeholder="Nhập mật khẩu" leftIcon={<Lock size={16} />} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={authMode === 'register' ? 12 : 1} />
-          {error && <div data-testid="auth-error" className="rounded-lg bg-error-soft p-3 text-sm font-semibold text-error">{error}</div>}
+          <p className="-mt-1 mb-5 text-sm leading-relaxed text-muted">{authMode === 'login' ? 'Mở lại tài liệu và tiến độ gần nhất của bạn.' : 'Bắt đầu xây thư viện học tập từ tài liệu của riêng bạn.'}</p>
+          {authMode === 'register' && <Input data-testid="auth-full-name-input" label="Tên của bạn" placeholder="Ví dụ: Minh Anh" value={name} onChange={(event) => setName(event.target.value)} required />}
+          <Input data-testid="auth-email-input" label="Email" type="email" placeholder="ban@example.com" leftIcon={<EnvelopeSimple size={17} />} value={email} onChange={(event) => setEmail(event.target.value)} required />
+          <Input data-testid="auth-password-input" label={authMode === 'register' ? 'Mật khẩu (ít nhất 12 ký tự)' : 'Mật khẩu'} type="password" placeholder="Nhập mật khẩu" leftIcon={<Lock size={17} />} value={password} onChange={(event) => setPassword(event.target.value)} required minLength={authMode === 'register' ? 12 : 1} />
+          {error && <div data-testid="auth-error" className="rounded-xl border border-error/15 bg-error-soft p-3 text-sm font-semibold text-error">{error}</div>}
           <Button data-testid="auth-submit" type="submit" size="lg" className="mt-2 w-full" isLoading={isLoading}>{authMode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}</Button>
-          <div className="pt-2 text-center text-sm text-muted">{authMode === 'login' ? 'Chưa có tài khoản? ' : 'Đã có tài khoản? '}<button data-testid="auth-mode-switch" type="button" onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setError(''); }} className="hm-affordance font-semibold text-accent underline decoration-rule-strong underline-offset-4 hover:decoration-accent">{authMode === 'login' ? 'Đăng ký' : 'Đăng nhập'}</button></div>
+          <div className="pt-2 text-center text-sm text-muted">{authMode === 'login' ? 'Chưa có tài khoản? ' : 'Đã có tài khoản? '}<button data-testid="auth-mode-switch" type="button" onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setError(''); }} className="hm-affordance font-semibold text-accent underline decoration-accent/35 underline-offset-4 hover:decoration-accent">{authMode === 'login' ? 'Đăng ký' : 'Đăng nhập'}</button></div>
         </form>
       </Modal>
     </div>

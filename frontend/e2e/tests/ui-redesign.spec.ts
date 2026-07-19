@@ -79,7 +79,7 @@ async function expectResponsivePage(page: Page): Promise<void> {
 
 test('landing and authentication modal remain responsive', async ({ page }) => {
   await page.goto('/welcome');
-  await expect(page.getByRole('heading', { level: 1, name: 'Tài liệu vào. Kiến thức ở lại.' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Học sâu hơn từ tài liệu đang có.' })).toBeVisible();
   await expectResponsivePage(page);
 
   await page.getByTestId('auth-login-open').click();
