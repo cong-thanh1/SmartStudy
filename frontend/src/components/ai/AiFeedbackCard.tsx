@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, XCircle, Lightbulb, ArrowRight, RotateCcw } from 'lucide-react';
+import { ArrowCounterClockwise as RotateCcw, ArrowRight, CheckCircle as CheckCircle2, Lightbulb, XCircle } from '@phosphor-icons/react';
 import { GradingResult, ExamQuestion } from '../../types';
 import { Card, Badge, Button } from '../common';
 import { clsx } from 'clsx';

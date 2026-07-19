@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X } from '@phosphor-icons/react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -57,14 +57,14 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         className={twMerge(
           clsx(
-            'w-full overflow-hidden rounded-xl border border-rule bg-surface shadow-[var(--shadow-whisper)]',
+            'w-full overflow-hidden rounded-[var(--radius-panel)] border border-white/70 bg-surface shadow-[var(--shadow-float)]',
             sizeStyles[size],
             className
           )
         )}
       >
         {title && (
-          <div className="flex items-center justify-between border-b border-rule bg-paper-2 px-6 py-5">
+          <div className="flex items-center justify-between border-b border-rule bg-surface px-6 py-5">
             <h3 id="modal-title" className="text-lg text-ink">{title}</h3>
             <button
               data-modal-close
@@ -72,7 +72,7 @@ export const Modal: React.FC<ModalProps> = ({
               className="grid min-h-11 min-w-11 place-items-center rounded-lg text-muted transition-colors duration-150 hover:bg-paper-3 hover:text-ink"
               aria-label="Đóng"
             >
-              <X size={20} />
+              <X size={20} weight="bold" />
             </button>
           </div>
         )}

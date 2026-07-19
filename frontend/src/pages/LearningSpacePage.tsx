@@ -1,25 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  MessageSquare,
-  Sparkles,
-  Send,
+  ChatCenteredText as MessageSquare,
+  Sparkle as Sparkles,
+  PaperPlaneTilt as Send,
   BookOpen,
   GraduationCap,
-  Layers,
-  ChevronRight,
-  RefreshCw,
-  HelpCircle,
+  Stack as Layers,
+  CaretRight as ChevronRight,
+  ArrowClockwise as RefreshCw,
+  Question as HelpCircle,
   Lightbulb,
-  FileQuestion,
-  BarChart3,
+  FileText as FileQuestion,
+  ChartBar as BarChart3,
   ArrowLeft,
   FileText,
-  MoreHorizontal,
-  PanelRightClose,
-  PanelRightOpen,
-  UploadCloud,
-} from 'lucide-react';
+  DotsThree as MoreHorizontal,
+  SidebarSimple as PanelRightClose,
+  SidebarSimple as PanelRightOpen,
+  UploadSimple as UploadCloud,
+} from '@phosphor-icons/react';
 import { Button, Card, Badge, ChatBubble, LoadingSpinner } from '../components';
 import { documentService, chatService, summaryService, tutorService } from '../services';
 import { Document, DocumentChapter, DocumentPreviewChunk, Message, Summary, Citation } from '../types';

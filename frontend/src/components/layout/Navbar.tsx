@@ -1,25 +1,15 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, MessageCircleMore } from 'lucide-react';
+import { ChatCenteredText, List } from '@phosphor-icons/react';
 
-interface NavbarProps {
-  onMenuClick: () => void;
-}
+interface NavbarProps { onMenuClick: () => void; }
 
 const pageContent = (pathname: string) => {
-  if (pathname.startsWith('/dashboard')) {
-    return { title: 'Tổng quan', subtitle: 'Tài liệu và tiến trình học tập của bạn.' };
-  }
-  if (pathname.startsWith('/learning')) {
-    return { title: 'Phòng học', subtitle: 'Đọc, hỏi và ghi lại điều quan trọng.' };
-  }
-  if (pathname.startsWith('/exam-center')) {
-    return { title: 'Luyện tập', subtitle: 'Tạo bài kiểm tra từ tài liệu đã học.' };
-  }
-  if (pathname.startsWith('/results')) {
-    return { title: 'Kết quả', subtitle: 'Xem câu trả lời và phần cần ôn lại.' };
-  }
-  return { title: 'SmartStudy', subtitle: 'Từ tài liệu đến một phiên học rõ ràng.' };
+  if (pathname.startsWith('/dashboard')) return { eyebrow: 'Library / 01', title: 'Tổng quan', subtitle: 'Tài liệu và nhịp học hôm nay.' };
+  if (pathname.startsWith('/learning')) return { eyebrow: 'Workspace / 02', title: 'Phòng học', subtitle: 'Đọc, hỏi và kiểm chứng nguồn.' };
+  if (pathname.startsWith('/exam-center')) return { eyebrow: 'Practice / 03', title: 'Luyện tập', subtitle: 'Tạo bài kiểm tra từ nội dung đã học.' };
+  if (pathname.startsWith('/results')) return { eyebrow: 'Review / 04', title: 'Kết quả', subtitle: 'Nhìn lại câu trả lời và khoảng trống kiến thức.' };
+  return { eyebrow: 'SmartStudy', title: 'Không gian học', subtitle: 'Biến tài liệu thành trí nhớ có thể kiểm tra.' };
 };
 
 export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
@@ -27,21 +17,25 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
   const content = pageContent(location.pathname);
 
   return (
-    <header className="sticky top-0 z-[var(--z-sticky)] flex h-[4.5rem] items-center justify-between border-b border-rule bg-paper px-4 sm:px-7 xl:px-12">
-      <div className="flex min-w-0 items-center gap-3">
-        <button onClick={onMenuClick} className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-rule bg-surface text-ink-2 lg:hidden" aria-label="Mở menu">
-          <Menu size={20} />
-        </button>
-        <div className="min-w-0">
-          <h1 className="truncate text-lg text-ink sm:text-xl">{content.title}</h1>
-          <p className="hidden truncate text-sm text-muted sm:block">{content.subtitle}</p>
+    <header className="sticky top-0 z-[var(--z-sticky)] border-b border-rule bg-paper/88 backdrop-blur-xl">
+      <div className="flex min-h-[4.75rem] items-center justify-between gap-4 px-4 sm:px-8 xl:px-12">
+        <div className="flex min-w-0 items-center gap-3">
+          <button onClick={onMenuClick} className="grid h-11 w-11 shrink-0 place-items-center rounded-[var(--radius-control)] border border-rule bg-surface text-ink lg:hidden" aria-label="Mở menu">
+            <List size={21} weight="bold" />
+          </button>
+          <div className="min-w-0">
+            <p className="hidden font-mono text-[9px] uppercase tracking-[0.14em] text-accent sm:block">{content.eyebrow}</p>
+            <div className="flex items-baseline gap-3">
+              <h1 className="truncate text-xl text-ink sm:text-2xl">{content.title}</h1>
+              <p className="hidden truncate text-sm text-muted xl:block">{content.subtitle}</p>
+            </div>
+          </div>
         </div>
+        <Link to="/learning" className="hm-affordance hidden items-center gap-2 rounded-[var(--radius-control)] border border-rule-strong bg-surface px-4 py-2 text-sm font-semibold text-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.8)] transition-all duration-200 hover:-translate-y-0.5 hover:border-ink sm:flex">
+          <ChatCenteredText size={17} />
+          Hỏi tài liệu
+        </Link>
       </div>
-
-      <Link to="/learning" className="hm-affordance hidden items-center gap-2 rounded-lg border border-rule-strong bg-surface px-3.5 py-2 text-sm font-semibold text-ink transition-colors duration-150 hover:bg-paper-2 sm:flex">
-        <MessageCircleMore size={16} />
-        Hỏi tài liệu
-      </Link>
     </header>
   );
 };
