@@ -202,7 +202,7 @@ test.describe('Nhóm 1 — Tải lên tài liệu PDF', () => {
         console.log(`[TC1.3] Corrupt file processing status: ${statusText}`);
         // Status should be either "Sẵn sàng" (some corrupt PDFs are partially parseable)
         // or "Lỗi" — but NOT stuck in "Đang xử lý" permanently
-        expect(['Sẵn sàng', 'Lỗi', 'Đang xử lý'].some(s => statusText?.includes(s))).toBe(true);
+        expect(['Sẵn sàng', 'Lỗi', 'Cần thử lại', 'Đang xử lý'].some(s => statusText?.includes(s))).toBe(true);
       }
     } else {
       // Upload was rejected upfront — check for error message in modal or toast

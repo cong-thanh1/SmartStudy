@@ -79,6 +79,7 @@ const app = createApp({
   documentService,
   examService,
   quizService,
+  profileProvider: authProvider,
   summaryService,
   tutorService,
 });

@@ -5,3 +5,4 @@ export * from './Input';
 export * from './Badge';
 export * from './GlassPanel';
 export * from './LoadingSpinner';
+export * from './FormattedText';

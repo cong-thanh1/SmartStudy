@@ -68,25 +68,32 @@ services:
         mc mb --ignore-existing "local/$${MINIO_BUCKET}";
         mc anonymous set none "local/$${MINIO_BUCKET}";
 
-  # A real local LLM, configured for low-spec PCs: Qwen 0.5B in Q4 format.
+  # RTX 3060 12 GB profile: Qwen 2.5 7B Q4_K_M fully offloaded to CUDA.
   # The model is downloaded once into the named volume by llama-cpp-init.
   llama-cpp:
-    image: ghcr.io/ggml-org/llama.cpp:server
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    gpus: all
     restart: unless-stopped
     depends_on:
       llama-cpp-init:
         condition: service_completed_successfully
     command:
       - -m
-      - /models/qwen2.5-0.5b-instruct-q4_k_m.gguf
+      - /models/${LLAMA_CPP_MODEL_FILE:-qwen2.5-7b-instruct-q4_k_m.gguf}
       - --host
       - 0.0.0.0
       - --port
       - "8080"
       - --ctx-size
-      - "2048"
+      - "${LLAMA_CPP_CONTEXT_SIZE:-4096}"
       - --threads
-      - "2"
+      - "${LLAMA_CPP_THREADS:-6}"
+      - --batch-size
+      - "${LLAMA_CPP_BATCH_SIZE:-512}"
+      - --n-gpu-layers
+      - "${LLAMA_CPP_GPU_LAYERS:-99}"
+      - --flash-attn
+      - "on"
       - --parallel
       - "1"
     ports:
@@ -106,7 +113,10 @@ services:
     user: "0:0"
     entrypoint: ["/bin/sh", "-c"]
     command:
-      - if [ ! -f /models/qwen2.5-0.5b-instruct-q4_k_m.gguf ]; then curl --fail --location --retry 3 --output /models/qwen2.5-0.5b-instruct-q4_k_m.gguf https://huggingface.co/bartowski/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf; fi
+      - if [ ! -f "/models/$${LLAMA_CPP_MODEL_FILE}" ]; then curl --fail --location --retry 3 --output "/models/$${LLAMA_CPP_MODEL_FILE}" "$${LLAMA_CPP_MODEL_URL}"; fi
+    environment:
+      LLAMA_CPP_MODEL_FILE: ${LLAMA_CPP_MODEL_FILE:-qwen2.5-7b-instruct-q4_k_m.gguf}
+      LLAMA_CPP_MODEL_URL: ${LLAMA_CPP_MODEL_URL:-https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf}
     volumes:
       - llama-cpp-models:/models
 
@@ -173,6 +183,7 @@ services:
       GEMINI_MAX_TOKENS: ${GEMINI_MAX_TOKENS:-4096}
       GEMINI_TIMEOUT_MILLISECONDS: ${GEMINI_TIMEOUT_MILLISECONDS:-120000}
       LLAMA_CPP_BASE_URL: http://llama-cpp:8080
+      LLAMA_CPP_MODEL: ${LLAMA_CPP_MODEL:-qwen2.5:7b}
       LLAMA_CPP_MAX_TOKENS: ${LLAMA_CPP_MAX_TOKENS:-1024}
       LLAMA_CPP_TIMEOUT_MILLISECONDS: ${LLAMA_CPP_TIMEOUT_MILLISECONDS:-120000}
       EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-local}
@@ -249,6 +260,7 @@ services:
       GEMINI_MAX_TOKENS: ${GEMINI_MAX_TOKENS:-4096}
       GEMINI_TIMEOUT_MILLISECONDS: ${GEMINI_TIMEOUT_MILLISECONDS:-120000}
       LLAMA_CPP_BASE_URL: http://llama-cpp:8080
+      LLAMA_CPP_MODEL: ${LLAMA_CPP_MODEL:-qwen2.5:7b}
       LLAMA_CPP_MAX_TOKENS: ${LLAMA_CPP_MAX_TOKENS:-1024}
       LLAMA_CPP_TIMEOUT_MILLISECONDS: ${LLAMA_CPP_TIMEOUT_MILLISECONDS:-120000}
       EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-local}

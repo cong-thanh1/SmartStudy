@@ -30,6 +30,7 @@ export const setTokens = (accessToken: string, refreshToken?: string) => {
 
 export const setStoredUser = (user: unknown) => {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
+  window.dispatchEvent(new Event('smartstudy:user-updated'));
 };
 
 export const clearAuth = () => {

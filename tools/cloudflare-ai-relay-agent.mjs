@@ -1,6 +1,8 @@
 const relayUrl = process.env.CLOUDFLARE_RELAY_URL;
 const agentKey = process.env.CLOUDFLARE_RELAY_AGENT_KEY;
-const ollamaUrl = process.env.OLLAMA_URL ?? "http://127.0.0.1:11434";
+const upstreamUrl = process.env.LOCAL_AI_UPSTREAM_URL
+  ?? process.env.OLLAMA_URL
+  ?? "http://127.0.0.1:8081";
 
 if (!relayUrl) throw new Error("CLOUDFLARE_RELAY_URL is required");
 if (!agentKey) throw new Error("CLOUDFLARE_RELAY_AGENT_KEY is required");
@@ -52,7 +54,7 @@ function connect() {
     if (message.type !== "request" || typeof message.id !== "string") return;
 
     try {
-      const upstream = await fetch(`${ollamaUrl}${message.path}`, {
+      const upstream = await fetch(`${upstreamUrl}${message.path}`, {
         body: message.body,
         headers: { "content-type": "application/json" },
         method: "POST",
@@ -66,7 +68,7 @@ function connect() {
       }));
     } catch {
       activeSocket.send(JSON.stringify({
-        body: JSON.stringify({ error: "ollama_unavailable" }),
+        body: JSON.stringify({ error: "local_ai_unavailable" }),
         contentType: "application/json",
         id: message.id,
         status: 502,
