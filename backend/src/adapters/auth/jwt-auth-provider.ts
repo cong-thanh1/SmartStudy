@@ -8,8 +8,10 @@ import type {
   AuthTokens,
   AuthUser,
   IAuthProvider,
+  IUserProfileProvider,
   LoginInput,
   RegisterInput,
+  UpdateUserProfileInput,
   UserRole,
 } from "../../ports/index.js";
 import {
@@ -36,7 +38,7 @@ interface TokenMaterial {
   readonly tokens: AuthTokens;
 }
 
-export class JwtAuthProvider implements IAuthProvider {
+export class JwtAuthProvider implements IAuthProvider, IUserProfileProvider {
   private readonly generateRefreshToken: () => string;
   private readonly now: () => Date;
 
@@ -162,6 +164,24 @@ export class JwtAuthProvider implements IAuthProvider {
     } catch {
       throw new InvalidTokenError();
     }
+  }
+
+  async getProfile(claims: AuthClaims): Promise<AuthUser> {
+    const user = await this.repository.findUserById(claims.sub);
+    if (!user) throw new InvalidTokenError();
+    return toAuthUser(user);
+  }
+
+  async updateProfile(
+    claims: AuthClaims,
+    input: UpdateUserProfileInput,
+  ): Promise<AuthUser> {
+    const user = await this.repository.updateUserFullName(
+      claims.sub,
+      input.fullName.trim(),
+    );
+    if (!user) throw new InvalidTokenError();
+    return toAuthUser(user);
   }
 
   private async createSession(user: AuthUserRecord): Promise<AuthSession> {

@@ -25,6 +25,11 @@ dist-ssr
 
 # Playwright E2E test artifacts
 e2e/fixtures/storageState.json
+e2e/fixtures/local_ai_learning.pdf
+e2e/fixtures/over-50mib.pdf
+e2e/fixtures/sample_clean.pdf
+e2e/fixtures/sample_corrupt.pdf
+e2e/fixtures/sample_vietnamese_tài_liệu_(1).pdf
 test-results/
 playwright-report/
 /playwright/.cache/

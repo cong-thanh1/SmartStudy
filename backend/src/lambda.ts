@@ -75,6 +75,7 @@ const app = createApp({
     llmProvider,
   ),
   quizService: new QuizService(quizRepository, documentRepository, llmProvider),
+  profileProvider: authProvider,
   summaryService: new SummaryService(
     new DynamoDbSummaryRepository(tableNames.summaries),
     documentRepository,

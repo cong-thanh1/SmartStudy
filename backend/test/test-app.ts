@@ -13,7 +13,7 @@ import type { IExamService } from "../src/modules/exam/exam-service.js";
 import type { IQuizService } from "../src/modules/quiz/quiz-service.js";
 import type { ISummaryService } from "../src/modules/summary/summary-service.js";
 import type { ITutorService } from "../src/modules/tutor/tutor-service.js";
-import type { IAuthProvider } from "../src/ports/index.js";
+import type { IAuthProvider, IUserProfileProvider } from "../src/ports/index.js";
 
 export const testDocumentConfig: DocumentConfig = {
   chunkMaxTokens: DEFAULT_DOCUMENT_CHUNK_MAX_TOKENS,
@@ -61,9 +61,11 @@ export function createTestApp(
   quizService?: IQuizService,
   examService?: IExamService,
   tutorService?: ITutorService,
+  profileProvider?: IUserProfileProvider,
 ) {
   return createApp({
     authProvider,
+    ...(profileProvider === undefined ? {} : { profileProvider }),
     chatService,
     documentConfig: testDocumentConfig,
     documentService,

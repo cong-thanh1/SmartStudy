@@ -3,3 +3,4 @@ export * from './DashboardPage';
 export * from './LearningSpacePage';
 export * from './ExamCenterPage';
 export * from './ResultsPage';
+export * from './ProfilePage';

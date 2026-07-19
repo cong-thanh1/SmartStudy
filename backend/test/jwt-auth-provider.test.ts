@@ -43,9 +43,11 @@ function createRepository(): IAuthRepository {
     createUser: vi.fn(async () => user),
     findRefreshToken: vi.fn(async () => null),
     findUserByEmail: vi.fn(async () => null),
+    findUserById: vi.fn(async () => null),
     revokeRefreshToken: vi.fn(async () => undefined),
     rotateRefreshToken: vi.fn(async () => true),
     saveRefreshToken: vi.fn(async () => undefined),
+    updateUserFullName: vi.fn(async () => null),
   };
 }
 

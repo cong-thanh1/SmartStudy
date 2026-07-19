@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  installPdfJsNodePolyfills,
   PdfParseTextExtractor,
   type CreatePdfParser,
   type PdfParserLike,
@@ -56,5 +57,36 @@ describe("PdfParseTextExtractor", () => {
       "corrupt PDF",
     );
     expect(parser.destroy).toHaveBeenCalledOnce();
+  });
+
+  it("installs the browser geometry globals required by pdf.js in Lambda", () => {
+    const globals = globalThis as Record<string, unknown>;
+    const previous = {
+      DOMMatrix: globals.DOMMatrix,
+      ImageData: globals.ImageData,
+      Path2D: globals.Path2D,
+    };
+
+    try {
+      delete globals.DOMMatrix;
+      delete globals.ImageData;
+      delete globals.Path2D;
+
+      installPdfJsNodePolyfills();
+
+      expect(globals.DOMMatrix).toBeTypeOf("function");
+      expect(globals.ImageData).toBeTypeOf("function");
+      expect(globals.Path2D).toBeTypeOf("function");
+      const matrix = new (globals.DOMMatrix as new (values: number[]) => {
+        a: number;
+        f: number;
+      })([2, 0, 0, 3, 4, 5]);
+      expect(matrix).toMatchObject({ a: 2, f: 5 });
+    } finally {
+      for (const [name, value] of Object.entries(previous)) {
+        if (value === undefined) delete globals[name];
+        else globals[name] = value;
+      }
+    }
   });
 });
